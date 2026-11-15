@@ -503,9 +503,6 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
   }
 
   async function handleLogin() {
-    // Keep the exact values entered by the user so a rejected client login never clears either field.
-    const submittedUsername = username;
-    const submittedPassword = password;
     const raw = username.trim();
     if (!raw || !password) { Alert.alert('بيانات ناقصة', 'اكتب رقم الهاتف أو الإيميل وكلمة السر.'); return; }
     const isAdmin = raw.startsWith('#');
@@ -538,18 +535,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
       setPassword('');
       setScreen(role === 'admin' ? 'admin' : role === 'client' ? 'client' : 'technician');
     } catch (err) {
-      if (authMode === 'client' && !isAdmin) {
-        // Restore both controlled inputs exactly as submitted after an unsuccessful client login.
-        setUsername(submittedUsername);
-        setPassword(submittedPassword);
-        const status = Number(err?.status || err?.statusCode || 0);
-        const message = status === 401 || status === 403
-          ? 'رقم الهاتف أو كلمة المرور غير صحيحة. برجاء التأكد من البيانات والمحاولة مرة أخرى.'
-          : (err.message || 'تعذر تسجيل الدخول. حاول مرة أخرى مع الاحتفاظ ببياناتك المدخلة.');
-        Alert.alert('تعذر تسجيل الدخول', message);
-      } else {
-        Alert.alert('تعذر تسجيل الدخول', err.message || 'راجع البيانات وحاول مرة أخرى.');
-      }
+      Alert.alert('تعذر تسجيل الدخول', err.message || 'راجع البيانات وحاول مرة أخرى.');
     } finally { setLoginLoading(false); }
   }
 
