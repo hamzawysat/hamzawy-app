@@ -63,7 +63,7 @@ export default function ClientWalletScreen({ session, onBalanceChange }) {
       };
       setWallet(next);
       onBalanceChange?.(next.balance);
-      setNumbers([settings.walletPhone1, settings.walletPhone2].map(value => String(value || '').trim()).filter(value => /^01[0-9]{9}$/.test(value)));
+      setNumbers([settings.walletPhone1, settings.walletPhone2].map(value => String(value || '').trim()).filter(value => /^01[0125][0-9]{8}$/.test(value)));
     } catch (e) {
       setError(e.message || 'تعذر تحميل المحفظة.');
     } finally { setLoading(false); }
@@ -82,7 +82,7 @@ export default function ClientWalletScreen({ session, onBalanceChange }) {
     if (submitting) return;
     const phone = fromPhone.replace(/\D/g, '');
     const value = Number(amount);
-    if (!/^01[0-9]{9}$/.test(phone)) return setError('اكتب رقم الهاتف المحوّل منه بشكل صحيح.');
+    if (!/^01[0125][0-9]{8}$/.test(phone)) return setError('اكتب رقم الهاتف المحوّل منه بشكل صحيح.');
     if (!Number.isInteger(value) || value < 10 || value > 10000) return setError('مبلغ الشحن يجب أن يكون من 10 إلى 10000 جنيه.');
     if (wallet.frozen) return setError('المحفظة مجمدة حاليًا. تواصل مع خدمة العملاء.');
     if (!numbers.length) return setError('أرقام التحويل غير متاحة حاليًا. تواصل مع خدمة العملاء قبل التحويل.');
