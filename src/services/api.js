@@ -74,6 +74,7 @@ async function loadConfig() {
     const cached = activeConfig || await readCachedConfig();
     if (cached) {
       activeConfig = cached;
+      lastConfigRefreshAt = Date.now();
       return cached;
     }
     throw new Error(remoteError?.message || 'تعذر تحديد عنوان الخادم. تحقق من الاتصال وحاول مرة أخرى.');
