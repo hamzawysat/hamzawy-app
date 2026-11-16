@@ -6,6 +6,7 @@ on:
     paths:
       - 'App.js'
       - 'src/**'
+      - 'tests/**'
       - '.github/workflows/ota-update.yml'
   pull_request:
     branches: [main]
