@@ -1099,9 +1099,13 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
 
   async function submitTopup() {
     const amount = Number(topup.amount);
-    if (!Number.isInteger(amount) || amount < 10 || !topup.fromPhone.trim() || !topup.method) { Alert.alert('بيانات غير صحيحة', 'اكتب مبلغًا صحيحًا ورقم المحوّل واختار المحفظة التي حولت منها.'); return; }
+    const phone = String(topup.fromPhone || '').replace(/\\D/g, '');
+    const reference = String(topup.reference || '').trim().slice(0, 50);
+    const technicianStatus = String(techData.profile?.status || session?.user?.status || '').trim();
+    if (technicianStatus !== 'معتمد') { Alert.alert('الحساب غير معتمد', 'شحن المحفظة متاح بعد اعتماد حسابك من الإدارة.'); return; }
+    if (!Number.isInteger(amount) || amount < 10 || amount > 10000 || !/^01[0-9]{9}$/.test(phone) || !topup.method || String(topup.reference || '').trim().length > 50) { Alert.alert('بيانات غير صحيحة', 'اكتب مبلغًا من 10 إلى 10000 جنيه ورقم محوّل صحيحًا واختار نوع المحفظة.'); return; }
     try {
-      const result = await api('/fanni/wallet/topup', { method: 'POST', token: session.token, body: { amount, fromPhone: topup.fromPhone.trim(), reference: topup.reference.trim(), method: topup.method } });
+      const result = await api('/fanni/wallet/topup', { method: 'POST', token: session.token, body: { amount, fromPhone: phone, reference, method: topup.method } });
       Alert.alert('تم إرسال طلب الشحن', result.message || 'طلبك قيد مراجعة الإدارة.');
       setTopup({ amount: '', fromPhone: '', reference: '', method: 'vodafone_cash' });
       setReloadKey(value => value + 1);
