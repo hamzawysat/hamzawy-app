@@ -47,10 +47,19 @@ jobs:
           if logo.width < 128 or logo.height < 128:
               raise SystemExit("Official logo image is unexpectedly small")
           logo = logo.resize((1024, 1024), Image.Resampling.LANCZOS)
-          logo.convert("RGB").save("assets/icon.png", quality=95)
-          logo.save("assets/adaptive-icon.png")
-          logo.save("assets/splash-icon.png")
-          logo.convert("RGB").save("assets/splash.png", quality=95)
+          # Keep the official mark intact, but give it breathing room inside launcher masks.
+          logo.thumbnail((860, 860), Image.Resampling.LANCZOS)
+          x = (1024 - logo.width) // 2
+          y = (1024 - logo.height) // 2
+          legacy = Image.new("RGBA", (1024, 1024), "#F4F8FC")
+          legacy.alpha_composite(logo, (x, y))
+          legacy.convert("RGB").save("assets/icon.png", quality=95)
+          foreground = Image.new("RGBA", (1024, 1024), (0, 0, 0, 0))
+          foreground.alpha_composite(logo, (x, y))
+          foreground.save("assets/adaptive-icon.png")
+          # Splash assets retain the original full-size official artwork.
+          Image.open(source).convert("RGBA").save("assets/splash-icon.png")
+          Image.open(source).convert("RGB").save("assets/splash.png", quality=95)
           PY
       - name: Prebuild Android
         run: npx expo prebuild --platform android --clean
@@ -115,10 +124,19 @@ jobs:
           if logo.width < 128 or logo.height < 128:
               raise SystemExit("Official logo image is unexpectedly small")
           logo = logo.resize((1024, 1024), Image.Resampling.LANCZOS)
-          logo.convert("RGB").save("assets/icon.png", quality=95)
-          logo.save("assets/adaptive-icon.png")
-          logo.save("assets/splash-icon.png")
-          logo.convert("RGB").save("assets/splash.png", quality=95)
+          # Keep the official mark intact, but give it breathing room inside launcher masks.
+          logo.thumbnail((860, 860), Image.Resampling.LANCZOS)
+          x = (1024 - logo.width) // 2
+          y = (1024 - logo.height) // 2
+          legacy = Image.new("RGBA", (1024, 1024), "#F4F8FC")
+          legacy.alpha_composite(logo, (x, y))
+          legacy.convert("RGB").save("assets/icon.png", quality=95)
+          foreground = Image.new("RGBA", (1024, 1024), (0, 0, 0, 0))
+          foreground.alpha_composite(logo, (x, y))
+          foreground.save("assets/adaptive-icon.png")
+          # Splash assets retain the original full-size official artwork.
+          Image.open(source).convert("RGBA").save("assets/splash-icon.png")
+          Image.open(source).convert("RGB").save("assets/splash.png", quality=95)
           PY
       - name: Prebuild Android
         run: npx expo prebuild --platform android --clean
@@ -168,4 +186,4 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: hamzawy-sat-lite-arm64-apk
-          path: hamzawy-sat-lite-armv7.apk
+          path: hamzawy-sat-lite-arm64.apk
