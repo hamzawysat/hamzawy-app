@@ -111,7 +111,8 @@ export function TechnicianDashboard({ context }) {
                  if (ownOfferRejected) return <TouchableOpacity disabled style={[styles.button, styles.buttonDanger]}><Text style={[styles.buttonText, styles.buttonDangerText]}>تم رفض عرضك</Text></TouchableOpacity>;
                  if (ownOfferAccepted) return null;
                  if (ownOffer) return <Button title="جاري انتظار الرد على عرضك" disabled onPress={() => {}} />;
-                 return <Button title="تقديم عرض" onPress={() => sendOffer(item)} />;
+                 if (!isApproved) return <Button title="تقديم العروض بعد اعتماد الحساب" disabled onPress={() => {}} />;
+                  return <Button title="تقديم عرض" onPress={() => sendOffer(item)} />;
                })()}
              </View>;
            }} />}
