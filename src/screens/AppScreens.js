@@ -1818,7 +1818,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         <View style={styles.homeLogoCirclePremium}>
           <Image source={require('../../assets/LOGO_UPLOAD_HERE/logo.png')} style={styles.homeLogoImage} resizeMode="contain" />
         </View>
-        <Text style={styles.homeBrandTitlePremium}>صُنّاع</Text>
+        <Text style={styles.homeBrandTitlePremium}>حمزاوي سات</Text>
         <Text style={styles.homeTaglinePremium}>كُلُّ خِدْمَةٍ تَبْدَأُ بِخُطْوَةٍ</Text>
         <Text style={styles.homeIntroPremium}>أكثر من عشرين مهنة في مكان واحد، وطلب خدمتك بخطوات بسيطة وسريعة.</Text>
       </View>
@@ -1832,7 +1832,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
           <View style={styles.roleCardCopy}><Text style={styles.roleTitlePremium}>الدخول كفني</Text><Text style={styles.roleDescriptionPremium}>استقبل الطلبات وقدّم عروضك وتابع مكسبك.</Text><View style={[styles.roleActionBadge, {backgroundColor:COLORS.navy}]}><Text style={styles.roleActionBadgeText}>شوف فرص الشغل ←</Text></View></View>
         </TouchableOpacity>
       </View>
-      <View style={styles.homeFooterPremium}><View style={styles.homeFooterDot} /><Text style={styles.homeFooterText}>اختار طريقة الدخول وابدأ مع صُنّاع</Text></View>
+      <View style={styles.homeFooterPremium}><View style={styles.homeFooterDot} /><Text style={styles.homeFooterText}>اختار طريقة الدخول وابدأ مع حمزاوي سات</Text></View>
     </ScrollView>
   </SafeAreaView>;
 }
