@@ -652,7 +652,7 @@ test('technician wallet top-ups follow browser approval, amount and phone valida
   assert.ok(screens.includes('amount > 10000'));
   assert.ok(screens.includes('/^01[0-9]{9}$/'));
   assert.ok(screens.includes('referenceCode: reference'));
-  assert.ok(wallet.includes("disabled={String(user?.status || '').trim() !== 'معتمد'}"));
+  assert.ok(wallet.includes("disabled={submitting || String(user?.status || '').trim() !== 'معتمد'}"));
 });
 
 test('native API preserves structured store purchase errors and resolves media URLs through central configuration', () => {
