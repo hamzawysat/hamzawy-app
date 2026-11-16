@@ -570,6 +570,9 @@ test('client dashboard includes browser service/store chooser, store, wallet, su
   assert.ok(client.includes("clientTab === 'subscriptions'"));
   assert.ok(client.includes('trackClientComplaints'));
   assert.ok(client.includes('payForClientOrder'));
+  assert.ok(client.includes('openTrackedOrderDetails'));
+  assert.ok(client.includes('notifications?.unread'));
+  assert.ok(client.includes('طلبات سابقة'));
   assert.ok(store.includes("api('/store/products')"));
   assert.ok(store.includes("'/store/' + role + '/orders'"));
   assert.ok(store.includes('idempotencyKey'));
