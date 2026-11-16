@@ -642,15 +642,14 @@ test('app config does not embed a backend URL in Expo metadata', () => {
   assert.equal(config.expo.android.minSdkVersion, 23);
 });
 
-test('APK workflow pads the official launcher mark and uploads the actual Lite APK filename', () => {
+test('APK workflow builds only the requested Modern ARM64 artifact and runs regression tests first', () => {
   const workflow = fs.readFileSync(path.join(root, '.github/workflows/build.yml'), 'utf8');
-  assert.equal((workflow.match(/logo\.thumbnail\(\(860, 860\)/g) || []).length, 2);
-  assert.equal((workflow.match(/path: hamzawy-sat-lite-arm64\.apk/g) || []).length, 0);
-  const liteJob = workflow.slice(workflow.indexOf('  build-lite:'));
-  assert.ok(liteJob.includes('"reactNativeArchitectures": "armeabi-v7a"'));
-  assert.ok(liteJob.includes('armeabi-v7a'));
-  assert.ok(liteJob.includes('cp "$APK" ../hamzawy-sat-lite-armv7.apk'));
-  assert.ok(liteJob.includes('name: hamzawy-sat-lite-armv7-apk'));
-  assert.ok(liteJob.includes('path: hamzawy-sat-lite-armv7.apk'));
-  assert.ok(!liteJob.includes('arm64-v8a'));
+  assert.equal((workflow.match(/logo\.thumbnail\(\(860, 860\)/g) || []).length, 1);
+  assert.ok(workflow.includes('feature/client-technician-web-parity-20261116'));
+  assert.ok(workflow.includes('run: npm test'));
+  assert.ok(workflow.includes('build-modern:'));
+  assert.ok(workflow.includes('reactNativeArchitectures=arm64-v8a'));
+  assert.ok(workflow.includes('path: hamzawy-sat-modern.apk'));
+  assert.ok(!workflow.includes('build-lite:'));
+  assert.ok(!workflow.includes('armeabi-v7a'));
 });
