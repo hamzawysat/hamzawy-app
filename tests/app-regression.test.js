@@ -766,6 +766,6 @@ test('client and technician always start on their home tab after login and sessi
   assert.ok(screens.includes("if (saved.role === 'fanni') setTechData(current => ({ ...current, tab: 'home' }))"));
   assert.ok(screens.includes("if (role === 'client') setClientTab('home')"));
   assert.ok(screens.includes("if (role === 'fanni') setTechData(current => ({ ...current, tab: 'home' }))"));
-  assert.ok(screens.includes("tab: 'home' }), 'logout should reset the technician tab to home'));
+  assert.ok(screens.includes("setTechData({ profile: null, orders: [], offers: [], wallet: [], loading: false, error: '', tab: 'home' });"));
   assert.ok(!screens.includes("if (role === 'fanni') setTechData(current => ({ ...current, tab: 'offers' }))"));
 });
