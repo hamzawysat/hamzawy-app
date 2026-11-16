@@ -48,6 +48,7 @@ export function ClientDashboard({ context }) {
         try {
           const result = await api('/client/orders/' + encodeURIComponent(sn) + '/pay', { method: 'POST', token: session.token, body: {} });
           if (result.balance !== undefined) setWalletBalance(Number(result.balance));
+          else { const wallet = await api('/client/wallet', { token: session.token }); if (wallet.balance !== undefined || wallet.walletBalance !== undefined) setWalletBalance(Number(wallet.balance ?? wallet.walletBalance)); }
           Alert.alert('تم حجز المبلغ', result.message || 'تم حجز قيمة الخدمة من محفظتك.');
           setReloadKey(value => value + 1);
           await refreshVisibleData();
