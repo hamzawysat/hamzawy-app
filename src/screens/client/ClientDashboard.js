@@ -95,7 +95,7 @@ export function ClientDashboard({ context }) {
       <StoreAdBanner role="client" session={session} visible={clientTab !== 'store'} onOpenStore={() => setClientTab('store')} />
 
     <ScrollView ref={clientScrollRef} contentContainerStyle={[styles.page, { paddingBottom: 110 }]} showsVerticalScrollIndicator={false}>
-      <PublicContentBanner />
+      <PublicContentBanner showSiteName={clientTab !== 'profile'} />
       {clientTab === 'home' ? <View style={styles.formCard}>
         <Text style={styles.cardTitlePremium}>أهلاً {session.user?.name || 'بك'} 👋</Text>
         <Text style={styles.detail}>كل خدمات حمزاوي سات في مكان واحد.</Text>

@@ -10,7 +10,6 @@ export function AccountScreen({ session, clientData, techData, setScreen, beginP
     const completedHistory = (history || []).filter(item => ['تم الانتهاء', 'مكتمل', 'مكتملة', 'completed', 'complete', 'finished'].includes(String(item.status || item.orderStatus || '').trim().toLowerCase()));
     const content = <>
       {!embedded ? <Button title="‹ رجوع" secondary onPress={() => setScreen(session?.role === 'client' ? 'client' : session?.role === 'fanni' ? 'technician' : 'admin')} /> : null}
-      <View style={{ width: "100%", direction: "ltr", alignItems: "flex-end" }}><Text style={[styles.title, { width: "100%", textAlign: "right", writingDirection: "rtl", alignSelf: "stretch" }]}>حسابي</Text></View>
       <View style={styles.dataCard}>
         <Text style={styles.sectionTitle}>بيانات الحساب</Text>
         <View style={styles.detailRow}><Text style={styles.detailLabel}>الاسم</Text><Text style={styles.detailValue}>{session?.user?.name || '—'}</Text></View>

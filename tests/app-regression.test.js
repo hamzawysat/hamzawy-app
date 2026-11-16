@@ -675,10 +675,22 @@ test('technician home shows browser-equivalent approval guidance and blocks offe
   assert.ok(wallet.includes("disabled={submitting || String(user?.status || '').trim() !== 'معتمد'}"));
 });
 
+test('embedded client account removes the duplicate site name and account heading without changing the main header', () => {
+  const account = fs.readFileSync(path.join(root, 'src/screens/account/AccountScreens.js'), 'utf8');
+  const client = fs.readFileSync(path.join(root, 'src/screens/client/ClientDashboard.js'), 'utf8');
+  assert.doesNotMatch(account, /<Text[^>]*>حسابي<\\/Text>/);
+  assert.ok(account.includes('<View style={styles.dataCard}>'));
+  assert.ok(client.includes('أهلًا {session.user?.name || \'بك\'}'));
+  assert.ok(client.includes('عميل صُنّاع'));
+  assert.ok(client.includes('<PublicContentBanner showSiteName={clientTab !== \'profile\'} />'));
+});
+
 test('native client dashboard displays public maintenance notices, announcements and FAQs', () => {
   const banner = fs.readFileSync(path.join(root, 'src/screens/shared/PublicContentBanner.js'), 'utf8');
   const client = fs.readFileSync(path.join(root, 'src/screens/client/ClientDashboard.js'), 'utf8');
-  assert.ok(client.includes('<PublicContentBanner />'));
+  assert.ok(client.includes('<PublicContentBanner showSiteName={clientTab !== \'profile\'} />'));
+  assert.ok(banner.includes('showSiteName && content.siteName'));
+  assert.ok(banner.includes('hasVisibleContent'));
   assert.ok(banner.includes("api('/content')"));
   assert.ok(banner.includes('maintenanceMessage'));
   assert.ok(banner.includes('announcement'));
