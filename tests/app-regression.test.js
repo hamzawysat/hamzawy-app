@@ -22,7 +22,7 @@ test('app resolves its API from the stable GitHub Pages configuration and has no
   assert.match(apiSource, /getApiUrl/);
   assert.match(apiSource, /apiHost/);
   assert.match(apiSource, /apiPort/);
-  assert.match(apiSource, /api\\/store\\/media/);
+  assert.ok(apiSource.includes("'/api/store/media'"));
   assert.equal(app.includes('API_BASE'), false);
   assert.doesNotMatch(app, /(?:sonaa-backend-v2|hamzawy-sat)\.(?:vercel\.app|dynv6\.net)/);
 });
