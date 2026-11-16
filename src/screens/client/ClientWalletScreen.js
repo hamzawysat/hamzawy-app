@@ -28,6 +28,15 @@ function transactionLabel(type) {
   })[type] || 'حركة مالية';
 }
 
+function normalizePhoneDigits(value) {
+  const arabic = '٠١٢٣٤٥٦٧٨٩';
+  const persian = '۰۱۲۳۴۵۶۷۸۹';
+  return String(value || '').replace(/[٠-٩۰-۹]/g, digit => {
+    const index = arabic.indexOf(digit);
+    return String(index >= 0 ? index : persian.indexOf(digit));
+  }).replace(/\\D/g, '');
+}
+
 function requestKey() {
   return 'client-wallet-' + Date.now() + '-' + Math.random().toString(36).slice(2);
 }
