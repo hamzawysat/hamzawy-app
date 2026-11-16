@@ -749,7 +749,8 @@ test('technician registration requires both private identity card uploads and se
   assert.ok(screens.includes('identityCardFrontFileId: identityCardUploads.front.fileId'));
   assert.ok(screens.includes('identityCardBackFileId: identityCardUploads.back.fileId'));
   assert.ok(screens.includes('identityCardUploads.front.uploading') && screens.includes('identityCardUploads.back.uploading'));
-  assert.ok(screens.indexOf('صورة بطاقة الرقم القومي *') < screens.indexOf('ميثاق صُنّاع – التعامل المهني مع العملاء'));
+  assert.ok(screens.indexOf('ميثاق صُنّاع – التعامل المهني مع العملاء') < screens.indexOf('صورة بطاقة الرقم القومي *'));
+  assert.ok(screens.indexOf('صورة بطاقة الرقم القومي *') < screens.indexOf('<TouchableOpacity disabled={!guidelinesReachedEnd}'));
   assert.ok(api.includes('FileSystem.uploadAsync'));
   assert.ok(api.includes("'/fanni/registration-media?side='"));
   assert.equal(pkg.dependencies['expo-image-picker'], '~15.0.7');
