@@ -660,7 +660,8 @@ test('technician wallet top-ups follow browser approval, amount and phone valida
 test('native API preserves structured store purchase errors and resolves media URLs through central configuration', () => {
   const api = fs.readFileSync(path.join(root, 'src/services/api.js'), 'utf8');
   assert.ok(api.includes('error.canUseCashOnDelivery = data?.canUseCashOnDelivery === true'));
-  assert.ok(api.includes('export { api, getMediaUrl }'));
+  assert.match(api, /export async function getMediaUrl\\(/);
+  assert.ok(api.includes('export { api }'));
   assert.ok(api.includes('config.mediaBaseUrl'));
 });
 
