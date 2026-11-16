@@ -24,6 +24,7 @@ function money(value) {
 export function StoreAdBanner({ role, session, visible = true, onOpenStore }) {
   const [ads, setAds] = useState([]);
   const [index, setIndex] = useState(0);
+  const [rotationSeconds, setRotationSeconds] = useState(10);
 
   useEffect(() => {
     let active = true;
@@ -37,6 +38,7 @@ export function StoreAdBanner({ role, session, visible = true, onOpenStore }) {
         .sort((a, b) => (Number(b.adPriority) || 0) - (Number(a.adPriority) || 0) ||
           new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
       setAds(eligible);
+      setRotationSeconds(Math.max(3, Math.min(120, Number(result.adRotationSeconds) || 10)));
       setIndex(0);
     }).catch(() => { if (active) setAds([]); });
     return () => { active = false; };
@@ -44,9 +46,9 @@ export function StoreAdBanner({ role, session, visible = true, onOpenStore }) {
 
   useEffect(() => {
     if (!visible || ads.length < 2) return undefined;
-    const timer = setInterval(() => setIndex(current => (current + 1) % ads.length), 10000);
+    const timer = setInterval(() => setIndex(current => (current + 1) % ads.length), rotationSeconds * 1000);
     return () => clearInterval(timer);
-  }, [ads.length, visible]);
+  }, [ads.length, visible, rotationSeconds]);
 
   const item = ads[index];
   if (!visible || !item) return null;
@@ -65,7 +67,7 @@ export function StoreAdBanner({ role, session, visible = true, onOpenStore }) {
   );
 }
 
-export default function StoreScreen({ role, session, onWalletBalanceChange }) {
+export default function StoreScreen({ role, session, walletBalance, onWalletBalanceChange }) {
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -163,7 +165,7 @@ export default function StoreScreen({ role, session, onWalletBalanceChange }) {
     }
   };
 
-  const userBalance = Number(session?.user?.walletBalance ?? session?.user?.balance ?? 0);
+  const userBalance = Number(walletBalance ?? session?.user?.walletBalance ?? session?.user?.balance ?? 0);
 
   return (
     <View style={{ flex: 1 }}>
