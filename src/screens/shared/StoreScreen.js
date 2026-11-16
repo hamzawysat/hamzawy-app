@@ -178,8 +178,8 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
   const userBalance = Number(walletBalance ?? session?.user?.walletBalance ?? session?.user?.balance ?? 0);
 
   return (
-    <View style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={{ padding: 14, paddingBottom: 28 }} showsVerticalScrollIndicator={false}>
+    <View style={{ width: '100%' }}>
+      <View style={{ padding: 14, paddingBottom: 28 }}>
         <View style={[styles.dataCard, { marginBottom: 12 }]}>
           <Text style={styles.cardTitlePremium}>متجر حمزاوي سات 🛍️</Text>
           <Text style={styles.detail}>اختار المنتج اللي محتاجه، وابعت طلبك. الإدارة هتتواصل معاك لتأكيد الطلب وطريقة الدفع.</Text>
@@ -212,7 +212,7 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
               </View>
             </View>
           )) : <View style={styles.dataCard}><Text style={styles.emptyText}>لا توجد منتجات متاحة حاليًا.</Text></View>}
-      </ScrollView>
+      </View>
       <Modal transparent visible={Boolean(selected)} animationType="slide" onRequestClose={() => setSelected(null)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
           <View style={{ backgroundColor: COLORS.white, borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: 18, gap: 10 }}>
