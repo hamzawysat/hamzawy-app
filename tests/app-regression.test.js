@@ -589,6 +589,8 @@ test('native store ads honor role audience, expiry, priority and configured rota
   assert.ok(store.includes('adExpiresAt'));
   assert.ok(store.includes('adPriority'));
   assert.ok(store.includes('adRotationSeconds'));
+  assert.ok(store.includes('Number(item.stock) > 0'));
+  assert.ok(store.includes('9000'));
   const client = fs.readFileSync(path.join(root, 'src/screens/client/ClientDashboard.js'), 'utf8');
   const tech = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianDashboard.js'), 'utf8');
   assert.ok(client.includes("visible={clientTab !== 'store'}"));
