@@ -44,7 +44,6 @@ export function TechnicianDashboard({ context }) {
     const isAcceptedJob = item => !isRejectedOffer(item) && (item.accepted === true || ['تم اختيار فني', 'جاري التنفيذ', 'قيد التنفيذ'].includes(String(item.orderStatus || item.status || '').trim()));
     const isCompletedJob = item => ['تم الانتهاء', 'مكتمل', 'مكتملة', 'completed', 'finished'].includes(String(item.orderStatus || item.status || '').trim().toLowerCase());
     const displayedOffers = technicianOffers.filter(item => tab === 'currentJobs' ? isAcceptedJob(item) && !isCompletedJob(item) : tab === 'completed' ? isCompletedJob(item) : !isAcceptedJob(item) && !isCompletedJob(item));
-    const tabs = [{ key: 'home', label: 'الرئيسية' }, { key: 'available', label: `الفرص (${filteredAvailableOrders.length})` }, { key: 'offers', label: `عروضي (${technicianOffers.filter(o => !isAcceptedJob(o) && !isCompletedJob(o)).length})` }, { key: 'currentJobs', label: `الطلبات الجارية (${technicianOffers.filter(o => isAcceptedJob(o) && !isCompletedJob(o)).length})` }, { key: 'completed', label: `المكتملة` }, { key: 'wallet', label: 'المحفظة' }, { key: 'store', label: 'المتجر' }, { key: 'profile', label: 'حسابي' }, { key: 'support', label: 'الدعم الفني' }];
     const refreshSpin = useRef(new Animated.Value(0)).current;
   const isRefreshing = Boolean(techData.loading);
   useEffect(() => {
@@ -61,6 +60,7 @@ export function TechnicianDashboard({ context }) {
     const serviceMatch = technicianServiceFilter === 'الكل' || String(item.service || item.specialty || '') === technicianServiceFilter;
     return (!query || haystack.includes(query)) && serviceMatch;
   });
+    const tabs = [{ key: 'home', label: 'الرئيسية' }, { key: 'available', label: `الفرص (${filteredAvailableOrders.length})` }, { key: 'offers', label: `عروضي (${technicianOffers.filter(o => !isAcceptedJob(o) && !isCompletedJob(o)).length})` }, { key: 'currentJobs', label: `الطلبات الجارية (${technicianOffers.filter(o => isAcceptedJob(o) && !isCompletedJob(o)).length})` }, { key: 'completed', label: `المكتملة` }, { key: 'wallet', label: 'المحفظة' }, { key: 'store', label: 'المتجر' }, { key: 'profile', label: 'حسابي' }, { key: 'support', label: 'الدعم الفني' }];
   const hasMoreAvailable = technicianOrdersPagination
     ? Number(technicianOrdersPagination.page || 1) < Number(technicianOrdersPagination.pages || 1)
     : technicianOrders.length >= 20;
