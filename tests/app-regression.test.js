@@ -549,11 +549,83 @@ test('client area selection hides the search field, reveals the detailed address
   assert.ok(screens.includes('areaTechnicianCounts, setAreaTechnicianCounts,'));
 });
 
-test('technician dashboard opens on the opportunities tab by default', () => {
+test('client and technician dashboards open on their browser-equivalent home views', () => {
   const state = fs.readFileSync(path.join(root, 'src/hooks/useAppState.js'), 'utf8');
-  assert.match(state, /tab: 'available'/);
+  assert.match(state, /clientTab,?[^\n]*|setClientTab/);
+  assert.match(state, /tab: 'home'/);
+  assert.match(state, /useState\('home'\)/);
 });
 
+
+
+test('client dashboard includes browser service/store chooser, store, wallet, subscriptions, support and complaint tracking', () => {
+  const client = fs.readFileSync(path.join(root, 'src/screens/client/ClientDashboard.js'), 'utf8');
+  const store = fs.readFileSync(path.join(root, 'src/screens/shared/StoreScreen.js'), 'utf8');
+  const wallet = fs.readFileSync(path.join(root, 'src/screens/client/ClientWalletScreen.js'), 'utf8');
+  const subscriptions = fs.readFileSync(path.join(root, 'src/screens/client/ClientSubscriptionsScreen.js'), 'utf8');
+  assert.ok(client.includes("clientNewRequestChoice === 'technician'"));
+  assert.ok(client.includes("setClientTab('store')"));
+  assert.ok(client.includes("clientTab === 'store'"));
+  assert.ok(client.includes("clientTab === 'wallet'"));
+  assert.ok(client.includes("clientTab === 'subscriptions'"));
+  assert.ok(client.includes('trackClientComplaints'));
+  assert.ok(client.includes('payForClientOrder'));
+  assert.ok(store.includes("api('/store/products')"));
+  assert.ok(store.includes("'/store/' + role + '/orders'"));
+  assert.ok(store.includes('idempotencyKey'));
+  assert.ok(wallet.includes("api('/client/wallet'"));
+  assert.ok(wallet.includes("'/client/wallet/topup'"));
+  assert.ok(wallet.includes('topupRequests'));
+  assert.ok(wallet.includes('transactions'));
+  assert.ok(subscriptions.includes("'/client/commerce/catalog'"));
+  assert.ok(subscriptions.includes("'/client/commerce/subscriptions/purchase'"));
+  assert.ok(subscriptions.includes("'/client/commerce/subscriptions/'"));
+});
+
+test('native store ads honor role audience, expiry, priority and configured rotation interval', () => {
+  const store = fs.readFileSync(path.join(root, 'src/screens/shared/StoreScreen.js'), 'utf8');
+  assert.ok(store.includes('isAdvertised === true'));
+  assert.ok(store.includes('adAudience'));
+  assert.ok(store.includes('adExpiresAt'));
+  assert.ok(store.includes('adPriority'));
+  assert.ok(store.includes('adRotationSeconds'));
+  assert.ok(store.includes("visible={clientTab !== 'store'}") || store.includes('visible={tab !== \'store\'}'));
+});
+
+test('technician dashboard includes browser home, store, support, filters, pagination and full wallet tabs', () => {
+  const tech = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianDashboard.js'), 'utf8');
+  const wallet = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianWalletScreen.js'), 'utf8');
+  const store = fs.readFileSync(path.join(root, 'src/screens/shared/StoreScreen.js'), 'utf8');
+  assert.ok(tech.includes("key: 'home'"));
+  assert.ok(tech.includes("key: 'store'"));
+  assert.ok(tech.includes("key: 'support'"));
+  assert.ok(tech.includes('filteredAvailableOrders'));
+  assert.ok(tech.includes('technicianServiceFilter'));
+  assert.ok(tech.includes('loadMoreAvailable'));
+  assert.ok(tech.includes('<StoreScreen role="fanni"'));
+  assert.ok(tech.includes('<TechnicianWalletScreen'));
+  assert.ok(wallet.includes("api('/fanni/wallet/history'"));
+  assert.ok(wallet.includes("id: 'requests'"));
+  assert.ok(wallet.includes("id: 'transactions'"));
+  assert.ok(store.includes("'/store/' + role + '/orders'"));
+});
+
+test('native client dashboard displays public maintenance notices, announcements and FAQs', () => {
+  const banner = fs.readFileSync(path.join(root, 'src/screens/shared/PublicContentBanner.js'), 'utf8');
+  const client = fs.readFileSync(path.join(root, 'src/screens/client/ClientDashboard.js'), 'utf8');
+  assert.ok(client.includes('<PublicContentBanner />'));
+  assert.ok(banner.includes("api('/content')"));
+  assert.ok(banner.includes('maintenanceMessage'));
+  assert.ok(banner.includes('announcement'));
+  assert.ok(banner.includes('faqs'));
+});
+
+test('native API preserves structured store purchase errors and resolves media URLs through central configuration', () => {
+  const api = fs.readFileSync(path.join(root, 'src/services/api.js'), 'utf8');
+  assert.ok(api.includes('error.canUseCashOnDelivery = data.canUseCashOnDelivery === true'));
+  assert.ok(api.includes('export { api, getMediaUrl }'));
+  assert.ok(api.includes('config.mediaBaseUrl'));
+});
 
 test('central API config validates HTTPS URLs and preserves a last-known-good configuration', () => {
   const source = fs.readFileSync(path.join(root, 'src/services/api.js'), 'utf8');
