@@ -55,12 +55,22 @@ jobs:
           node-version: 20
       - name: Install dependencies
         run: npm install --legacy-peer-deps
-      - name: Publish update to production branch
+      - name: Verify production channel points to production branch
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
           if [ -z "$EXPO_TOKEN" ]; then
-            echo "::error::GitHub secret EXPO_TOKEN is missing. Add an Expo access token in repository Actions secrets."
+            echo "::error::GitHub secret EXPO_TOKEN is missing."
             exit 1
           fi
+          if ! npx eas-cli channel:view production --json > /tmp/production-channel.json; then
+            echo "Production channel does not exist; creating it."
+            npx eas-cli channel:create production --non-interactive
+          fi
+          npx eas-cli channel:edit production --branch production --non-interactive
+          npx eas-cli channel:view production --json
+      - name: Publish update to production branch
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
           npx eas-cli update --platform android --branch production --message "OTA: ${{ github.event.head_commit.message || 'Manual production update' }}" --non-interactive
