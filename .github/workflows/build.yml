@@ -58,6 +58,18 @@ jobs:
         run: |
           printf '\nexpo.useLegacyPackaging=true\nreactNativeArchitectures=arm64-v8a\n' >> android/gradle.properties
           grep -E '^(expo.useLegacyPackaging|reactNativeArchitectures)=' android/gradle.properties
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path("android/app/build.gradle")
+          source = path.read_text()
+          marker = "defaultConfig {"
+          if marker not in source:
+              raise SystemExit("Could not find Android defaultConfig block")
+          if "abiFilters" not in source:
+              source = source.replace(marker, marker + "\\n        ndk {\\n            abiFilters 'arm64-v8a'\\n        }", 1)
+          path.write_text(source)
+          PY
+          grep -n -A4 "defaultConfig {" android/app/build.gradle
       - name: Build Modern Release APK
         run: |
           cd android
@@ -129,6 +141,18 @@ jobs:
           path.write_text("\n".join(lines) + "\n")
           PY
           grep -E 'android.enable(Proguard|ShrinkResources)|android.enableBundleCompression|reactNativeArchitectures' android/gradle.properties
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path("android/app/build.gradle")
+          source = path.read_text()
+          marker = "defaultConfig {"
+          if marker not in source:
+              raise SystemExit("Could not find Android defaultConfig block")
+          if "abiFilters" not in source:
+              source = source.replace(marker, marker + "\\n        ndk {\\n            abiFilters 'arm64-v8a'\\n        }", 1)
+          path.write_text(source)
+          PY
+          grep -n -A4 "defaultConfig {" android/app/build.gradle
       - name: Build Lite Release APK
         run: |
           cd android
