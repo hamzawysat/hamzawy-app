@@ -21,7 +21,7 @@ test('all project JavaScript and JSX files parse successfully', () => {
     ...['src', 'tests'].flatMap(directory => {
       const collect = current => fs.readdirSync(current, { withFileTypes: true }).flatMap(entry => {
         const fullPath = path.join(current, entry.name);
-        return entry.isDirectory() ? collect(fullPath) : /\\.js$/.test(entry.name) ? [fullPath] : [];
+        return entry.isDirectory() ? collect(fullPath) : /\.js$/.test(entry.name) ? [fullPath] : [];
       });
       return collect(path.join(root, directory));
     })
