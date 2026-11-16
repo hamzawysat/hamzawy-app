@@ -29,11 +29,9 @@ export default function TechnicianWalletScreen({ session, user, transferNumbers,
       const entries = Array.isArray(result.transactions) ? result.transactions : [];
       setRequests(history);
       setTransactions(entries);
-      const balance = result.balance ?? result.walletBalance ?? result.wallet?.balance;
-      if (balance !== undefined) onBalanceChange?.(Number(balance));
     } catch (e) { setError(e.message || 'تعذر تحميل سجل المحفظة.'); }
     finally { setLoading(false); }
-  }, [session?.token, onBalanceChange]);
+  }, [session?.token]);
 
   useEffect(() => { load(); }, [load]);
 
