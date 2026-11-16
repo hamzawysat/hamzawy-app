@@ -1,0 +1,67 @@
+name: Publish Android OTA Update
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'App.js'
+      - 'src/**'
+      - 'package.json'
+      - 'tests/**'
+  workflow_dispatch:
+
+concurrency:
+  group: hamzawy-ota-production
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate Android OTA compatibility
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+      - name: Verify OTA configuration
+        run: |
+          node <<'NODE'
+          const app = require('./app.json').expo;
+          const pkg = require('./package.json');
+          if (!pkg.dependencies['expo-updates']) throw new Error('expo-updates must be a direct dependency');
+          if (app.updates?.enabled !== true) throw new Error('Expo Updates must be enabled');
+          if (app.updates?.url !== 'https://u.expo.dev/01cd6ee6-73a2-4404-8381-d60446befcc5') throw new Error('Unexpected EAS Update project URL');
+          if (app.updates?.requestHeaders?.['expo-channel-name'] !== 'production') throw new Error('Android OTA channel must be production');
+          if (app.runtimeVersion?.policy !== 'appVersion') throw new Error('Runtime version policy must remain appVersion');
+          console.log('OTA configuration verified:', app.version, 'production');
+          NODE
+      - name: Run regression tests
+        run: npm test
+      - name: Verify Android JS bundle
+        run: npx expo export --platform android --output-dir /tmp/hamzawy-ota-export
+
+  publish:
+    name: Publish production OTA
+    needs: validate
+    if: ${{ needs.validate.result == 'success' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+      - name: Publish update to production branch
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "::error::GitHub secret EXPO_TOKEN is missing. Add an Expo access token in repository Actions secrets."
+            exit 1
+          fi
+          npx eas-cli update --platform android --branch production --message "OTA: ${{ github.event.head_commit.message || 'Manual production update' }}" --non-interactive
