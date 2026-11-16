@@ -615,6 +615,16 @@ test('technician dashboard includes browser home, store, support, filters, pagin
   assert.ok(store.includes("'/store/' + role + '/orders'"));
 });
 
+
+test('technician home shows browser-equivalent approval guidance and blocks offers and wallet top-ups until approved', () => {
+  const tech = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianDashboard.js'), 'utf8');
+  const wallet = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianWalletScreen.js'), 'utf8');
+  assert.ok(tech.includes("const isApproved = String(user.status || '').trim() === 'معتمد'"));
+  assert.ok(tech.includes('if (!isApproved) return <Button title="تقديم العروض بعد اعتماد الحساب"'));
+  assert.ok(tech.includes('إرسال العروض وشحن المحفظة متاحان بعد اعتماد الإدارة'));
+  assert.ok(wallet.includes("disabled={submitting || String(user?.status || '').trim() !== 'معتمد'}"));
+});
+
 test('native client dashboard displays public maintenance notices, announcements and FAQs', () => {
   const banner = fs.readFileSync(path.join(root, 'src/screens/shared/PublicContentBanner.js'), 'utf8');
   const client = fs.readFileSync(path.join(root, 'src/screens/client/ClientDashboard.js'), 'utf8');
