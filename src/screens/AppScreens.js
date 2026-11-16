@@ -678,11 +678,11 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
       return;
     }
     if (!guidelinesReachedEnd) {
-      Alert.alert('ميثاق صُنّاع', 'لازم تقرأ الميثاق حتى آخره قبل الموافقة.');
+      Alert.alert('ميثاق حمزاوي سات', 'لازم تقرأ الميثاق حتى آخره قبل الموافقة.');
       return;
     }
     if (!guidelinesChecked) {
-      Alert.alert('الموافقة مطلوبة', 'علّم على مربع قرأت وأوافق على ميثاق صُنّاع لإكمال التسجيل.');
+      Alert.alert('الموافقة مطلوبة', 'علّم على مربع قرأت وأوافق على ميثاق حمزاوي سات لإكمال التسجيل.');
       return;
     }
     if (!identityCardUploads.front.fileId || !identityCardUploads.back.fileId ||
@@ -1216,7 +1216,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         token: session?.token,
         body: { accepted: true, version: '2026-10-20-v1' }
       });
-      Alert.alert('تم تسجيل الموافقة', result.message || 'تم تسجيل موافقتك على ميثاق صُنّاع.');
+      Alert.alert('تم تسجيل الموافقة', result.message || 'تم تسجيل موافقتك على ميثاق حمزاوي سات.');
       setReloadKey(value => value + 1);
     } catch (err) {
       Alert.alert('تعذر تسجيل الموافقة', err.message || 'حاول مرة أخرى.');
@@ -1912,7 +1912,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
           <Text style={{ color: '#64748B', fontSize: 10, lineHeight: 18, textAlign: 'right' }}>الصيغ المقبولة: JPG وPNG وWebP — الحد الأقصى 15 ميجابايت لكل صورة.</Text>
         </View>
 
-        <Text style={styles.sectionTitle}>ميثاق صُنّاع – التعامل المهني مع العملاء</Text>
+        <Text style={styles.sectionTitle}>ميثاق حمزاوي سات – التعامل المهني مع العملاء</Text>
         <Text style={styles.detail}>اقرأ الميثاق كاملًا. لن تتمكن من الموافقة أو إرسال طلب التسجيل قبل الوصول إلى نهاية النص.</Text>
         <View style={{ height: 240, borderWidth: 1, borderColor: COLORS.border, borderRadius: 14, overflow: 'hidden', backgroundColor: COLORS.white }}>
           <ScrollView
@@ -1945,7 +1945,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
             <Text style={{ color: COLORS.white, fontWeight: '900' }}>{guidelinesChecked ? '✓' : ''}</Text>
           </View>
           <Text style={[styles.detail, { flex: 1, fontWeight: '800', color: COLORS.text }]}>
-            {guidelinesReachedEnd ? 'قرأت ميثاق صُنّاع كاملًا وأوافق على الالتزام به.' : 'مرّر الميثاق حتى نهايته لتفعيل الموافقة.'}
+            {guidelinesReachedEnd ? 'قرأت ميثاق حمزاوي سات كاملًا وأوافق على الالتزام به.' : 'مرّر الميثاق حتى نهايته لتفعيل الموافقة.'}
           </Text>
         </TouchableOpacity>
       </>}
