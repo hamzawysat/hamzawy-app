@@ -724,3 +724,15 @@ test('APK workflow builds only the requested Modern ARM64 artifact and runs regr
   assert.ok(!workflow.includes('build-lite:'));
   assert.ok(!workflow.includes('armeabi-v7a'));
 });
+
+
+test('native client and technician tabs render as a compact RTL two-row grid without horizontal scrolling', () => {
+  const styles = fs.readFileSync(path.join(root, 'src/theme/styles.js'), 'utf8');
+  const client = fs.readFileSync(path.join(root, 'src/screens/client/ClientDashboard.js'), 'utf8');
+  const tech = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianDashboard.js'), 'utf8');
+  assert.match(styles, /tabRowPremium: \{[^}]*direction: 'rtl'[^}]*flexWrap: 'wrap'/);
+  assert.match(styles, /pillPremium: \{[^}]*flexBasis: '17\.5%'[^}]*minHeight: 42/);
+  assert.ok(client.includes('<View style={styles.tabRowPremium}>'));
+  assert.ok(tech.includes('<View style={styles.tabRowPremium}>'));
+  assert.ok(!tech.includes('<ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 8, gap: 6 }}><View style={styles.tabRowPremium}>'));
+});
