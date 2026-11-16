@@ -1099,7 +1099,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
 
   async function submitTopup() {
     const amount = Number(topup.amount);
-    const phone = String(topup.fromPhone || '').replace(/\\D/g, '');
+    const phone = String(topup.fromPhone || '').replace(/\D/g, '');
     const reference = String(topup.reference || '').trim().slice(0, 50);
     const technicianStatus = String(techData.profile?.status || session?.user?.status || '').trim();
     if (technicianStatus !== 'معتمد') { Alert.alert('الحساب غير معتمد', 'شحن المحفظة متاح بعد اعتماد حسابك من الإدارة.'); return; }
