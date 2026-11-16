@@ -33,7 +33,7 @@ function money(value) {
 export function StoreAdBanner({ role, session, visible = true, onOpenStore }) {
   const [ads, setAds] = useState([]);
   const [index, setIndex] = useState(0);
-  const [rotationSeconds, setRotationSeconds] = useState(10);
+  const [rotationSeconds, setRotationSeconds] = useState(5);
 
   useEffect(() => {
     let active = true;
@@ -47,7 +47,8 @@ export function StoreAdBanner({ role, session, visible = true, onOpenStore }) {
         .sort((a, b) => (Number(b.adPriority) || 0) - (Number(a.adPriority) || 0) ||
           new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
       setAds(eligible);
-      setRotationSeconds(Math.max(3, Math.min(120, Number(result.adRotationSeconds) || 10)));
+      const configuredSeconds = Number(result.adRotationSeconds);
+      setRotationSeconds(Number.isInteger(configuredSeconds) && configuredSeconds >= 5 && configuredSeconds <= 60 ? configuredSeconds : 5);
       setIndex(0);
     }).catch(() => { if (active) setAds([]); });
     return () => { active = false; };
