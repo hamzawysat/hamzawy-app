@@ -1,7 +1,7 @@
-name: Build APK Final
+name: Build Modern and Lite APKs
 on:
   push:
-    branches: [ main, 'feature/sync-web-updates-20261103' ]
+    branches: [ main, 'feature/sync-web-updates-20261103', 'feature/central-api-config-20261116' ]
     paths:
       - 'App.js'
       - 'src/**'
@@ -13,8 +13,10 @@ on:
       - 'android/**'
       - '.github/workflows/build.yml'
   workflow_dispatch:
+
 jobs:
-  build:
+  build-modern:
+    name: Build Modern APK (all supported ABIs)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -48,12 +50,83 @@ jobs:
           PY
       - name: Prebuild Android
         run: npx expo prebuild --platform android --clean
-      - name: Build Release APK
+      - name: Build Modern Release APK
         run: |
           cd android
           chmod +x gradlew
           ./gradlew assembleRelease
+          APK="app/build/outputs/apk/release/app-release.apk"
+          test -s "$APK"
+          echo "Modern APK bytes: $(stat -c%s "$APK")"
+          cp "$APK" ../hamzawy-sat-modern.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: sonaa-apk-final
-          path: android/app/build/outputs/apk/release/app-release.apk
+          name: hamzawy-sat-modern-apk
+          path: hamzawy-sat-modern.apk
+
+  build-lite:
+    name: Build Lite APK (ARMv7 + R8/resource shrinking)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+      - name: Generate app icons and splash from official logo
+        run: |
+          mkdir -p assets
+          python3 -m pip install --quiet Pillow
+          python3 - <<'PY'
+          from PIL import Image
+          from pathlib import Path
+          source = Path("assets/LOGO_UPLOAD_HERE/logo.png")
+          if not source.is_file():
+              raise SystemExit("Official logo missing: assets/LOGO_UPLOAD_HERE/logo.png")
+          logo = Image.open(source).convert("RGBA")
+          if logo.width < 128 or logo.height < 128:
+              raise SystemExit("Official logo image is unexpectedly small")
+          logo = logo.resize((1024, 1024), Image.Resampling.LANCZOS)
+          logo.convert("RGB").save("assets/icon.png", quality=95)
+          logo.save("assets/adaptive-icon.png")
+          logo.save("assets/splash-icon.png")
+          logo.convert("RGB").save("assets/splash.png", quality=95)
+          PY
+      - name: Prebuild Android
+        run: npx expo prebuild --platform android --clean
+      - name: Configure Lite APK
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path("android/gradle.properties")
+          lines = path.read_text().splitlines() if path.exists() else []
+          values = {
+              "android.enableProguardInReleaseBuilds": "true",
+              "android.enableShrinkResourcesInReleaseBuilds": "true",
+              "android.enableBundleCompression": "true",
+              "reactNativeArchitectures": "armeabi-v7a",
+          }
+          for key, value in values.items():
+              lines = [line for line in lines if not line.startswith(key + "=")]
+              lines.append(f"{key}={value}")
+          path.write_text("\n".join(lines) + "\n")
+          PY
+          grep -E 'android.enable(Proguard|ShrinkResources)|android.enableBundleCompression|reactNativeArchitectures' android/gradle.properties
+      - name: Build Lite Release APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease
+          APK="app/build/outputs/apk/release/app-release.apk"
+          test -s "$APK"
+          echo "Lite APK bytes: $(stat -c%s "$APK")"
+          cp "$APK" ../hamzawy-sat-lite-armv7.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hamzawy-sat-lite-armv7-apk
+          path: hamzawy-sat-lite-armv7.apk
