@@ -30,7 +30,7 @@ function isValidConfig(value) {
   if (parsedHost.hostname !== apiHost || parsedHost.username || parsedHost.password || parsedHost.port) return false;
   if (!Number.isInteger(value.apiPort) || value.apiPort < 1 || value.apiPort > 65535) return false;
   const apiPath = normalizePath(value.apiPath, '/api');
-  const mediaPath = normalizePath(value.mediaPath, '/api/media');
+  const mediaPath = normalizePath(value.mediaPath, '/api/store/media');
   if (!apiPath || !mediaPath) return false;
   const origin = 'https://' + apiHost + (value.apiPort === 443 ? '' : ':' + value.apiPort);
   return {
@@ -112,7 +112,7 @@ export async function getApiUrl(path = '') {
 
 export async function getMediaUrl(path = '') {
   const config = await getServerConfig();
-  const base = config.mediaBaseUrl || config.apiBaseUrl + '/media';
+  const base = config.mediaBaseUrl || config.apiBaseUrl + '/store/media';
   const suffix = String(path || '');
   return base + (suffix.startsWith('/') ? suffix : '/' + suffix);
 }
