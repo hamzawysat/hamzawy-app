@@ -44,6 +44,7 @@ export default function ClientWalletScreen({ session, onBalanceChange }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [idempotencyKey, setIdempotencyKey] = useState('');
 
   const load = useCallback(async () => {
     if (!session?.token) return;
@@ -86,13 +87,16 @@ export default function ClientWalletScreen({ session, onBalanceChange }) {
     if (wallet.frozen) return setError('المحفظة مجمدة حاليًا. تواصل مع خدمة العملاء.');
     if (!numbers.length) return setError('أرقام التحويل غير متاحة حاليًا. تواصل مع خدمة العملاء قبل التحويل.');
     setSubmitting(true); setError(''); setSuccess('');
+    const requestId = idempotencyKey || requestKey();
+    setIdempotencyKey(requestId);
     try {
       const result = await api('/client/wallet/topup', {
         method: 'POST',
         token: session.token,
-        body: { fromPhone: phone, amount: value, method, reference: reference.trim().slice(0, 50), idempotencyKey: requestKey() }
+        body: { fromPhone: phone, amount: value, method, reference: reference.trim().slice(0, 50), idempotencyKey: requestId }
       });
       setSuccess(result.message || 'تم إرسال طلب الشحن للمراجعة.');
+      setIdempotencyKey('');
       setFromPhone(''); setAmount(''); setReference('');
       await load();
     } catch (e) { setError(e.message || 'تعذر إرسال طلب الشحن.'); }
