@@ -1828,7 +1828,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
           <Image source={require('../../assets/LOGO_UPLOAD_HERE/logo.png')} style={styles.homeLogoImage} resizeMode="contain" />
         </View>
         <Text style={styles.homeBrandTitlePremium}>حمزاوي سات</Text>
-        <Text style={styles.homeTaglinePremium}>خدمات الدش وكاميرات المراقبة والشاشات</Text>
+        <Text style={styles.homeTaglinePremium}>كُلُّ خِدْمَةٍ تَبْدَأُ بِخُطْوَةٍ</Text>
         <Text style={styles.homeIntroPremium}>تركيب وصيانة وضبط الدش وكاميرات المراقبة والشاشات، بخطوات بسيطة وخدمة موثوقة.</Text>
       </View>
       <View style={styles.roleCardsPremium}>
