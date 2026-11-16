@@ -15,8 +15,11 @@ function StoreImage({ value, style }) {
     let active = true;
     const raw = String(value || '').trim();
     if (!raw) { setResolved(''); return () => { active = false; }; }
-    if (/^https?:\\/\\//i.test(raw)) { setResolved(raw); return () => { active = false; }; }
-    getMediaUrl(raw.replace(/^\\/api\\/store\\/media\\/?/, '').replace(/^\\/+/, '')).then(url => { if (active) setResolved(url); }).catch(() => { if (active) setResolved(''); });
+    if (raw.startsWith('https://') || raw.startsWith('http://')) { setResolved(raw); return () => { active = false; }; }
+    const prefix = '/api/store/media/';
+    let mediaId = raw.startsWith(prefix) ? raw.slice(prefix.length) : raw;
+    while (mediaId.startsWith('/')) mediaId = mediaId.slice(1);
+    getMediaUrl(mediaId).then(url => { if (active) setResolved(url); }).catch(() => { if (active) setResolved(''); });
     return () => { active = false; };
   }, [value]);
   return resolved ? <Image source={{ uri: resolved }} style={style} resizeMode="cover" /> : <View style={[style, { backgroundColor: '#EEF2F7', alignItems: 'center', justifyContent: 'center' }]}><Text style={{ fontSize: 28 }}>📦</Text></View>;
