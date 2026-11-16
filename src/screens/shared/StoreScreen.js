@@ -58,11 +58,10 @@ export function StoreAdBanner({ role, session, visible = true, onOpenStore }) {
   }, [role, session?.token]);
 
   useEffect(() => {
-    setDisplayReady(false);
-    if (!visible || !ads.length) return undefined;
+    if (!visible || !ads.length || displayReady) return undefined;
     const firstDisplay = setTimeout(() => setDisplayReady(true), 9000);
     return () => clearTimeout(firstDisplay);
-  }, [ads.length, visible]);
+  }, [ads.length, visible, displayReady]);
 
   useEffect(() => {
     if (!visible || !displayReady || ads.length < 2) return undefined;
