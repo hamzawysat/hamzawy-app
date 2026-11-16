@@ -6,8 +6,6 @@ on:
     paths:
       - 'App.js'
       - 'src/**'
-      - 'package.json'
-      - 'tests/**'
   pull_request:
     branches: [main]
   workflow_dispatch:
