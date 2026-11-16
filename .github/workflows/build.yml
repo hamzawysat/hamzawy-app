@@ -12,6 +12,18 @@ on:
       - 'package-lock.json'
       - 'android/**'
       - '.github/workflows/build.yml'
+  pull_request:
+    branches: [ 'feature/central-api-config-20261116' ]
+    paths:
+      - 'App.js'
+      - 'src/**'
+      - 'tests/**'
+      - 'app.json'
+      - 'assets/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'android/**'
+      - '.github/workflows/build.yml'
   workflow_dispatch:
 
 concurrency:
