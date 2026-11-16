@@ -4,14 +4,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { styles } from '../../theme/styles';
 import { Button, Field } from '../../components/FormControls';
 import AreaPicker from '../../components/AreaPicker';
-import { StoreAdBanner } from '../shared/StoreScreen';
-export function AccountScreen({ session, clientData, techData, setScreen, beginProfileEdit, setRatingPrompt, getOrderSN, onOpenStore }) {
-const isClientAccount = session?.role === 'client';
+export function AccountScreen({ session, clientData, techData, setScreen, beginProfileEdit, setRatingPrompt, getOrderSN, embedded = false }) {
+    const isClientAccount = session?.role === 'client';
     const history = isClientAccount ? clientData.orders : session?.role === 'fanni' ? techData.offers : [];
     const completedHistory = (history || []).filter(item => ['تم الانتهاء', 'مكتمل', 'مكتملة', 'completed', 'complete', 'finished'].includes(String(item.status || item.orderStatus || '').trim().toLowerCase()));
-    return <SafeAreaView style={styles.safe}><ScrollView contentContainerStyle={styles.page}>
-      <Button title="‹ رجوع" secondary onPress={() => setScreen(session?.role === 'client' ? 'client' : session?.role === 'fanni' ? 'technician' : 'admin')} />
-      {isClientAccount ? <StoreAdBanner role="client" session={session} onOpenStore={onOpenStore} /> : null}
+    const content = <>
+      {!embedded ? <Button title="‹ رجوع" secondary onPress={() => setScreen(session?.role === 'client' ? 'client' : session?.role === 'fanni' ? 'technician' : 'admin')} /> : null}
       <View style={{ width: "100%", direction: "ltr", alignItems: "flex-end" }}><Text style={[styles.title, { width: "100%", textAlign: "right", writingDirection: "rtl", alignSelf: "stretch" }]}>حسابي</Text></View>
       <View style={styles.dataCard}>
         <Text style={styles.sectionTitle}>بيانات الحساب</Text>
@@ -35,7 +33,10 @@ const isClientAccount = session?.role === 'client';
           </View>;
         }) : <Text style={styles.detail}>لا توجد عمليات مكتملة لعرضها حاليًا.</Text>}
       </> : null}
-    </ScrollView></SafeAreaView>;
+    </>;
+    return embedded
+      ? <View style={styles.page}>{content}</View>
+      : <SafeAreaView style={styles.safe}><ScrollView contentContainerStyle={styles.page}>{content}</ScrollView></SafeAreaView>;
 }
 
 export function ProfileEditScreen({ session, techData, categories, areas, profileEditForm, setProfileEditForm, profileEditOpenCategory, setProfileEditOpenCategory, toggleProfileEditSpecialty, saveProfileEdits, setScreen }) {
