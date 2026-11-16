@@ -1,0 +1,55 @@
+name: Publish Android OTA Update
+
+on:
+  push:
+    branches: [ 'fix/technician-home-default-20261116' ]
+    paths:
+      - 'App.js'
+      - 'src/**'
+      - 'app.json'
+      - 'package.json'
+      - 'tests/**'
+      - '.github/workflows/ota-update.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: hamzawy-ota-production
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate app before OTA
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+      - name: Run regression tests
+        run: npm test
+      - name: Verify Android JS bundle
+        run: npx expo export --platform android --output-dir /tmp/hamzawy-ota-export
+
+  publish:
+    name: Publish production OTA
+    needs: validate
+    if: ${{ needs.validate.result == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+      - name: Publish update to production branch
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "::error::GitHub secret EXPO_TOKEN is missing. Add an Expo access token in repository Actions secrets."
+            exit 1
+          fi
+          npx eas-cli update --branch production --message "OTA: ${{ github.event.head_commit.message || 'Manual production update' }}" --non-interactive
