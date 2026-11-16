@@ -302,10 +302,10 @@ test('client and technician chats render price-change requests in the same chron
   assert.ok(app.includes("entry.status==='مرفوض'?'رفض العميل الزيادة؛ السعر السابق ما زال ساريًا.'"));
 });
 
-test('client and technician support buttons keep their positions and use the new premium support color', () => {
-  assert.equal(app.split('onPress={openWhatsAppSupport} style={[styles.floatingButton,styles.whatsappButton]}').length - 1, 2, 'client and technician support buttons should both remain in place');
-  assert.ok(app.includes("whatsappButton: { backgroundColor: COLORS.indigo900, borderColor: COLORS.cyan400, borderWidth: 1.5"), 'support button should use the new indigo/cyan styling');
-  assert.ok(app.includes("floatingWhatsApp: { color: COLORS.white, fontSize: 21"), 'support icon should remain clearly visible');
+test('client and technician dashboards keep the refresh control and remove only the floating support button', () => {
+  assert.equal(app.split('onPress={openWhatsAppSupport} style={[styles.floatingButton,styles.whatsappButton]}').length - 1, 0, 'floating support buttons should be removed');
+  assert.equal(app.split('accessibilityLabel={isRefreshing ? "جاري تحديث البيانات" : "تحديث البيانات"}').length - 1, 2, 'client and technician refresh buttons should remain');
+  assert.ok(app.includes('🎧 الدعم الفني'), 'client and technician support entry points should remain available');
 });
 
 test('technician available orders and offers are deduplicated on initial load and refresh', () => {
