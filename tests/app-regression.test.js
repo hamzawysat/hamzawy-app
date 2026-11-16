@@ -589,7 +589,10 @@ test('native store ads honor role audience, expiry, priority and configured rota
   assert.ok(store.includes('adExpiresAt'));
   assert.ok(store.includes('adPriority'));
   assert.ok(store.includes('adRotationSeconds'));
-  assert.ok(store.includes("visible={clientTab !== 'store'}") || store.includes('visible={tab !== \'store\'}'));
+  const client = fs.readFileSync(path.join(root, 'src/screens/client/ClientDashboard.js'), 'utf8');
+  const tech = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianDashboard.js'), 'utf8');
+  assert.ok(client.includes("visible={clientTab !== 'store'}"));
+  assert.ok(tech.includes("visible={tab !== 'store'}"));
 });
 
 test('technician dashboard includes browser home, store, support, filters, pagination and full wallet tabs', () => {
