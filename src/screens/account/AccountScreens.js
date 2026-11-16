@@ -11,6 +11,7 @@ const isClientAccount = session?.role === 'client';
     return <SafeAreaView style={styles.safe}><ScrollView contentContainerStyle={styles.page}>
       <Button title="‹ رجوع" secondary onPress={() => setScreen(session?.role === 'client' ? 'client' : session?.role === 'fanni' ? 'technician' : 'admin')} />
       <Text style={styles.title}>حسابي</Text>
+      <Text style={styles.detail}>علامة اختبار OTA — إصدار التحديث وصل إلى شاشة الحساب</Text>
       <View style={styles.dataCard}>
         <Text style={styles.sectionTitle}>بيانات الحساب</Text>
         <View style={styles.detailRow}><Text style={styles.detailLabel}>الاسم</Text><Text style={styles.detailValue}>{session?.user?.name || '—'}</Text></View>
