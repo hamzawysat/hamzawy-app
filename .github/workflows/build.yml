@@ -97,7 +97,7 @@ jobs:
           path: hamzawy-sat-modern.apk
 
   build-lite:
-    name: Build Lite APK (ARM64 + R8/resource shrinking)
+    name: Build Lite APK (ARMv7 + R8/resource shrinking)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -151,7 +151,7 @@ jobs:
               "android.enableShrinkResourcesInReleaseBuilds": "true",
               "android.enableBundleCompression": "true",
               "expo.useLegacyPackaging": "true",
-              "reactNativeArchitectures": "arm64-v8a",
+              "reactNativeArchitectures": "armeabi-v7a",
           }
           for key, value in values.items():
               lines = [line for line in lines if not line.startswith(key + "=")]
@@ -167,7 +167,7 @@ jobs:
           if marker not in source:
               raise SystemExit("Could not find Android defaultConfig block")
           if "abiFilters" not in source:
-              source = source.replace(marker, marker + chr(10) + "        ndk {" + chr(10) + "            abiFilters 'arm64-v8a'" + chr(10) + "        }", 1)
+              source = source.replace(marker, marker + chr(10) + "        ndk {" + chr(10) + "            abiFilters 'armeabi-v7a'" + chr(10) + "        }", 1)
           path.write_text(source)
           PY
           grep -n -A4 "defaultConfig {" android/app/build.gradle
@@ -175,15 +175,15 @@ jobs:
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a
+          ./gradlew assembleRelease -PreactNativeArchitectures=armeabi-v7a
           APK="app/build/outputs/apk/release/app-release.apk"
           test -s "$APK"
           echo "Lite APK bytes: $(stat -c%s "$APK")"
           du -h "$APK"
           echo "Lite APK ABIs:"
           unzip -Z1 "$APK" | grep "^lib/" | cut -d/ -f2 | sort -u
-          cp "$APK" ../hamzawy-sat-lite-arm64.apk
+          cp "$APK" ../hamzawy-sat-lite-armv7.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: hamzawy-sat-lite-arm64-apk
-          path: hamzawy-sat-lite-arm64.apk
+          name: hamzawy-sat-lite-armv7-apk
+          path: hamzawy-sat-lite-armv7.apk
