@@ -26,7 +26,7 @@ export function useAppState() {
   const clientServiceDetailYRef = useRef(0);
   const clientFormYRef = useRef(0);
   const [clientData, setClientData] = useState({ orders: [], loading: false, error: '', sn: '', clientToken: '' });
-  const [techData, setTechData] = useState({ profile: null, orders: [], offers: [], wallet: [], loading: false, error: '', tab: 'home' });
+  const [techData, setTechData] = useState({ profile: null, orders: [], offers: [], wallet: [], ordersPagination: null, loading: false, error: '', tab: 'home' });
   const [walletTransferNumbers, setWalletTransferNumbers] = useState({ walletPhone1: '', walletPhone2: '' });
   const [assignedDetails, setAssignedDetails] = useState({});
   const [technicianSearch, setTechnicianSearch] = useState('');
