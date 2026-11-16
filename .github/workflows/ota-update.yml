@@ -52,4 +52,4 @@ jobs:
             echo "::error::GitHub secret EXPO_TOKEN is missing. Add an Expo access token in repository Actions secrets."
             exit 1
           fi
-          npx eas-cli update --branch production --message "OTA: ${{ github.event.head_commit.message || 'Manual production update' }}" --non-interactive
+          npx eas-cli update --platform android --branch production --message "OTA: ${{ github.event.head_commit.message || 'Manual production update' }}" --non-interactive
