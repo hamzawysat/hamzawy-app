@@ -744,6 +744,8 @@ test('technician registration requires both private identity card uploads and se
   const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
   assert.ok(screens.includes("import * as ImagePicker from 'expo-image-picker'")); 
   assert.ok(screens.includes("import * as ImageManipulator from 'expo-image-manipulator'"));
+  assert.ok(screens.includes("import { api, uploadRegistrationIdentity } from '../services/api'"));
+  assert.ok(screens.includes('uploadRegistrationIdentity(side, uploadUri, uploadMime)'));
   assert.ok(screens.includes('identityCardFrontFileId: identityCardUploads.front.fileId'));
   assert.ok(screens.includes('identityCardBackFileId: identityCardUploads.back.fileId'));
   assert.ok(screens.includes('identityCardUploads.front.uploading') && screens.includes('identityCardUploads.back.uploading'));
