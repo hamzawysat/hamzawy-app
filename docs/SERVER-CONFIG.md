@@ -14,7 +14,7 @@ The APK contains only that stable configuration-document URL. It must not contai
 - `apiHost`: backend hostname only, without scheme, port, or path.
 - `apiPort`: public HTTPS port, normally `443`.
 - `apiPath`: API prefix, currently `/api`.
-- `mediaPath`: media endpoint prefix, currently `/api/media`.
+- `mediaPath`: media endpoint prefix, currently `/api/store/media`.
 
 Do not place credentials, tokens, database connection strings, or secrets in this public file.
 
