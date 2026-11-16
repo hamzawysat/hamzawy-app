@@ -86,7 +86,29 @@ export function ClientDashboard({ context }) {
 
     <ScrollView ref={clientScrollRef} contentContainerStyle={[styles.page, { paddingBottom: 110 }]} showsVerticalScrollIndicator={false}>
       <PublicContentBanner />
-      {clientTab === 'home' ? <View style={styles.formCard}><Text style={styles.cardTitlePremium}>أهلاً {session.user?.name || 'بك'} 👋</Text><Text style={styles.detail}>كل خدمات حمزاوي سات في مكان واحد.</Text><View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 }}><View style={{ flexGrow: 1, flexBasis: '45%', padding: 12, borderRadius: 12, backgroundColor: '#F1F5F9' }}><Text style={styles.detail}>إجمالي طلباتي</Text><Text style={styles.cardTitlePremium}>{clientData.orders.length}</Text></View><View style={{ flexGrow: 1, flexBasis: '45%', padding: 12, borderRadius: 12, backgroundColor: '#F1F5F9' }}><Text style={styles.detail}>رصيد محفظتي</Text><Text style={styles.cardTitlePremium}>{walletBalance.toLocaleString('ar-EG')} ج</Text></View></View><Button title="طلب خدمة أو شراء من المتجر" onPress={() => { setClientTab('new'); setClientNewRequestChoice(''); }} /><Button title="فتح المحفظة" secondary onPress={() => setClientTab('wallet')} /><Button title="الاشتراكات" secondary onPress={() => setClientTab('subscriptions')} /><Button title="الدعم الفني" secondary onPress={() => setScreen('support')} /></View> : null}
+      {clientTab === 'home' ? <View style={styles.formCard}>
+        <Text style={styles.cardTitlePremium}>أهلاً {session.user?.name || 'بك'} 👋</Text>
+        <Text style={styles.detail}>كل خدمات حمزاوي سات في مكان واحد.</Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
+          <View style={{ flexGrow: 1, flexBasis: '45%', padding: 12, borderRadius: 12, backgroundColor: '#F1F5F9' }}><Text style={styles.detail}>إجمالي طلباتي</Text><Text style={styles.cardTitlePremium}>{clientData.orders.length}</Text><Button title="عرض الطلبات" secondary onPress={() => setClientTab('current')} /></View>
+          <View style={{ flexGrow: 1, flexBasis: '45%', padding: 12, borderRadius: 12, backgroundColor: '#F1F5F9' }}><Text style={styles.detail}>طلبات جارية</Text><Text style={styles.cardTitlePremium}>{clientData.orders.filter(order => !['تم الانتهاء','منتهي','ملغي','مؤرشف','منتهي - اعتذار'].includes(String(order.status || ''))).length}</Text><Button title="متابعة الجاري" secondary onPress={() => setClientTab('current')} /></View>
+          <View style={{ flexGrow: 1, flexBasis: '45%', padding: 12, borderRadius: 12, backgroundColor: '#F1F5F9' }}><Text style={styles.detail}>طلبات سابقة</Text><Text style={styles.cardTitlePremium}>{clientData.orders.filter(order => ['تم الانتهاء','منتهي','ملغي','مؤرشف','منتهي - اعتذار'].includes(String(order.status || ''))).length}</Text><Button title="عرض السابق" secondary onPress={() => setClientTab('previous')} /></View>
+          <View style={{ flexGrow: 1, flexBasis: '45%', padding: 12, borderRadius: 12, backgroundColor: '#F1F5F9' }}><Text style={styles.detail}>رصيد محفظتي</Text><Text style={styles.cardTitlePremium}>{walletBalance.toLocaleString('ar-EG')} ج</Text><Button title="فتح المحفظة" secondary onPress={() => setClientTab('wallet')} /></View>
+        </View>
+        <View style={{ marginTop: 12, padding: 12, borderRadius: 12, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: COLORS.border }}>
+          <Text style={styles.detailBold}>الإشعارات</Text><Text style={styles.detail}>{Number(notifications?.unread || 0)} إشعار غير مقروء</Text><Button title="فتح الإشعارات" secondary onPress={() => { setNotificationsOpen(true); setReloadKey(value => value + 1); }} />
+        </View>
+        <Text style={[styles.cardTitleSmall, { marginTop: 14 }]}>القائمة الرئيسية</Text>
+        <Text style={styles.detail}>اختار القسم اللي عايز تفتحه.</Text>
+        <Button title="＋ طلب خدمة جديدة" onPress={() => { setClientTab('new'); setClientNewRequestChoice(''); }} />
+        <Button title="📋 طلباتي" secondary onPress={() => setClientTab('current')} />
+        <Button title="🔎 تتبع طلب" secondary onPress={() => setClientTab('track')} />
+        <Button title="💳 محفظتي" secondary onPress={() => setClientTab('wallet')} />
+        <Button title="📄 الاشتراكات" secondary onPress={() => setClientTab('subscriptions')} />
+        <Button title="🛍️ المتجر" secondary onPress={() => setClientTab('store')} />
+        <Button title="⚠️ الشكاوى" secondary onPress={() => setClientTab('complaint')} />
+        <Button title="🎧 الدعم الفني" secondary onPress={() => setScreen('support')} />
+      </View> : null}
       {clientTab === 'new' && !clientNewRequestChoice ? <View style={styles.formCard}><Text style={styles.cardTitlePremium}>طلب جديد</Text><Text style={styles.detail}>تحب تطلب خدمة ولا تشتري منتج من المتجر؟</Text><Button title="🛠️ عايز صنايعي" onPress={() => setClientNewRequestChoice('technician')} /><Button title="🛍️ عايز أشتري من المتجر" secondary onPress={() => setClientTab('store')} /></View> : null}
       {clientTab === 'new' && clientNewRequestChoice === 'technician' ? <><Button title="رجوع لاختيار نوع الطلب" secondary onPress={() => setClientNewRequestChoice('')} /><View style={styles.welcomeCard}><Text style={styles.welcomeTitle}>اطلب خدمتك الآن 🚀</Text><Text style={styles.welcomeSub}>اختار المهنة والخدمة والفني المناسب هيجيلك</Text></View>
       {servicesLoading ? <ActivityIndicator color={COLORS.teal} /> : <>
