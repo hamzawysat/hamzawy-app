@@ -88,7 +88,7 @@ export function TechnicianDashboard({ context }) {
           </View>
         </View>
       </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 8, gap: 6 }}><View style={styles.tabRowPremium}>{tabs.map(item => <TouchableOpacity key={item.key} onPress={() => item.key === 'support' ? setScreen('support') : setTechData(v => ({ ...v, tab: item.key }))} style={[styles.pillPremium, tab === item.key && styles.pillPremiumActive]}><Text style={[styles.pillPremiumText, tab === item.key && styles.pillPremiumTextActive]}>{item.label}</Text></TouchableOpacity>)}</View></ScrollView>
+      <View style={styles.tabRowPremium}>{tabs.map(item => <TouchableOpacity key={item.key} onPress={() => item.key === 'support' ? setScreen('support') : setTechData(v => ({ ...v, tab: item.key }))} style={[styles.pillPremium, tab === item.key && styles.pillPremiumActive]}><Text style={[styles.pillPremiumText, tab === item.key && styles.pillPremiumTextActive]}>{item.label}</Text></TouchableOpacity>)}</View>
       <StoreAdBanner role="fanni" session={session} visible={tab !== 'store'} onOpenStore={() => setTechData(v => ({ ...v, tab: 'store' }))} />
       {offerDraft ? <View style={styles.formCard}>
         <Text style={styles.cardTitlePremium}>تقديم عرض على {offerDraft.order.service || 'الخدمة'} — {offerDraft.order.sn}</Text>
