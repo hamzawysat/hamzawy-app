@@ -1,7 +1,20 @@
-name: Build APK Final
+name: Build Modern ARM64 APK
+# Rebuild trigger for the client-technician parity candidate
 on:
   push:
-    branches: [ main, 'feature/sync-web-updates-20261103' ]
+    branches: [ main, 'feature/sync-web-updates-20261103', 'feature/central-api-config-20261116', 'feature/client-technician-web-parity-20261116' ]
+    paths:
+      - 'App.js'
+      - 'src/**'
+      - 'tests/**'
+      - 'app.json'
+      - 'assets/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'android/**'
+      - '.github/workflows/build.yml'
+  pull_request:
+    branches: [ 'feature/central-api-config-20261116' ]
     paths:
       - 'App.js'
       - 'src/**'
@@ -13,8 +26,14 @@ on:
       - 'android/**'
       - '.github/workflows/build.yml'
   workflow_dispatch:
+
+concurrency:
+  group: hamzawy-apk-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build:
+  build-modern:
+    name: Build Modern APK (ARM64, matching current release architecture)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -27,6 +46,8 @@ jobs:
           java-version: '17'
       - name: Install dependencies
         run: npm install --legacy-peer-deps
+      - name: Run regression tests
+        run: npm test
       - name: Generate app icons and splash from official logo
         run: |
           mkdir -p assets
@@ -41,19 +62,52 @@ jobs:
           if logo.width < 128 or logo.height < 128:
               raise SystemExit("Official logo image is unexpectedly small")
           logo = logo.resize((1024, 1024), Image.Resampling.LANCZOS)
-          logo.convert("RGB").save("assets/icon.png", quality=95)
-          logo.save("assets/adaptive-icon.png")
-          logo.save("assets/splash-icon.png")
-          logo.convert("RGB").save("assets/splash.png", quality=95)
+          # Keep the official mark intact, but give it breathing room inside launcher masks.
+          logo.thumbnail((860, 860), Image.Resampling.LANCZOS)
+          x = (1024 - logo.width) // 2
+          y = (1024 - logo.height) // 2
+          legacy = Image.new("RGBA", (1024, 1024), "#F4F8FC")
+          legacy.alpha_composite(logo, (x, y))
+          legacy.convert("RGB").save("assets/icon.png", quality=95)
+          foreground = Image.new("RGBA", (1024, 1024), (0, 0, 0, 0))
+          foreground.alpha_composite(logo, (x, y))
+          foreground.save("assets/adaptive-icon.png")
+          # Splash assets retain the original full-size official artwork.
+          Image.open(source).convert("RGBA").save("assets/splash-icon.png")
+          Image.open(source).convert("RGB").save("assets/splash.png", quality=95)
           PY
       - name: Prebuild Android
         run: npx expo prebuild --platform android --clean
-      - name: Build Release APK
+      - name: Configure Modern APK
+        run: |
+          printf '\nexpo.useLegacyPackaging=true\nreactNativeArchitectures=arm64-v8a\n' >> android/gradle.properties
+          grep -E '^(expo.useLegacyPackaging|reactNativeArchitectures)=' android/gradle.properties
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path("android/app/build.gradle")
+          source = path.read_text()
+          marker = "defaultConfig {"
+          if marker not in source:
+              raise SystemExit("Could not find Android defaultConfig block")
+          if "abiFilters" not in source:
+              source = source.replace(marker, marker + chr(10) + "        ndk {" + chr(10) + "            abiFilters 'arm64-v8a'" + chr(10) + "        }", 1)
+          path.write_text(source)
+          PY
+          grep -n -A4 "defaultConfig {" android/app/build.gradle
+      - name: Build Modern Release APK
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleRelease
+          ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a
+          APK="app/build/outputs/apk/release/app-release.apk"
+          test -s "$APK"
+          echo "Modern APK bytes: $(stat -c%s "$APK")"
+          du -h "$APK"
+          echo "Modern APK ABIs:"
+          unzip -Z1 "$APK" | grep "^lib/" | cut -d/ -f2 | sort -u
+          cp "$APK" ../hamzawy-sat-modern.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: sonaa-apk-final
-          path: android/app/build/outputs/apk/release/app-release.apk
+          name: hamzawy-sat-modern-apk
+          path: hamzawy-sat-modern.apk
+

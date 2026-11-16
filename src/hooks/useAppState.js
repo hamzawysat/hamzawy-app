@@ -26,7 +26,7 @@ export function useAppState() {
   const clientServiceDetailYRef = useRef(0);
   const clientFormYRef = useRef(0);
   const [clientData, setClientData] = useState({ orders: [], loading: false, error: '', sn: '', clientToken: '' });
-  const [techData, setTechData] = useState({ profile: null, orders: [], offers: [], wallet: [], loading: false, error: '', tab: 'available' });
+  const [techData, setTechData] = useState({ profile: null, orders: [], offers: [], wallet: [], ordersPagination: null, loading: false, error: '', tab: 'home' });
   const [walletTransferNumbers, setWalletTransferNumbers] = useState({ walletPhone1: '', walletPhone2: '' });
   const [assignedDetails, setAssignedDetails] = useState({});
   const [technicianSearch, setTechnicianSearch] = useState('');
@@ -36,7 +36,7 @@ export function useAppState() {
   const [guidelinesViewportHeight, setGuidelinesViewportHeight] = useState(0);
   const [adminData, setAdminData] = useState({ orders: [], fannis: [], clients: [], topups: [], complaints: [], loading: false, error: '', tab: 'orders' });
   const [topup, setTopup] = useState({ amount: '', fromPhone: '', reference: '', method: 'vodafone_cash' });
-  const [clientTab, setClientTab] = useState('new');
+  const [clientTab, setClientTab] = useState('home');
   const [clientServiceSearch, setClientServiceSearch] = useState('');
   const [servicePickerOpen, setServicePickerOpen] = useState(false);
   const [subservicePickerOpen, setSubservicePickerOpen] = useState(false);

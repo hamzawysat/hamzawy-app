@@ -13,8 +13,42 @@ function collectJavaScript(directory) {
 const app = fs.readFileSync(path.join(root, 'App.js'), 'utf8') + '\n' + collectJavaScript(path.join(root, 'src'));
 const packageJson = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 
-test('app points to the production Sonaa API', () => {
-  assert.match(app, /const API_BASE = 'https:\/\/sonaa-backend-v2\.vercel\.app\/api';/);
+test('all project JavaScript and JSX files parse successfully', () => {
+  const parser = require('@babel/parser');
+  const files = [
+    path.join(root, 'App.js'),
+    path.join(root, 'babel.config.js'),
+    ...['src', 'tests'].flatMap(directory => {
+      const collect = current => fs.readdirSync(current, { withFileTypes: true }).flatMap(entry => {
+        const fullPath = path.join(current, entry.name);
+        return entry.isDirectory() ? collect(fullPath) : /\.js$/.test(entry.name) ? [fullPath] : [];
+      });
+      return collect(path.join(root, directory));
+    })
+  ];
+  const failures = [];
+  for (const file of files) {
+    try {
+      parser.parse(fs.readFileSync(file, 'utf8'), { sourceType: 'unambiguous', plugins: ['jsx'] });
+    } catch (error) {
+      failures.push(path.relative(root, file) + ': ' + error.message);
+    }
+  }
+  assert.deepEqual(failures, [], 'JavaScript/JSX syntax errors detected');
+});
+
+test('app resolves its API from the stable GitHub Pages configuration and has no embedded backend host', () => {
+  const apiSource = fs.readFileSync(path.join(root, 'src/services/api.js'), 'utf8');
+  assert.match(apiSource, /https:\/\/hamzawysat\.github\.io\/hamzawy-download\/server-config\.json/);
+  assert.match(apiSource, /SecureStore\.getItemAsync/);
+  assert.match(apiSource, /SecureStore\.setItemAsync/);
+  assert.match(apiSource, /value\.schemaVersion !== 1/);
+  assert.match(apiSource, /getApiUrl/);
+  assert.match(apiSource, /apiHost/);
+  assert.match(apiSource, /apiPort/);
+  assert.ok(apiSource.includes("'/api/store/media'"));
+  assert.equal(app.includes('API_BASE'), false);
+  assert.doesNotMatch(app, /(?:sonaa-backend-v2|hamzawy-sat)\.(?:vercel\.app|dynv6\.net)/);
 });
 
 test('rating dismissal uses versioned encrypted storage and keeps migration keys', () => {
@@ -272,14 +306,13 @@ test('technician available orders and offers are deduplicated on initial load an
 });
 
 test('wallet transfer notice is limited to technician wallet and explains accepted transfer routes', () => {
-  const walletStart = app.indexOf("{tab === 'wallet' && <ScrollView");
-  const walletEnd = app.indexOf("</ScrollView>}", walletStart);
-  assert.notEqual(walletStart, -1);
-  const walletBody = app.slice(walletStart, walletEnd);
-  assert.ok(walletBody.includes('تنويه بخصوص التحويلات'));
-  assert.ok(walletBody.includes('من محفظة إلكترونية إلى محفظة إلكترونية'));
-  assert.ok(walletBody.includes('من إنستا باي إلى محفظة إلكترونية فقط'));
-  assert.ok(walletBody.includes('لا نقبل التحويل من إنستا باي إلى إنستا باي'));
+  const technicianWallet = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianWalletScreen.js'), 'utf8');
+  const clientWallet = fs.readFileSync(path.join(root, 'src/screens/client/ClientWalletScreen.js'), 'utf8');
+  assert.ok(technicianWallet.includes('تنويه بخصوص التحويلات'));
+  assert.ok(technicianWallet.includes('من محفظة إلكترونية إلى محفظة إلكترونية'));
+  assert.ok(technicianWallet.includes('من إنستا باي إلى محفظة إلكترونية فقط'));
+  assert.ok(technicianWallet.includes('لا نقبل التحويل من إنستا باي إلى إنستا باي'));
+  assert.ok(!clientWallet.includes('تنويه بخصوص التحويلات'), 'transfer notice should remain limited to technician wallet');
   assert.ok(app.includes('walletNotice:'));
 });
 
@@ -311,7 +344,7 @@ test('mobile client can record, preview, delete, and submit voice order descript
 });
 test('technician can play voice descriptions in available and accepted jobs through authenticated backend endpoint', () => {
   assert.equal(app.split('function VoicePlayback({ orderSN, token, hasVoiceRecording })').length - 1, 1);
-  assert.ok(app.includes("API_BASE + '/orders/' + encodeURIComponent(String(orderSN)) + '/voice'"));
+  assert.ok(app.includes("getApiUrl('/orders/' + encodeURIComponent(String(orderSN)) + '/voice')"));
   assert.ok(app.includes("headers: { Authorization: 'Bearer ' + token }"));
   assert.ok(app.includes('<VoicePlayback orderSN={sn} token={session?.token} hasVoiceRecording={Boolean(item.hasVoiceRecording)} />'));
   assert.ok(app.includes('assignedDetails[sn].order.hasVoiceRecording || item.hasVoiceRecording'));
@@ -356,7 +389,7 @@ test('technician profile edit loads shared service categories before rendering s
 test('modular screen files are connected and app assets resolve from their new locations', () => {
   const screen = fs.readFileSync(path.join(root, 'src/screens/AppScreens.js'), 'utf8');
   const appEntry = fs.readFileSync(path.join(root, 'App.js'), 'utf8');
-  assert.match(screen, /import \{ API_BASE, api \} from '\.\.\/services\/api';/);
+  assert.match(screen, /import \{ api \} from '\.\.\/services\/api';/);
   assert.match(screen, /from '\.\/auth\/AuthScreens'/);
   assert.match(screen, /from '\.\/account\/AccountScreens'/);
   assert.ok(!screen.includes('require("./assets/'), 'screen assets must use the path relative to src/screens');
@@ -539,7 +572,145 @@ test('client area selection hides the search field, reveals the detailed address
   assert.ok(screens.includes('areaTechnicianCounts, setAreaTechnicianCounts,'));
 });
 
-test('technician dashboard opens on the opportunities tab by default', () => {
+test('client and technician dashboards open on their browser-equivalent home views', () => {
   const state = fs.readFileSync(path.join(root, 'src/hooks/useAppState.js'), 'utf8');
-  assert.match(state, /tab: 'available'/);
+  assert.match(state, /const \[clientTab, setClientTab\] = useState\('home'\)/);
+  assert.match(state, /tab: 'home'/);
+  assert.match(state, /useState\('home'\)/);
+});
+
+
+
+test('client dashboard includes browser service/store chooser, store, wallet, subscriptions, support and complaint tracking', () => {
+  const client = fs.readFileSync(path.join(root, 'src/screens/client/ClientDashboard.js'), 'utf8');
+  const store = fs.readFileSync(path.join(root, 'src/screens/shared/StoreScreen.js'), 'utf8');
+  const wallet = fs.readFileSync(path.join(root, 'src/screens/client/ClientWalletScreen.js'), 'utf8');
+  const subscriptions = fs.readFileSync(path.join(root, 'src/screens/client/ClientSubscriptionsScreen.js'), 'utf8');
+  assert.ok(client.includes("clientNewRequestChoice === 'technician'"));
+  assert.ok(client.includes("setClientTab('store')"));
+  assert.ok(client.includes("clientTab === 'store'"));
+  assert.ok(client.includes("clientTab === 'wallet'"));
+  assert.ok(client.includes("clientTab === 'subscriptions'"));
+  assert.ok(client.includes('trackClientComplaints'));
+  assert.ok(client.includes('payForClientOrder'));
+  assert.ok(client.includes('openTrackedOrderDetails'));
+  assert.ok(client.includes('notifications?.unread'));
+  assert.ok(client.includes('طلبات سابقة'));
+  assert.ok(store.includes("api('/store/products')"));
+  assert.ok(store.includes("'/store/' + role + '/orders'"));
+  assert.ok(store.includes('idempotencyKey'));
+  assert.ok(wallet.includes("api('/client/wallet'"));
+  assert.ok(wallet.includes("'/client/wallet/topup'"));
+  assert.ok(wallet.includes('topupRequests'));
+  assert.ok(wallet.includes('transactions'));
+  assert.ok(subscriptions.includes("'/client/commerce/catalog'"));
+  assert.ok(subscriptions.includes("'/client/commerce/subscriptions/purchase'"));
+  assert.ok(subscriptions.includes("'/client/commerce/subscriptions/'"));
+});
+
+test('native store ads honor role audience, expiry, priority and configured rotation interval', () => {
+  const store = fs.readFileSync(path.join(root, 'src/screens/shared/StoreScreen.js'), 'utf8');
+  assert.ok(store.includes('isAdvertised === true'));
+  assert.ok(store.includes('adAudience'));
+  assert.ok(store.includes('adExpiresAt'));
+  assert.ok(store.includes('adPriority'));
+  assert.ok(store.includes('adRotationSeconds'));
+  assert.ok(store.includes('Number(item.stock) > 0'));
+  assert.ok(store.includes('9000'));
+  const client = fs.readFileSync(path.join(root, 'src/screens/client/ClientDashboard.js'), 'utf8');
+  const tech = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianDashboard.js'), 'utf8');
+  assert.ok(client.includes("visible={clientTab !== 'store'}"));
+  assert.ok(tech.includes("visible={tab !== 'store'}"));
+});
+
+test('technician dashboard includes browser home, store, support, filters, pagination and full wallet tabs', () => {
+  const tech = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianDashboard.js'), 'utf8');
+  const wallet = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianWalletScreen.js'), 'utf8');
+  const store = fs.readFileSync(path.join(root, 'src/screens/shared/StoreScreen.js'), 'utf8');
+  assert.ok(tech.includes("key: 'home'"));
+  assert.ok(tech.includes("key: 'store'"));
+  assert.ok(tech.includes("key: 'support'"));
+  assert.ok(tech.includes('filteredAvailableOrders'));
+  assert.ok(tech.includes('technicianServiceFilter'));
+  assert.ok(tech.includes('loadMoreAvailable'));
+  assert.ok(tech.includes('<StoreScreen role="fanni"'));
+  assert.ok(tech.includes('<TechnicianWalletScreen'));
+  assert.ok(wallet.includes("api('/fanni/wallet/history'"));
+  assert.ok(wallet.includes("id: 'requests'"));
+  assert.ok(wallet.includes("id: 'transactions'"));
+  assert.ok(store.includes("'/store/' + role + '/orders'"));
+});
+
+
+test('technician home shows browser-equivalent approval guidance and blocks offers and wallet top-ups until approved', () => {
+  const tech = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianDashboard.js'), 'utf8');
+  const wallet = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianWalletScreen.js'), 'utf8');
+  assert.ok(tech.includes("const isApproved = String(user.status || '').trim() === 'معتمد'"));
+  assert.ok(tech.includes('if (!isApproved) return <Button title="تقديم العروض بعد اعتماد الحساب"'));
+  assert.ok(tech.includes('إرسال العروض وشحن المحفظة متاحان بعد اعتماد الإدارة'));
+  assert.ok(wallet.includes("disabled={submitting || String(user?.status || '').trim() !== 'معتمد'}"));
+});
+
+test('native client dashboard displays public maintenance notices, announcements and FAQs', () => {
+  const banner = fs.readFileSync(path.join(root, 'src/screens/shared/PublicContentBanner.js'), 'utf8');
+  const client = fs.readFileSync(path.join(root, 'src/screens/client/ClientDashboard.js'), 'utf8');
+  assert.ok(client.includes('<PublicContentBanner />'));
+  assert.ok(banner.includes("api('/content')"));
+  assert.ok(banner.includes('maintenanceMessage'));
+  assert.ok(banner.includes('announcement'));
+  assert.ok(banner.includes('faqs'));
+});
+
+
+test('client wallet top-ups keep an idempotency key across retries and refresh the wallet balance', () => {
+  const wallet = fs.readFileSync(path.join(root, 'src/screens/client/ClientWalletScreen.js'), 'utf8');
+  const client = fs.readFileSync(path.join(root, 'src/screens/client/ClientDashboard.js'), 'utf8');
+  assert.ok(wallet.includes('const requestId = idempotencyKey || requestKey()'));
+  assert.ok(wallet.includes('idempotencyKey: requestId'));
+  assert.ok(wallet.includes("api('/client/wallet/topup'"));
+  assert.ok(client.includes("api('/client/wallet'"));
+});
+
+test('technician wallet top-ups follow browser approval, amount and phone validation', () => {
+  const screens = fs.readFileSync(path.join(root, 'src/screens/AppScreens.js'), 'utf8');
+  const wallet = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianWalletScreen.js'), 'utf8');
+  assert.ok(screens.includes("technicianStatus !== 'معتمد'"));
+  assert.ok(screens.includes('amount > 10000'));
+  assert.ok(screens.includes('/^01[0125][0-9]{8}$/'));
+  assert.ok(screens.includes('referenceCode: reference'));
+  assert.ok(wallet.includes("disabled={submitting || String(user?.status || '').trim() !== 'معتمد'}"));
+});
+
+test('native API preserves structured store purchase errors and resolves media URLs through central configuration', () => {
+  const api = fs.readFileSync(path.join(root, 'src/services/api.js'), 'utf8');
+  assert.ok(api.includes('error.canUseCashOnDelivery = data?.canUseCashOnDelivery === true'));
+  assert.ok(api.includes('export async function getMediaUrl'), 'getMediaUrl should be exported');
+  assert.ok(api.includes('export { api }'));
+  assert.ok(api.includes('config.mediaBaseUrl'));
+});
+
+test('central API config validates HTTPS URLs and preserves a last-known-good configuration', () => {
+  const source = fs.readFileSync(path.join(root, 'src/services/api.js'), 'utf8');
+  assert.match(source, /CONFIG_CACHE_KEY/);
+  assert.match(source, /isValidConfig/);
+  assert.match(source, /last-known-good|last known good/i);
+  assert.match(source, /value\.apiProtocol !== 'https'/);
+  assert.match(source, /configVersion/);
+});
+
+test('app config does not embed a backend URL in Expo metadata', () => {
+  const config = JSON.parse(fs.readFileSync(path.join(root, 'app.json'), 'utf8'));
+  assert.equal(config.expo.extra.apiUrl, undefined);
+  assert.equal(config.expo.android.minSdkVersion, 23);
+});
+
+test('APK workflow builds only the requested Modern ARM64 artifact and runs regression tests first', () => {
+  const workflow = fs.readFileSync(path.join(root, '.github/workflows/build.yml'), 'utf8');
+  assert.equal((workflow.match(/logo\.thumbnail\(\(860, 860\)/g) || []).length, 1);
+  assert.ok(workflow.includes('run: npm test'));
+  assert.ok(workflow.includes('build-modern:'));
+  assert.ok(workflow.includes('reactNativeArchitectures=arm64-v8a'));
+  assert.ok(workflow.includes('path: hamzawy-sat-modern.apk'));
+  assert.ok(!workflow.includes('build-lite:'));
+  assert.ok(!workflow.includes('armeabi-v7a'));
 });

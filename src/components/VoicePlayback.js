@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Text, TouchableOpacity, Alert } from 'react-native';
 import { Audio } from 'expo-av';
-import { API_BASE } from '../services/api';
+import { getApiUrl } from '../services/api';
 import { styles } from '../theme/styles';
 function VoicePlayback({ orderSN, token, hasVoiceRecording }) {
   const [sound, setSound] = useState(null);
@@ -13,7 +13,7 @@ function VoicePlayback({ orderSN, token, hasVoiceRecording }) {
     if (playing && sound) { try { await sound.stopAsync(); await sound.unloadAsync(); } catch (_) {} setSound(null); setPlaying(false); return; }
     try {
       setLoading(true); await Audio.setAudioModeAsync({ allowsRecordingIOS: false, playsInSilentModeIOS: true });
-      const uri = API_BASE + '/orders/' + encodeURIComponent(String(orderSN)) + '/voice';
+      const uri = await getApiUrl('/orders/' + encodeURIComponent(String(orderSN)) + '/voice');
       const created = await Audio.Sound.createAsync({ uri, headers: { Authorization: 'Bearer ' + token } }, { shouldPlay: true });
       setSound(created.sound); setPlaying(true);
       created.sound.setOnPlaybackStatusUpdate(status => { if (status.didJustFinish) { created.sound.unloadAsync().catch(() => {}); setSound(null); setPlaying(false); } });

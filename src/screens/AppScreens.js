@@ -9,7 +9,7 @@ import * as Clipboard from 'expo-clipboard';
 import * as SecureStore from 'expo-secure-store';
 import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system';
-import { API_BASE, api } from '../services/api';
+import { api } from '../services/api';
 import { COLORS } from '../theme/colors';
 import { styles } from '../theme/styles';
 import { getOrderChatTimeline, toList, dateLabel, getServiceEmoji } from '../utils/app-helpers';
@@ -27,6 +27,15 @@ import { TechnicianDashboard } from './technician/TechnicianDashboard';
 import { useAppState } from '../hooks/useAppState';
 import { useScreenNavigation } from '../hooks/useScreenNavigation';
 import { usePushNotifications } from '../hooks/usePushNotifications';
+
+function normalizePhoneDigits(value) {
+  const arabic = '٠١٢٣٤٥٦٧٨٩';
+  const persian = '۰۱۲۳۴۵۶۷۸۹';
+  return String(value || '').replace(/[٠-٩۰-۹]/g, digit => {
+    const index = arabic.indexOf(digit);
+    return String(index >= 0 ? index : persian.indexOf(digit));
+  }).replace(/\D/g, '');
+}
 
 function AppScreens({ onScreenChange, onAuthRestoringChange }) {
   const { screen, setScreenState, screenHistoryRef, screenRef, setScreen } = useScreenNavigation();
@@ -161,6 +170,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         }
         if (!mounted) return;
         setSession(saved);
+        if (saved.role === 'client') setClientTab('home');
         const target = saved.role === 'client' ? 'client' : 'technician';
         screenRef.current = target;
         setScreenState(target);
@@ -184,8 +194,12 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         setNotificationsOpen(false);
         return true;
       }
+      // داخل لوحة العميل، الرجوع يعيد إلى الرئيسية قبل مغادرة اللوحة.
+      if (screen === 'client' && clientTab !== 'home') {
+        setClientTab('home');
+        return true;
+      }
       let previous = screenHistoryRef.current.pop();
-      if (screen === 'home') return false;
       while (previous && ['home', 'login', 'clientRegister', 'technicianRegister'].includes(previous) && session) {
         previous = screenHistoryRef.current.pop();
       }
@@ -194,21 +208,25 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         setScreenState(previous);
         return true;
       }
-      if (session) {
-        logout();
+      const rootScreen = session
+        ? (session.role === 'client' ? 'client' : session.role === 'admin' ? 'admin' : 'technician')
+        : 'home';
+      if (screen !== rootScreen) {
+        screenHistoryRef.current = [];
+        screenRef.current = rootScreen;
+        setScreenState(rootScreen);
+        if (rootScreen === 'client') setClientTab('home');
         return true;
       }
-      if (screen !== 'home') {
-        screenRef.current = 'home';
-        setScreenState('home');
-        return true;
-      }
-      Alert.alert('صُنّاع', 'أنت بالفعل في الصفحة الرئيسية.');
+      Alert.alert('الخروج من التطبيق؟', 'هل تريد الخروج من تطبيق حمزاوي سات؟', [
+        { text: 'إلغاء', style: 'cancel' },
+        { text: 'خروج', style: 'destructive', onPress: () => BackHandler.exitApp() },
+      ]);
       return true;
     };
     const subscription = BackHandler.addEventListener('hardwareBackPress', onHardwareBack);
     return () => subscription.remove();
-  }, [screen, offerDraft, notificationsOpen, session]);
+  }, [screen, offerDraft, notificationsOpen, session, clientTab, setClientTab]);
 
   useEffect(() => {
     if (!['client', 'technician', 'admin', 'clientRegister', 'technicianRegister', 'profileEdit'].includes(screen)) return;
@@ -350,6 +368,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         profile: results[0].status === 'fulfilled' ? (results[0].value.user || results[0].value) : session.user,
         orders: results[1].status === 'fulfilled' ? uniqueByOrderSN(toList(results[1].value, ['orders'])) : [],
         offers: results[2].status === 'fulfilled' ? uniqueByOrderSN(toList(results[2].value, ['offers'])) : [],
+        ordersPagination: results[1].status === 'fulfilled' ? (results[1].value.pagination || null) : current.ordersPagination,
         wallet: results[3].status === 'fulfilled' ? toList(results[3].value, ['history', 'transactions', 'requests']) : [],
         loading: false,
         error: failed ? failed.reason?.message || 'تعذر تحميل بعض بيانات الفني' : '',
@@ -530,7 +549,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         await SecureStore.setItemAsync('sonaa.auth.session.v1', JSON.stringify(nextSession));
       }
       setSession(nextSession);
-      if (role === 'client') setClientTab('new');
+      if (role === 'client') setClientTab('home');
       if (role === 'fanni') setTechData(current => ({ ...current, tab: 'offers' }));
       setPassword('');
       setScreen(role === 'admin' ? 'admin' : role === 'client' ? 'client' : 'technician');
@@ -548,7 +567,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
       const nextSession = { token: result.token, user: result.client, role: 'client' };
       await SecureStore.setItemAsync('sonaa.auth.session.v1', JSON.stringify(nextSession));
       setSession(nextSession);
-      setClientTab('new');
+      setClientTab('home');
       setScreen('client');
     } catch (err) { Alert.alert('تعذر إنشاء الحساب', err.message || 'راجع البيانات وحاول مرة أخرى.'); }
     finally { setLoginLoading(false); }
@@ -774,7 +793,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
   useEffect(() => {
     if (!session || screen !== 'technician' || session.role !== 'fanni') return;
     let active = true, busy = false;
-    const refreshTechnicianData = async () => { if (busy) return; busy = true; try { const results = await Promise.allSettled([api('/orders/available', { token: session.token }), api('/orders/my-offers', { token: session.token }), api('/fanni/wallet/history', { token: session.token })]); if (active) setTechData(current => ({ ...current, orders: results[0].status === 'fulfilled' ? uniqueByOrderSN(toList(results[0].value, ['orders'])) : current.orders, offers: results[1].status === 'fulfilled' ? uniqueByOrderSN(toList(results[1].value, ['offers'])) : current.offers, wallet: results[2].status === 'fulfilled' ? toList(results[2].value, ['history', 'transactions', 'requests']) : current.wallet })); } catch {} finally { busy = false; } };
+    const refreshTechnicianData = async () => { if (busy) return; busy = true; try { const results = await Promise.allSettled([api('/orders/available', { token: session.token }), api('/orders/my-offers', { token: session.token }), api('/fanni/wallet/history', { token: session.token })]); if (active) setTechData(current => ({ ...current, orders: results[0].status === 'fulfilled' ? uniqueByOrderSN(toList(results[0].value, ['orders'])) : current.orders, offers: results[1].status === 'fulfilled' ? uniqueByOrderSN(toList(results[1].value, ['offers'])) : current.offers, ordersPagination: results[0].status === 'fulfilled' ? (results[0].value.pagination || current.ordersPagination) : current.ordersPagination, wallet: results[2].status === 'fulfilled' ? toList(results[2].value, ['history', 'transactions', 'requests']) : current.wallet })); } catch {} finally { busy = false; } };
     const timer = setInterval(refreshTechnicianData, 5000);
     return () => { active = false; clearInterval(timer); };
   }, [session, screen]);
@@ -1098,9 +1117,13 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
 
   async function submitTopup() {
     const amount = Number(topup.amount);
-    if (!Number.isInteger(amount) || amount < 10 || !topup.fromPhone.trim() || !topup.method) { Alert.alert('بيانات غير صحيحة', 'اكتب مبلغًا صحيحًا ورقم المحوّل واختار المحفظة التي حولت منها.'); return; }
+    const phone = normalizePhoneDigits(topup.fromPhone);
+    const reference = String(topup.reference || '').trim().slice(0, 50);
+    const technicianStatus = String(techData.profile?.status || session?.user?.status || '').trim();
+    if (technicianStatus !== 'معتمد') { Alert.alert('الحساب غير معتمد', 'شحن المحفظة متاح بعد اعتماد حسابك من الإدارة.'); return; }
+    if (!Number.isInteger(amount) || amount < 10 || amount > 10000 || !/^01[0125][0-9]{8}$/.test(phone) || !topup.method || String(topup.reference || '').trim().length > 50) { Alert.alert('بيانات غير صحيحة', 'اكتب مبلغًا من 10 إلى 10000 جنيه ورقم محوّل صحيحًا واختار نوع المحفظة.'); return; }
     try {
-      const result = await api('/fanni/wallet/topup', { method: 'POST', token: session.token, body: { amount, fromPhone: topup.fromPhone.trim(), reference: topup.reference.trim(), method: topup.method } });
+      const result = await api('/fanni/wallet/topup', { method: 'POST', token: session.token, body: { amount, fromPhone: phone, phone, reference, referenceCode: reference, method: topup.method, note: ('تحويل من ' + phone + ' بقيمة ' + amount + ' - كود: ' + (reference || 'بدون')).slice(0, 200) } });
       Alert.alert('تم إرسال طلب الشحن', result.message || 'طلبك قيد مراجعة الإدارة.');
       setTopup({ amount: '', fromPhone: '', reference: '', method: 'vodafone_cash' });
       setReloadKey(value => value + 1);
@@ -1308,7 +1331,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
   async function saveProfileEdits() {
     if (!session || profileEditForm.loading) return;
     const phone = String(profileEditForm.phone || '').replace(/[^0-9]/g, '');
-    if (!/^01[0-9]{9}$/.test(phone)) { setProfileEditForm(current => ({ ...current, error: 'رقم الهاتف لازم يكون 11 رقمًا ويبدأ بـ 01.' })); return; }
+    if (!/^01[0125][0-9]{8}$/.test(phone)) { setProfileEditForm(current => ({ ...current, error: 'رقم الهاتف لازم يكون 11 رقمًا ويبدأ بـ 01.' })); return; }
     if (session.role === 'client') {
       const name = String(profileEditForm.name || '').trim();
       if (name.length < 2 || name.length > 50) { setProfileEditForm(current => ({ ...current, error: 'اكتب الاسم بشكل صحيح (من حرفين إلى 50 حرفًا).' })); return; }
@@ -1348,7 +1371,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
 
   async function startPasswordRecovery() {
     const phone = recoveryForm.phone.replace(/[^0-9]/g, '');
-    if (!/^01[0-9]{9}$/.test(phone)) { setRecoveryForm(v => ({ ...v, error: 'اكتب رقم الهاتف المسجل بالحساب بشكل صحيح.' })); return; }
+    if (!/^01[0125][0-9]{8}$/.test(phone)) { setRecoveryForm(v => ({ ...v, error: 'اكتب رقم الهاتف المسجل بالحساب بشكل صحيح.' })); return; }
     setRecoveryForm(v => ({ ...v, loading: true, error: '', info: '' }));
     try {
       const result = await api('/password-recovery/request', { method: 'POST', body: { role: recoveryForm.role, phone } });
@@ -1586,7 +1609,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
   async function adminSaveProfileEdit() {
     if (!adminProfileEdit.id || adminProfileEdit.loading) return;
     const phone = String(adminProfileEdit.phone || '').replace(/[^0-9]/g, '');
-    if (!/^01[0-9]{9}$/.test(phone)) { setAdminProfileEdit(current => ({ ...current, error: 'رقم الهاتف لازم يكون 11 رقمًا ويبدأ بـ 01.' })); return; }
+    if (!/^01[0125][0-9]{8}$/.test(phone)) { setAdminProfileEdit(current => ({ ...current, error: 'رقم الهاتف لازم يكون 11 رقمًا ويبدأ بـ 01.' })); return; }
     setAdminProfileEdit(current => ({ ...current, loading: true, error: '', message: '' }));
     try {
       let result;
@@ -1804,21 +1827,21 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         <View style={styles.homeLogoCirclePremium}>
           <Image source={require('../../assets/LOGO_UPLOAD_HERE/logo.png')} style={styles.homeLogoImage} resizeMode="contain" />
         </View>
-        <Text style={styles.homeBrandTitlePremium}>صُنّاع</Text>
+        <Text style={styles.homeBrandTitlePremium}>حمزاوي سات</Text>
         <Text style={styles.homeTaglinePremium}>كُلُّ خِدْمَةٍ تَبْدَأُ بِخُطْوَةٍ</Text>
-        <Text style={styles.homeIntroPremium}>أكثر من عشرين مهنة في مكان واحد، وطلب خدمتك بخطوات بسيطة وسريعة.</Text>
+        <Text style={styles.homeIntroPremium}>تركيب وصيانة وضبط الدش وكاميرات المراقبة والشاشات، بخطوات بسيطة وخدمة موثوقة.</Text>
       </View>
       <View style={styles.roleCardsPremium}>
         <TouchableOpacity activeOpacity={0.88} onPress={() => goLogin('client')} style={[styles.roleCardPremium, styles.clientRoleCardPremium]}>
           <View style={styles.clientIconCirclePremium}><Text style={styles.roleIconPremium}>⌂</Text></View>
-          <View style={styles.roleCardCopy}><Text style={styles.roleTitlePremium}>الدخول كعميل</Text><Text style={styles.roleDescriptionPremium}>اطلب الخدمة اللي محتاجها وتابع عروض الفنيين بسهولة.</Text><View style={styles.roleActionBadge}><Text style={styles.roleActionBadgeText}>اطلب الآن ←</Text></View></View>
+          <View style={styles.roleCardCopy}><Text style={styles.roleTitlePremium}>الدخول كعميل</Text><Text style={styles.roleDescriptionPremium}>اطلب تركيب أو صيانة الدش أو الكاميرات أو الشاشات، وتابع عروض الفنيين بسهولة.</Text><View style={styles.roleActionBadge}><Text style={styles.roleActionBadgeText}>اطلب الآن ←</Text></View></View>
         </TouchableOpacity>
         <TouchableOpacity activeOpacity={0.88} onPress={() => goLogin('fanni')} style={[styles.roleCardPremium, styles.technicianRoleCardPremium]}>
           <View style={styles.technicianIconCirclePremium}><Text style={styles.roleIconPremium}>⚒</Text></View>
-          <View style={styles.roleCardCopy}><Text style={styles.roleTitlePremium}>الدخول كفني</Text><Text style={styles.roleDescriptionPremium}>استقبل الطلبات وقدّم عروضك وتابع مكسبك.</Text><View style={[styles.roleActionBadge, {backgroundColor:COLORS.navy}]}><Text style={styles.roleActionBadgeText}>شوف فرص الشغل ←</Text></View></View>
+          <View style={styles.roleCardCopy}><Text style={styles.roleTitlePremium}>الدخول كفني</Text><Text style={styles.roleDescriptionPremium}>استقبل طلبات الدش والكاميرات والشاشات، وقدّم عروضك وتابع شغلك.</Text><View style={[styles.roleActionBadge, {backgroundColor:COLORS.navy}]}><Text style={styles.roleActionBadgeText}>شوف فرص الشغل ←</Text></View></View>
         </TouchableOpacity>
       </View>
-      <View style={styles.homeFooterPremium}><View style={styles.homeFooterDot} /><Text style={styles.homeFooterText}>اختار طريقة الدخول وابدأ مع صُنّاع</Text></View>
+      <View style={styles.homeFooterPremium}><View style={styles.homeFooterDot} /><Text style={styles.homeFooterText}>اختار طريقة الدخول وابدأ مع حمزاوي سات</Text></View>
     </ScrollView>
   </SafeAreaView>;
 }
