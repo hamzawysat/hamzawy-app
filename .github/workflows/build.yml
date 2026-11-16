@@ -20,7 +20,7 @@ concurrency:
 
 jobs:
   build-modern:
-    name: Build Modern APK (all supported ABIs)
+    name: Build Modern APK (ARM64, matching current release architecture)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -54,15 +54,15 @@ jobs:
           PY
       - name: Prebuild Android
         run: npx expo prebuild --platform android --clean
-      - name: Configure compact APK native-library packaging
+      - name: Configure Modern APK
         run: |
-          printf '\nexpo.useLegacyPackaging=true\n' >> android/gradle.properties
-          grep -E '^expo.useLegacyPackaging=' android/gradle.properties
+          printf '\nexpo.useLegacyPackaging=true\nreactNativeArchitectures=arm64-v8a\n' >> android/gradle.properties
+          grep -E '^(expo.useLegacyPackaging|reactNativeArchitectures)=' android/gradle.properties
       - name: Build Modern Release APK
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleRelease
+          ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a
           APK="app/build/outputs/apk/release/app-release.apk"
           test -s "$APK"
           echo "Modern APK bytes: $(stat -c%s "$APK")"
@@ -76,7 +76,7 @@ jobs:
           path: hamzawy-sat-modern.apk
 
   build-lite:
-    name: Build Lite APK (ARMv7 + R8/resource shrinking)
+    name: Build Lite APK (ARM64 + R8/resource shrinking)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -121,7 +121,7 @@ jobs:
               "android.enableShrinkResourcesInReleaseBuilds": "true",
               "android.enableBundleCompression": "true",
               "expo.useLegacyPackaging": "true",
-              "reactNativeArchitectures": "armeabi-v7a",
+              "reactNativeArchitectures": "arm64-v8a",
           }
           for key, value in values.items():
               lines = [line for line in lines if not line.startswith(key + "=")]
@@ -133,15 +133,15 @@ jobs:
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleRelease
+          ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a
           APK="app/build/outputs/apk/release/app-release.apk"
           test -s "$APK"
           echo "Lite APK bytes: $(stat -c%s "$APK")"
           du -h "$APK"
           echo "Lite APK ABIs:"
           unzip -Z1 "$APK" | grep "^lib/" | cut -d/ -f2 | sort -u
-          cp "$APK" ../hamzawy-sat-lite-armv7.apk
+          cp "$APK" ../hamzawy-sat-lite-arm64.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: hamzawy-sat-lite-armv7-apk
+          name: hamzawy-sat-lite-arm64-apk
           path: hamzawy-sat-lite-armv7.apk
