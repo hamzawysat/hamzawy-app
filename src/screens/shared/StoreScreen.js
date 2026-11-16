@@ -34,6 +34,7 @@ export function StoreAdBanner({ role, session, visible = true, onOpenStore }) {
   const [ads, setAds] = useState([]);
   const [index, setIndex] = useState(0);
   const [rotationSeconds, setRotationSeconds] = useState(5);
+  const [displayReady, setDisplayReady] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -44,6 +45,8 @@ export function StoreAdBanner({ role, session, visible = true, onOpenStore }) {
         .filter(item => item.isAdvertised === true)
         .filter(item => !item.adAudience || item.adAudience === 'both' || item.adAudience === role)
         .filter(item => !item.adExpiresAt || new Date(item.adExpiresAt).getTime() > now)
+        .filter(item => item.stock === null || item.stock === undefined || Number(item.stock) > 0)
+        .filter(item => Boolean(String(item.name || '').trim() && /^https?:\\/\\//i.test(String(item.imageUrl || ''))))
         .sort((a, b) => (Number(b.adPriority) || 0) - (Number(a.adPriority) || 0) ||
           new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
       setAds(eligible);
@@ -55,13 +58,20 @@ export function StoreAdBanner({ role, session, visible = true, onOpenStore }) {
   }, [role, session?.token]);
 
   useEffect(() => {
-    if (!visible || ads.length < 2) return undefined;
+    setDisplayReady(false);
+    if (!visible || !ads.length) return undefined;
+    const firstDisplay = setTimeout(() => setDisplayReady(true), 9000);
+    return () => clearTimeout(firstDisplay);
+  }, [ads.length, visible]);
+
+  useEffect(() => {
+    if (!visible || !displayReady || ads.length < 2) return undefined;
     const timer = setInterval(() => setIndex(current => (current + 1) % ads.length), rotationSeconds * 1000);
     return () => clearInterval(timer);
-  }, [ads.length, visible, rotationSeconds]);
+  }, [ads.length, visible, displayReady, rotationSeconds]);
 
   const item = ads[index];
-  if (!visible || !item) return null;
+  if (!visible || !displayReady || !item) return null;
   return (
     <TouchableOpacity accessibilityRole="button" onPress={onOpenStore}
       style={{ marginHorizontal: 14, marginTop: 8, marginBottom: 4, padding: 10, borderRadius: 14, borderWidth: 1, borderColor: '#DCE6F2', backgroundColor: '#FFFFFF', flexDirection: 'row', alignItems: 'center', gap: 10 }}>
