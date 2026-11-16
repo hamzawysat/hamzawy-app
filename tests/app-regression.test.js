@@ -515,8 +515,8 @@ test('technician registration and profile edits use approved multi-select areas,
   assert.ok(screens.includes('<AreaPicker label="مناطق العمل *" options={areas} multiple'));
   assert.match(screens, /areas: selectedAreas/);
   assert.ok(account.includes('<AreaPicker label="مناطق العمل *" options={areas} multiple'));
-  assert.doesNotMatch(screens, /مناطق العمل \\(اكتب المناطق وافصل بينها بفاصلة\\)/);
-  assert.doesNotMatch(account, /مناطق العمل \\(افصل بين المناطق بفاصلة\\)/);
+  assert.doesNotMatch(screens, /مناطق العمل \(اكتب المناطق وافصل بينها بفاصلة\)/);
+  assert.doesNotMatch(account, /مناطق العمل \(افصل بين المناطق بفاصلة\)/);
 });
 
 test('client order area is selected from approved options and service counts react to selected area', () => {
@@ -749,10 +749,23 @@ test('technician registration requires both private identity card uploads and se
   assert.ok(screens.includes('identityCardFrontFileId: identityCardUploads.front.fileId'));
   assert.ok(screens.includes('identityCardBackFileId: identityCardUploads.back.fileId'));
   assert.ok(screens.includes('identityCardUploads.front.uploading') && screens.includes('identityCardUploads.back.uploading'));
-  assert.ok(screens.indexOf('ميثاق صُنّاع – التعامل المهني مع العملاء') < screens.indexOf('صورة بطاقة الرقم القومي *'));
-  assert.ok(screens.indexOf('صورة بطاقة الرقم القومي *') < screens.indexOf('<TouchableOpacity disabled={!guidelinesReachedEnd}'));
+  assert.ok(screens.indexOf('صورة بطاقة الرقم القومي *') < screens.indexOf('ميثاق صُنّاع – التعامل المهني مع العملاء'), 'ID card upload section must appear before the terms');
+  assert.ok(screens.indexOf('ميثاق صُنّاع – التعامل المهني مع العملاء') < screens.indexOf('<TouchableOpacity disabled={!guidelinesReachedEnd}'), 'agreement checkbox must remain after the terms');
   assert.ok(api.includes('FileSystem.uploadAsync'));
   assert.ok(api.includes("'/fanni/registration-media?side='"));
   assert.equal(pkg.dependencies['expo-image-picker'], '~15.0.7');
   assert.equal(pkg.dependencies['expo-image-manipulator'], '~12.0.5');
+});
+
+
+test('client and technician always start on their home tab after login and session restore', () => {
+  const screens = fs.readFileSync(path.join(root, 'src/screens/AppScreens.js'), 'utf8');
+  const state = fs.readFileSync(path.join(root, 'src/hooks/useAppState.js'), 'utf8');
+  assert.match(state, /const \[techData, setTechData\] = useState\([^;]*tab: 'home'/);
+  assert.ok(screens.includes("if (saved.role === 'client') setClientTab('home')"));
+  assert.ok(screens.includes("if (saved.role === 'fanni') setTechData(current => ({ ...current, tab: 'home' }))"));
+  assert.ok(screens.includes("if (role === 'client') setClientTab('home')"));
+  assert.ok(screens.includes("if (role === 'fanni') setTechData(current => ({ ...current, tab: 'home' }))"));
+  assert.ok(screens.includes("setTechData({ profile: null, orders: [], offers: [], wallet: [], loading: false, error: '', tab: 'home' });"));
+  assert.ok(!screens.includes("if (role === 'fanni') setTechData(current => ({ ...current, tab: 'offers' }))"));
 });
