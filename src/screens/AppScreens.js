@@ -266,6 +266,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         if (!mounted) return;
         setSession(saved);
         if (saved.role === 'client') setClientTab('home');
+        if (saved.role === 'fanni') setTechData(current => ({ ...current, tab: 'home' }));
         const target = saved.role === 'client' ? 'client' : 'technician';
         screenRef.current = target;
         setScreenState(target);
@@ -645,7 +646,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
       }
       setSession(nextSession);
       if (role === 'client') setClientTab('home');
-      if (role === 'fanni') setTechData(current => ({ ...current, tab: 'offers' }));
+      if (role === 'fanni') setTechData(current => ({ ...current, tab: 'home' }));
       setPassword('');
       setScreen(role === 'admin' ? 'admin' : role === 'client' ? 'client' : 'technician');
     } catch (err) {
@@ -1805,7 +1806,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     setScreenState('home');
     setSession(null); setUsername(''); setPassword('');
     setClientData({ orders: [], loading: false, error: '', sn: '', clientToken: '' });
-    setTechData({ profile: null, orders: [], offers: [], wallet: [], loading: false, error: '', tab: 'offers' });
+    setTechData({ profile: null, orders: [], offers: [], wallet: [], loading: false, error: '', tab: 'home' });
     setAdminData({ orders: [], fannis: [], clients: [], topups: [], complaints: [], loading: false, error: '', tab: 'orders' });
     setNotifications({ items: [], unread: 0, loading: false, error: '' });
     setAdminUsers([]);
