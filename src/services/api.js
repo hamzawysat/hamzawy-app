@@ -12,8 +12,11 @@ let configLoadPromise = null;
 
 function normalizePath(value, fallback) {
   const path = typeof value === 'string' && value.trim() ? value.trim() : fallback;
-  if (!path.startsWith('/') || path.startsWith('//') || path.includes('..') || /[?#\\s]/.test(path)) return null;
-  return path.replace(/\\/+$/, '') || '/';
+  if (!path.startsWith('/') || path.startsWith('//') || path.includes('..') ||
+      path.includes('?') || path.includes('#') || Array.from(path).some(char => char.charCodeAt(0) <= 32)) return null;
+  let normalized = path;
+  while (normalized.length > 1 && normalized.endsWith('/')) normalized = normalized.slice(0, -1);
+  return normalized;
 }
 
 function isValidConfig(value) {
