@@ -9,6 +9,8 @@ import * as Clipboard from 'expo-clipboard';
 import * as SecureStore from 'expo-secure-store';
 import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system';
+import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { api } from '../services/api';
 import { COLORS } from '../theme/colors';
 import { styles } from '../theme/styles';
@@ -40,6 +42,99 @@ function normalizePhoneDigits(value) {
 function AppScreens({ onScreenChange, onAuthRestoringChange }) {
   const { screen, setScreenState, screenHistoryRef, screenRef, setScreen } = useScreenNavigation();
   const appState = useAppState();
+  const [identityCardUploads, setIdentityCardUploads] = useState({
+    front: { fileId: '', previewUri: '', uploading: false, status: '' },
+    back: { fileId: '', previewUri: '', uploading: false, status: '' }
+  });
+  const [identityPreviewUri, setIdentityPreviewUri] = useState('');
+
+  async function pickTechnicianIdentityImage(side, source) {
+    if (!['front', 'back'].includes(side) || identityCardUploads[side]?.uploading || loginLoading) return;
+    try {
+      const permission = source === 'camera'
+        ? await ImagePicker.requestCameraPermissionsAsync()
+        : await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert('إذن مطلوب', source === 'camera'
+          ? 'اسمح باستخدام الكاميرا لتصوير البطاقة.'
+          : 'اسمح بالوصول إلى الصور لاختيار صورة البطاقة.');
+        return;
+      }
+      const result = source === 'camera'
+        ? await ImagePicker.launchCameraAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: false, quality: 1 })
+        : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: false, quality: 1 });
+      if (result.canceled || !result.assets?.[0]?.uri) return;
+
+      const asset = result.assets[0];
+      const extension = String(asset.fileName || asset.uri).split('?')[0].split('.').pop().toLowerCase();
+      const inferredMime = ({ jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' })[extension] || '';
+      const originalMime = asset.mimeType || inferredMime;
+      if (!['image/jpeg', 'image/png', 'image/webp'].includes(originalMime)) {
+        Alert.alert('نوع صورة غير مدعوم', 'الصيغ المقبولة هي JPG وPNG وWebP فقط.');
+        return;
+      }
+      const fileInfo = await FileSystem.getInfoAsync(asset.uri);
+      const originalSize = Number(asset.fileSize || fileInfo.size || 0);
+      if (originalSize > 15 * 1024 * 1024) {
+        Alert.alert('حجم الصورة كبير', 'الحد الأقصى 15 ميجابايت لكل صورة. اختار صورة أصغر.');
+        return;
+      }
+
+      setIdentityCardUploads(current => ({
+        ...current,
+        [side]: { fileId: '', previewUri: asset.uri, uploading: true, status: 'جاري تجهيز الصورة...' }
+      }));
+
+      let uploadUri = asset.uri;
+      let uploadMime = originalMime;
+      const width = Number(asset.width || 0);
+      const height = Number(asset.height || 0);
+      const largestDimension = Math.max(width, height);
+      if (largestDimension > 1920 || originalSize > 1200 * 1024) {
+        const scale = largestDimension > 0 ? Math.min(1, 1920 / largestDimension) : 1;
+        const resize = width >= height
+          ? { width: Math.max(1, Math.round(width * scale)) }
+          : { height: Math.max(1, Math.round(height * scale)) };
+        const optimized = await ImageManipulator.manipulateAsync(
+          asset.uri,
+          scale < 1 ? [{ resize }] : [],
+          { compress: 0.82, format: ImageManipulator.SaveFormat.JPEG }
+        );
+        uploadUri = optimized.uri;
+        uploadMime = 'image/jpeg';
+        setIdentityCardUploads(current => ({
+          ...current,
+          [side]: { ...current[side], previewUri: optimized.uri, status: 'تم تجهيز الصورة، جاري رفعها...' }
+        }));
+      } else {
+        setIdentityCardUploads(current => ({
+          ...current,
+          [side]: { ...current[side], status: 'جاري رفع الصورة...' }
+        }));
+      }
+
+      const uploaded = await uploadRegistrationIdentity(side, uploadUri, uploadMime);
+      setIdentityCardUploads(current => ({
+        ...current,
+        [side]: { fileId: uploaded.fileId, previewUri: uploadUri, uploading: false, status: 'تم رفع الصورة بنجاح ✓' }
+      }));
+      Alert.alert('تم رفع الصورة', side === 'front' ? 'تم رفع صورة الوجه الأمامي بنجاح.' : 'تم رفع صورة الوجه الخلفي بنجاح.');
+    } catch (error) {
+      const message = error?.message || 'تعذر رفع الصورة. تحقق من الاتصال وحاول مرة أخرى.';
+      setIdentityCardUploads(current => ({
+        ...current,
+        [side]: { ...current[side], fileId: '', uploading: false, status: message }
+      }));
+      Alert.alert('تعذر رفع صورة البطاقة', message);
+    }
+  }
+
+  function clearTechnicianIdentityImage(side) {
+    setIdentityCardUploads(current => ({
+      ...current,
+      [side]: { fileId: '', previewUri: '', uploading: false, status: 'تم إزالة الصورة. اختار صورة بديلة.' }
+    }));
+  }
   const { categories, setCategories, areas, setAreas, areaTechnicianCounts, setAreaTechnicianCounts, adminProfileEdit, setAdminProfileEdit, adminPendingProfileEdits, setAdminPendingProfileEdits, selected, setSelected, servicesLoading, setServicesLoading, servicesError, setServicesError, reloadKey, setReloadKey, session, setSession, authRestoring, setAuthRestoring, username, setUsername, password, setPassword, loginLoading, setLoginLoading, authMode, setAuthMode, form, setForm, clientData, setClientData, techData, setTechData, walletTransferNumbers, setWalletTransferNumbers, assignedDetails, setAssignedDetails, technicianSearch, setTechnicianSearch, technicianServiceFilter, setTechnicianServiceFilter, guidelinesChecked, setGuidelinesChecked, guidelinesReachedEnd, setGuidelinesReachedEnd, guidelinesViewportHeight, setGuidelinesViewportHeight, adminData, setAdminData, topup, setTopup, clientTab, setClientTab, clientServiceSearch, setClientServiceSearch, servicePickerOpen, setServicePickerOpen, subservicePickerOpen, setSubservicePickerOpen, ratingPrompt, setRatingPrompt, dismissedRatings, setDismissedRatings, ratingDismissalsLoaded, setRatingDismissalsLoaded, ratingDismissalsLoadedFor, setRatingDismissalsLoadedFor, clientTrackSN, setClientTrackSN, clientTrackedOrder, setClientTrackedOrder, clientTrackError, setClientTrackError, clientTrackLoading, setClientTrackLoading, clientComplaint, setClientComplaint, clientComplaintTrack, setClientComplaintTrack, expandedClientOrders, setExpandedClientOrders, expandedTechnicianOrders, setExpandedTechnicianOrders, notificationsOpen, setNotificationsOpen, offerDraft, setOfferDraft, notifications, setNotifications, orderChats, setOrderChats, chatDrafts, setChatDrafts, priceDrafts, setPriceDrafts, ratingDrafts, setRatingDrafts, ratingSubmitting, setRatingSubmitting, adminUsers, setAdminUsers, adminExtras, setAdminExtras, adminServiceDraft, setAdminServiceDraft, adminServiceEdit, setAdminServiceEdit, adminRegionDraft, setAdminRegionDraft, adminAnnouncementDraft, setAdminAnnouncementDraft, adminFaqDraft, setAdminFaqDraft, adminReportFilters, setAdminReportFilters, adminWallet, setAdminWallet, adminUsersLoading, setAdminUsersLoading, broadcast, setBroadcast, supportCases, setSupportCases, supportCase, setSupportCase, supportDraft, setSupportDraft, supportSubject, setSupportSubject, supportLoading, setSupportLoading, supportError, setSupportError, accountPasswordForm, setAccountPasswordForm, profileEditForm, setProfileEditForm, profileEditOpenCategory, setProfileEditOpenCategory, recoveryForm, setRecoveryForm, adminSupportCases, setAdminSupportCases, adminSupportSelected, setAdminSupportSelected, adminSupportDraft, setAdminSupportDraft, adminRecoveryCases, setAdminRecoveryCases, adminRecoverySelected, setAdminRecoverySelected, adminRecoveryCode, setAdminRecoveryCode, adminRecoveryDraft, setAdminRecoveryDraft, registrationNameRef, registrationPhoneRef, registrationPasswordRef, registrationConfirmPasswordRef, clientAreaInputRef, clientAddressInputRef, clientDescriptionInputRef, clientBudgetInputRef, clientServiceDetailYRef, clientFormYRef, clientScrollRef, chatScrollRef, clientChatScrollRefs, clientChatAtBottomRef, ratingSubmittingRef, orderChatsRef, acceptedChatAutoOpenedRef, dismissedRatingsRef, ratingHandledRef, ratingStatusSnapshotRef, services, updateForm } = appState;
   const pushTokenRef = usePushNotifications(session);
   const headerInitial = screen === 'client'
@@ -589,6 +684,11 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
       Alert.alert('الموافقة مطلوبة', 'علّم على مربع قرأت وأوافق على ميثاق صُنّاع لإكمال التسجيل.');
       return;
     }
+    if (!identityCardUploads.front.fileId || !identityCardUploads.back.fileId ||
+        identityCardUploads.front.uploading || identityCardUploads.back.uploading) {
+      Alert.alert('صور البطاقة مطلوبة', 'ارفع صورة الوجه الأمامي والخلفي وانتظر اكتمال رفع الصورتين قبل إرسال التسجيل.');
+      return;
+    }
     setLoginLoading(true);
     try {
       const result = await api('/fanni/register', { method: 'POST', body: {
@@ -597,9 +697,16 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         password: form.password,
         specialties: form.specialties,
         areas: selectedAreas,
-        guidelinesAccepted: true
+        guidelinesAccepted: true,
+        identityCardFrontFileId: identityCardUploads.front.fileId,
+        identityCardBackFileId: identityCardUploads.back.fileId
       } });
       Alert.alert('تم إرسال التسجيل', result.message || 'حسابك قيد مراجعة الإدارة.');
+      setIdentityCardUploads({
+        front: { fileId: '', previewUri: '', uploading: false, status: '' },
+        back: { fileId: '', previewUri: '', uploading: false, status: '' }
+      });
+      setIdentityPreviewUri('');
       setUsername(form.phone); setPassword(''); setScreen('login'); setAuthMode('fanni');
     } catch (err) { Alert.alert('تعذر تسجيل الفني', err.message || 'راجع البيانات وحاول مرة أخرى.'); }
     finally { setLoginLoading(false); }
@@ -1769,6 +1876,41 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         <AreaPicker label="مناطق العمل *" options={areas} multiple value={form.areas} onChange={value => updateForm('areas', value)} maxSelections={30} />
         <Text style={styles.detail}>اختار المناطق التي تستطيع العمل فيها من القائمة المعتمدة. يمكنك اختيار حتى 30 منطقة.</Text>
 
+        <View style={{ backgroundColor: '#EFF6FF', borderColor: '#BFDBFE', borderWidth: 1, borderRadius: 16, padding: 12, marginTop: 12, gap: 10 }}>
+          <View>
+            <Text style={{ color: '#0F172A', fontSize: 14, fontWeight: '900', textAlign: 'right' }}>صورة بطاقة الرقم القومي *</Text>
+            <Text style={{ color: '#475569', fontSize: 11, lineHeight: 19, textAlign: 'right', marginTop: 4 }}>ارفع صورة واضحة للوجه الأمامي والخلفي. الصورتان مطلوبتان ولن يتم إنشاء الحساب بدونهما، وسيتم حفظهما بشكل خاص لمراجعة الإدارة.</Text>
+          </View>
+          {[{ side: 'front', label: 'الوجه الأمامي' }, { side: 'back', label: 'الوجه الخلفي' }].map(({ side, label }) => {
+            const upload = identityCardUploads[side];
+            return <View key={side} style={{ backgroundColor: '#FFFFFF', borderColor: '#E2E8F0', borderWidth: 1, borderRadius: 12, padding: 10, gap: 9 }}>
+              <View style={{ flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Text style={{ color: '#1E293B', fontSize: 12, fontWeight: '900' }}>{label}</Text>
+                <Text style={{ color: upload.fileId ? '#047857' : upload.uploading ? '#1D4ED8' : '#DC2626', fontSize: 10, fontWeight: '900' }}>{upload.fileId ? 'تم الرفع ✓' : upload.uploading ? 'جاري الرفع...' : 'مطلوب'}</Text>
+              </View>
+              {upload.previewUri ? <Image source={{ uri: upload.previewUri }} resizeMode="contain" style={{ width: '100%', height: 150, backgroundColor: '#F8FAFC', borderRadius: 9 }} /> : null}
+              <View style={{ flexDirection: 'row-reverse', gap: 8 }}>
+                <TouchableOpacity disabled={upload.uploading || loginLoading} onPress={() => pickTechnicianIdentityImage(side, 'gallery')} style={{ flex: 1, minHeight: 42, borderRadius: 10, borderWidth: 1, borderColor: '#BFDBFE', backgroundColor: '#EFF6FF', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 }}>
+                  <Text style={{ color: '#1E40AF', fontSize: 11, fontWeight: '900', textAlign: 'center' }}>{upload.fileId ? 'اختيار من المعرض مرة أخرى' : 'اختيار من المعرض'}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity disabled={upload.uploading || loginLoading} onPress={() => pickTechnicianIdentityImage(side, 'camera')} style={{ flex: 1, minHeight: 42, borderRadius: 10, borderWidth: 1, borderColor: '#A7F3D0', backgroundColor: '#ECFDF5', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 }}>
+                  <Text style={{ color: '#047857', fontSize: 11, fontWeight: '900', textAlign: 'center' }}>📷 التقاط بالكاميرا</Text>
+                </TouchableOpacity>
+              </View>
+              {upload.previewUri ? <View style={{ flexDirection: 'row-reverse', gap: 8 }}>
+                <TouchableOpacity onPress={() => setIdentityPreviewUri(upload.previewUri)} style={{ flex: 1, minHeight: 38, borderRadius: 10, borderWidth: 1, borderColor: '#CBD5E1', backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ color: '#1E293B', fontSize: 11, fontWeight: '800' }}>معاينة الصورة</Text>
+                </TouchableOpacity>
+                <TouchableOpacity disabled={upload.uploading} onPress={() => clearTechnicianIdentityImage(side)} style={{ minHeight: 38, paddingHorizontal: 14, borderRadius: 10, borderWidth: 1, borderColor: '#FECACA', backgroundColor: '#FEF2F2', alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ color: '#B91C1C', fontSize: 11, fontWeight: '800' }}>إزالة</Text>
+                </TouchableOpacity>
+              </View> : null}
+              <Text style={{ color: upload.fileId ? '#047857' : upload.uploading ? '#1D4ED8' : '#475569', fontSize: 10, fontWeight: '800', textAlign: 'right' }}>{upload.status || (upload.fileId ? 'تم رفع الصورة بنجاح.' : 'لم يتم رفع الصورة بعد.')}</Text>
+            </View>;
+          })}
+          <Text style={{ color: '#64748B', fontSize: 10, lineHeight: 18, textAlign: 'right' }}>الصيغ المقبولة: JPG وPNG وWebP — الحد الأقصى 15 ميجابايت لكل صورة.</Text>
+        </View>
+
         <Text style={styles.sectionTitle}>ميثاق صُنّاع – التعامل المهني مع العملاء</Text>
         <Text style={styles.detail}>اقرأ الميثاق كاملًا. لن تتمكن من الموافقة أو إرسال طلب التسجيل قبل الوصول إلى نهاية النص.</Text>
         <View style={{ height: 240, borderWidth: 1, borderColor: COLORS.border, borderRadius: 14, overflow: 'hidden', backgroundColor: COLORS.white }}>
@@ -1806,6 +1948,14 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
           </Text>
         </TouchableOpacity>
       </>}
+      {identityPreviewUri ? <Modal visible transparent animationType="fade" onRequestClose={() => setIdentityPreviewUri('')}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(15,23,42,0.94)', padding: 16, justifyContent: 'center' }}>
+          <TouchableOpacity onPress={() => setIdentityPreviewUri('')} style={{ alignSelf: 'flex-end', backgroundColor: '#FFFFFF', borderRadius: 10, paddingHorizontal: 16, paddingVertical: 10, marginBottom: 12 }}>
+            <Text style={{ color: '#111827', fontWeight: '900' }}>إغلاق المعاينة</Text>
+          </TouchableOpacity>
+          <Image source={{ uri: identityPreviewUri }} resizeMode="contain" style={{ width: '100%', flex: 1 }} />
+        </View>
+      </Modal> : null}
       <Button title={loginLoading ? 'جاري التسجيل...' : isClient ? 'إنشاء حساب' : 'إرسال طلب التسجيل'}
         onPress={isClient ? registerClient : registerTechnician}
         disabled={loginLoading || (!isClient && (!guidelinesReachedEnd || !guidelinesChecked))}
