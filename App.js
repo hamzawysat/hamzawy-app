@@ -65,7 +65,6 @@ function AppContent() {
       </View>
       <Text style={splashStyles.title}>حمزاوي سات</Text>
       <Text style={splashStyles.caption}>الدش • كاميرات المراقبة • الشاشات</Text>
-      <Text style={splashStyles.caption}>اختبار تحديث OTA</Text>
       <View style={splashStyles.loadingTrack}><View style={splashStyles.loadingFill} /></View>
     </View> : null}
   </View>;
