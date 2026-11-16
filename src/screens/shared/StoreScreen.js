@@ -205,15 +205,20 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
     <View style={{ width: '100%' }}>
       <View style={{ padding: 14, paddingBottom: 28 }}>
         <View style={[styles.dataCard, { marginBottom: 12 }]}>
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityState={{ expanded: previousOrdersOpen }}
-            onPress={() => setPreviousOrdersOpen(open => !open)}
-            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}
-          >
-            <Text style={styles.cardTitleSmall}>طلبات المتجر السابقة ({orders.length})</Text>
-            <Text style={{ color: COLORS.teal, fontSize: 18, fontWeight: '900' }}>{previousOrdersOpen ? '⌃' : '⌄'}</Text>
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityState={{ expanded: previousOrdersOpen }}
+              onPress={() => setPreviousOrdersOpen(open => !open)}
+              style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}
+            >
+              <Text style={styles.cardTitleSmall}>طلبات المتجر السابقة ({orders.length})</Text>
+              <Text style={{ color: COLORS.teal, fontSize: 18, fontWeight: '900' }}>{previousOrdersOpen ? '⌃' : '⌄'}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity accessibilityRole="button" onPress={() => load(true)} disabled={loading || refreshing}>
+              <Text style={{ color: COLORS.teal, fontWeight: '900' }}>{refreshing ? '...' : 'تحديث'}</Text>
+            </TouchableOpacity>
+          </View>
           {previousOrdersOpen ? (
             orders.length ? orders.map((order, index) => (
               <View key={String(order._id || index)} style={{ paddingVertical: 9, borderTopWidth: index ? 1 : 0, borderTopColor: COLORS.border }}>
@@ -223,9 +228,6 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
               </View>
             )) : <Text style={styles.emptyText}>لسه مفيش طلبات شراء.</Text>
           ) : null}
-        </View>
-        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 8 }}>
-          <Button title={refreshing ? 'جاري التحديث...' : 'تحديث'} secondary onPress={() => load(true)} disabled={loading || refreshing} />
         </View>
         {loading ? <ActivityIndicator color={COLORS.teal} size="large" /> : error ? <View style={styles.dataCard}><Text style={styles.errorText}>{error}</Text><Button title="إعادة المحاولة" onPress={() => load()} /></View> :
           products.length ? products.map((item, index) => (
