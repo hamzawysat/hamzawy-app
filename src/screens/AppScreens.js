@@ -1876,6 +1876,33 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         <AreaPicker label="مناطق العمل *" options={areas} multiple value={form.areas} onChange={value => updateForm('areas', value)} maxSelections={30} />
         <Text style={styles.detail}>اختار المناطق التي تستطيع العمل فيها من القائمة المعتمدة. يمكنك اختيار حتى 30 منطقة.</Text>
 
+        <Text style={styles.sectionTitle}>ميثاق صُنّاع – التعامل المهني مع العملاء</Text>
+        <Text style={styles.detail}>اقرأ الميثاق كاملًا. لن تتمكن من الموافقة أو إرسال طلب التسجيل قبل الوصول إلى نهاية النص.</Text>
+        <View style={{ height: 240, borderWidth: 1, borderColor: COLORS.border, borderRadius: 14, overflow: 'hidden', backgroundColor: COLORS.white }}>
+          <ScrollView
+            nestedScrollEnabled
+            showsVerticalScrollIndicator
+            onLayout={event => setGuidelinesViewportHeight(event.nativeEvent.layout.height)}
+            onContentSizeChange={(width, height) => {
+              if (guidelinesViewportHeight && height <= guidelinesViewportHeight + 8) setGuidelinesReachedEnd(true);
+            }}
+            onScroll={event => {
+              const { contentOffset, layoutMeasurement, contentSize } = event.nativeEvent;
+              if (layoutMeasurement.height + contentOffset.y >= contentSize.height - 18) setGuidelinesReachedEnd(true);
+            }}
+            scrollEventThrottle={16}
+            contentContainerStyle={{ padding: 14, gap: 12 }}
+          >
+            <Text style={styles.detail}>١. التزم بسعر العرض الذي وافق عليه العميل. أي زيادة تحتاج موافقة صريحة مسجلة داخل المنصة قبل التنفيذ.</Text>
+            <Text style={styles.detail}>٢. تعامل باحترام وصدق، دون ضغط أو تهديد أو تضليل.</Text>
+            <Text style={styles.detail}>٣. قبل قبول العرض، الردود المسموحة «نعم»، «لا»، «حسب الاتفاق». ممنوع تبادل بيانات الاتصال أو التحايل على المنصة قبل القبول.</Text>
+            <Text style={styles.detail}>٤. لا تضغط إنهاء المهمة إلا بعد إنجازها فعلًا.</Text>
+            <Text style={styles.detail}>٥. احمِ بيانات العميل ولا تستخدمها خارج الطلب.</Text>
+            <Text style={styles.detail}>٦. يحق للطرفين التقييم بعد الإكمال؛ ممنوع الإكراه على تقييم إيجابي أو التلاعب بالتقييمات.</Text>
+            <Text style={styles.detail}>٧. المخالفات قد تؤدي إلى مراجعة الطلب أو تعليق الحساب أو إيقافه.</Text>
+            <Text style={styles.detail}>بالضغط على الموافقة، تؤكد أنك قرأت التعليمات وفهمتها وتتعهد بالالتزام بها أثناء استخدام منصة صُنّاع.</Text>
+          </ScrollView>
+        </View>
         <View style={{ backgroundColor: '#EFF6FF', borderColor: '#BFDBFE', borderWidth: 1, borderRadius: 16, padding: 12, marginTop: 12, gap: 10 }}>
           <View>
             <Text style={{ color: '#0F172A', fontSize: 14, fontWeight: '900', textAlign: 'right' }}>صورة بطاقة الرقم القومي *</Text>
@@ -1911,33 +1938,6 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
           <Text style={{ color: '#64748B', fontSize: 10, lineHeight: 18, textAlign: 'right' }}>الصيغ المقبولة: JPG وPNG وWebP — الحد الأقصى 15 ميجابايت لكل صورة.</Text>
         </View>
 
-        <Text style={styles.sectionTitle}>ميثاق صُنّاع – التعامل المهني مع العملاء</Text>
-        <Text style={styles.detail}>اقرأ الميثاق كاملًا. لن تتمكن من الموافقة أو إرسال طلب التسجيل قبل الوصول إلى نهاية النص.</Text>
-        <View style={{ height: 240, borderWidth: 1, borderColor: COLORS.border, borderRadius: 14, overflow: 'hidden', backgroundColor: COLORS.white }}>
-          <ScrollView
-            nestedScrollEnabled
-            showsVerticalScrollIndicator
-            onLayout={event => setGuidelinesViewportHeight(event.nativeEvent.layout.height)}
-            onContentSizeChange={(width, height) => {
-              if (guidelinesViewportHeight && height <= guidelinesViewportHeight + 8) setGuidelinesReachedEnd(true);
-            }}
-            onScroll={event => {
-              const { contentOffset, layoutMeasurement, contentSize } = event.nativeEvent;
-              if (layoutMeasurement.height + contentOffset.y >= contentSize.height - 18) setGuidelinesReachedEnd(true);
-            }}
-            scrollEventThrottle={16}
-            contentContainerStyle={{ padding: 14, gap: 12 }}
-          >
-            <Text style={styles.detail}>١. التزم بسعر العرض الذي وافق عليه العميل. أي زيادة تحتاج موافقة صريحة مسجلة داخل المنصة قبل التنفيذ.</Text>
-            <Text style={styles.detail}>٢. تعامل باحترام وصدق، دون ضغط أو تهديد أو تضليل.</Text>
-            <Text style={styles.detail}>٣. قبل قبول العرض، الردود المسموحة «نعم»، «لا»، «حسب الاتفاق». ممنوع تبادل بيانات الاتصال أو التحايل على المنصة قبل القبول.</Text>
-            <Text style={styles.detail}>٤. لا تضغط إنهاء المهمة إلا بعد إنجازها فعلًا.</Text>
-            <Text style={styles.detail}>٥. احمِ بيانات العميل ولا تستخدمها خارج الطلب.</Text>
-            <Text style={styles.detail}>٦. يحق للطرفين التقييم بعد الإكمال؛ ممنوع الإكراه على تقييم إيجابي أو التلاعب بالتقييمات.</Text>
-            <Text style={styles.detail}>٧. المخالفات قد تؤدي إلى مراجعة الطلب أو تعليق الحساب أو إيقافه.</Text>
-            <Text style={styles.detail}>بالضغط على الموافقة، تؤكد أنك قرأت التعليمات وفهمتها وتتعهد بالالتزام بها أثناء استخدام منصة صُنّاع.</Text>
-          </ScrollView>
-        </View>
         <TouchableOpacity disabled={!guidelinesReachedEnd} onPress={() => setGuidelinesChecked(value => !value)} activeOpacity={0.8}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, opacity: guidelinesReachedEnd ? 1 : 0.45 }}>
           <View style={{ width: 24, height: 24, borderRadius: 6, borderWidth: 2, borderColor: guidelinesChecked ? COLORS.teal : COLORS.muted, backgroundColor: guidelinesChecked ? COLORS.teal : COLORS.white, alignItems: 'center', justifyContent: 'center' }}>
