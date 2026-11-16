@@ -1,4 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
+import * as FileSystem from 'expo-file-system';
 
 const SERVER_CONFIG_URL = 'https://hamzawysat.github.io/hamzawy-download/server-config.json';
 const CONFIG_CACHE_KEY = 'hamzawy.server-config.v1';
@@ -108,6 +109,26 @@ export async function getApiUrl(path = '') {
   const config = await getServerConfig();
   const suffix = String(path || '');
   return config.apiBaseUrl + (suffix.startsWith('/') ? suffix : '/' + suffix);
+}
+
+export async function uploadRegistrationIdentity(side, uri, mimeType) {
+  if (!['front', 'back'].includes(side)) throw new Error('حدد وجه البطاقة الأمامي أو الخلفي.');
+  if (!uri || !['image/jpeg', 'image/png', 'image/webp'].includes(mimeType)) {
+    throw new Error('اختار صورة JPG أو PNG أو WebP صالحة.');
+  }
+  const url = await getApiUrl('/fanni/registration-media?side=' + encodeURIComponent(side));
+  const response = await FileSystem.uploadAsync(url, uri, {
+    httpMethod: 'POST',
+    uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+    headers: { 'Content-Type': mimeType },
+  });
+  let data = {};
+  try { data = JSON.parse(response.body || '{}'); } catch (_) {}
+  if (response.status < 200 || response.status >= 300) {
+    throw new Error(data.message || 'تعذر رفع صورة البطاقة. حاول مرة أخرى.');
+  }
+  if (!data.fileId) throw new Error('لم نتأكد من حفظ الصورة. حاول رفعها مرة أخرى.');
+  return data;
 }
 
 export async function getMediaUrl(path = '') {
