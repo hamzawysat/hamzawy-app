@@ -650,7 +650,7 @@ test('technician wallet top-ups follow browser approval, amount and phone valida
   const wallet = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianWalletScreen.js'), 'utf8');
   assert.ok(screens.includes("technicianStatus !== 'معتمد'"));
   assert.ok(screens.includes('amount > 10000'));
-  assert.ok(screens.includes('/^01[0-9]{9}$/'));
+  assert.ok(screens.includes('/^01[0125][0-9]{8}$/'));
   assert.ok(screens.includes('referenceCode: reference'));
   assert.ok(wallet.includes("disabled={submitting || String(user?.status || '').trim() !== 'معتمد'}"));
 });
