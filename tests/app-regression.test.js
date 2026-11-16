@@ -551,7 +551,7 @@ test('client area selection hides the search field, reveals the detailed address
 
 test('client and technician dashboards open on their browser-equivalent home views', () => {
   const state = fs.readFileSync(path.join(root, 'src/hooks/useAppState.js'), 'utf8');
-  assert.match(state, /clientTab,?[^\n]*|setClientTab/);
+  assert.match(state, /const \[clientTab, setClientTab\] = useState\('home'\)/);
   assert.match(state, /tab: 'home'/);
   assert.match(state, /useState\('home'\)/);
 });
@@ -618,6 +618,26 @@ test('native client dashboard displays public maintenance notices, announcements
   assert.ok(banner.includes('maintenanceMessage'));
   assert.ok(banner.includes('announcement'));
   assert.ok(banner.includes('faqs'));
+});
+
+
+test('client wallet top-ups keep an idempotency key across retries and refresh the wallet balance', () => {
+  const wallet = fs.readFileSync(path.join(root, 'src/screens/client/ClientWalletScreen.js'), 'utf8');
+  const client = fs.readFileSync(path.join(root, 'src/screens/client/ClientDashboard.js'), 'utf8');
+  assert.ok(wallet.includes('const requestId = idempotencyKey || requestKey()'));
+  assert.ok(wallet.includes('idempotencyKey: requestId'));
+  assert.ok(wallet.includes("api('/client/wallet/topup'"));
+  assert.ok(client.includes("api('/client/wallet'"));
+});
+
+test('technician wallet top-ups follow browser approval, amount and phone validation', () => {
+  const screens = fs.readFileSync(path.join(root, 'src/screens/AppScreens.js'), 'utf8');
+  const wallet = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianWalletScreen.js'), 'utf8');
+  assert.ok(screens.includes("technicianStatus !== 'معتمد'"));
+  assert.ok(screens.includes('amount > 10000'));
+  assert.ok(screens.includes('/^01[0-9]{9}$/'));
+  assert.ok(screens.includes('referenceCode: reference'));
+  assert.ok(wallet.includes("disabled={String(user?.status || '').trim() !== 'معتمد'}"));
 });
 
 test('native API preserves structured store purchase errors and resolves media URLs through central configuration', () => {
