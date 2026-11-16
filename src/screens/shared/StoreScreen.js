@@ -38,23 +38,33 @@ export function StoreAdBanner({ role, session, visible = true, onOpenStore }) {
 
   useEffect(() => {
     let active = true;
-    api('/store/products').then(result => {
-      if (!active) return;
-      const now = Date.now();
-      const eligible = (Array.isArray(result.products) ? result.products : [])
-        .filter(item => item.isAdvertised === true)
-        .filter(item => !item.adAudience || item.adAudience === 'both' || item.adAudience === role)
-        .filter(item => !item.adExpiresAt || new Date(item.adExpiresAt).getTime() > now)
-        .filter(item => item.stock === null || item.stock === undefined || Number(item.stock) > 0)
-        .filter(item => { const imageUrl = String(item.imageUrl || ''); return Boolean(String(item.name || '').trim() && (imageUrl.startsWith('https://') || imageUrl.startsWith('http://'))); })
-        .sort((a, b) => (Number(b.adPriority) || 0) - (Number(a.adPriority) || 0) ||
-          new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
-      setAds(eligible);
-      const configuredSeconds = Number(result.adRotationSeconds);
-      setRotationSeconds(Number.isInteger(configuredSeconds) && configuredSeconds >= 5 && configuredSeconds <= 60 ? configuredSeconds : 5);
-      setIndex(0);
-    }).catch(() => { if (active) setAds([]); });
-    return () => { active = false; };
+    let loaded = false;
+    let retryTimer = null;
+    const loadAds = async () => {
+      if (!active || loaded) return;
+      try {
+        const result = await api('/store/products');
+        if (!active) return;
+        const now = Date.now();
+        const eligible = (Array.isArray(result.products) ? result.products : [])
+          .filter(item => item.isAdvertised === true)
+          .filter(item => !item.adAudience || item.adAudience === 'both' || item.adAudience === role)
+          .filter(item => !item.adExpiresAt || new Date(item.adExpiresAt).getTime() > now)
+          .filter(item => item.stock === null || item.stock === undefined || Number(item.stock) > 0)
+          .filter(item => { const imageUrl = String(item.imageUrl || ''); return Boolean(String(item.name || '').trim() && (imageUrl.startsWith('https://') || imageUrl.startsWith('http://'))); })
+          .sort((a, b) => (Number(b.adPriority) || 0) - (Number(a.adPriority) || 0) ||
+            new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+        setAds(eligible);
+        const configuredSeconds = Number(result.adRotationSeconds);
+        setRotationSeconds(Number.isInteger(configuredSeconds) && configuredSeconds >= 5 && configuredSeconds <= 60 ? configuredSeconds : 5);
+        setIndex(0);
+        loaded = true;
+        if (retryTimer) clearInterval(retryTimer);
+      } catch (_) {}
+    };
+    loadAds();
+    retryTimer = setInterval(loadAds, 3000);
+    return () => { active = false; if (retryTimer) clearInterval(retryTimer); };
   }, [role, session?.token]);
 
   useEffect(() => {
