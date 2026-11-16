@@ -81,7 +81,7 @@ export default function ClientSubscriptionsScreen({ session, walletBalance = 0, 
   };
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 14, paddingBottom: 30 }} showsVerticalScrollIndicator={false}>
+    <View style={{ padding: 14, paddingBottom: 30 }}>
       <View style={styles.dataCard}>
         <Text style={styles.cardTitlePremium}>الاشتراكات</Text>
         <Text style={styles.detail}>تابع اشتراكاتك أو استعرض الباقات المتاحة.</Text>
@@ -114,6 +114,6 @@ export default function ClientSubscriptionsScreen({ session, walletBalance = 0, 
           {['active', 'expired'].includes(item.status) ? <Button title={submitting === String(item._id) ? 'جاري التجديد...' : 'تجديد الاشتراك'} onPress={() => renew(item)} disabled={Boolean(submitting)} /> : null}
         </View>) : <Text style={styles.emptyText}>لم تشترك في أي باقة حتى الآن.</Text>}
       </View>}
-    </ScrollView>
+    </View>
   );
 }
