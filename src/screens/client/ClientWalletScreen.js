@@ -34,7 +34,7 @@ function normalizePhoneDigits(value) {
   return String(value || '').replace(/[٠-٩۰-۹]/g, digit => {
     const index = arabic.indexOf(digit);
     return String(index >= 0 ? index : persian.indexOf(digit));
-  }).replace(/\\D/g, '');
+  }).replace(/\D/g, '');
 }
 
 function requestKey() {
@@ -89,7 +89,7 @@ export default function ClientWalletScreen({ session, onBalanceChange }) {
 
   const submitTopup = async () => {
     if (submitting) return;
-    const phone = fromPhone.replace(/\D/g, '');
+    const phone = normalizePhoneDigits(fromPhone);
     const value = Number(amount);
     if (!/^01[0125][0-9]{8}$/.test(phone)) return setError('اكتب رقم الهاتف المحوّل منه بشكل صحيح.');
     if (!Number.isInteger(value) || value < 10 || value > 10000) return setError('مبلغ الشحن يجب أن يكون من 10 إلى 10000 جنيه.');
