@@ -50,6 +50,10 @@ jobs:
           PY
       - name: Prebuild Android
         run: npx expo prebuild --platform android --clean
+      - name: Configure compact APK native-library packaging
+        run: |
+          printf '\nexpo.useLegacyPackaging=true\n' >> android/gradle.properties
+          grep -E '^expo.useLegacyPackaging=' android/gradle.properties
       - name: Build Modern Release APK
         run: |
           cd android
@@ -109,6 +113,7 @@ jobs:
               "android.enableProguardInReleaseBuilds": "true",
               "android.enableShrinkResourcesInReleaseBuilds": "true",
               "android.enableBundleCompression": "true",
+              "expo.useLegacyPackaging": "true",
               "reactNativeArchitectures": "armeabi-v7a",
           }
           for key, value in values.items():
