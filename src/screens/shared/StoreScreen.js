@@ -109,6 +109,7 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
   const [note, setNote] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('wallet');
   const [submitting, setSubmitting] = useState(false);
+  const [previousOrdersOpen, setPreviousOrdersOpen] = useState(false);
 
   const load = useCallback(async (silent = false) => {
     if (!session?.token) return;
@@ -204,20 +205,27 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
     <View style={{ width: '100%' }}>
       <View style={{ padding: 14, paddingBottom: 28 }}>
         <View style={[styles.dataCard, { marginBottom: 12 }]}>
-          <Text style={styles.cardTitlePremium}>متجر حمزاوي سات 🛍️</Text>
-          <Text style={styles.detail}>اختار المنتج اللي محتاجه، وابعت طلبك. الإدارة هتتواصل معاك لتأكيد الطلب وطريقة الدفع.</Text>
-          <Text style={[styles.detail, { fontWeight: '900', marginTop: 6 }]}>رصيد محفظتك: {money(userBalance)}</Text>
-          <Button title={refreshing ? 'جاري التحديث...' : 'تحديث المتجر وطلباتي'} secondary onPress={() => load(true)} disabled={loading || refreshing} />
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityState={{ expanded: previousOrdersOpen }}
+            onPress={() => setPreviousOrdersOpen(open => !open)}
+            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}
+          >
+            <Text style={styles.cardTitleSmall}>طلبات المتجر السابقة ({orders.length})</Text>
+            <Text style={{ color: COLORS.teal, fontSize: 18, fontWeight: '900' }}>{previousOrdersOpen ? '⌃' : '⌄'}</Text>
+          </TouchableOpacity>
+          {previousOrdersOpen ? (
+            orders.length ? orders.map((order, index) => (
+              <View key={String(order._id || index)} style={{ paddingVertical: 9, borderTopWidth: index ? 1 : 0, borderTopColor: COLORS.border }}>
+                <Text style={styles.detailBold}>{order.productName || order.name || 'طلب متجر'}</Text>
+                <Text style={styles.detail}>الكمية: {order.quantity || 1} • {money(order.total)} • الحالة: {order.status || 'قيد المراجعة'}</Text>
+                {order.createdAt ? <Text style={styles.detailSmall}>{new Date(order.createdAt).toLocaleString('ar-EG')}</Text> : null}
+              </View>
+            )) : <Text style={styles.emptyText}>لسه مفيش طلبات شراء.</Text>
+          ) : null}
         </View>
-        <View style={[styles.dataCard, { marginBottom: 12 }]}>
-          <Text style={styles.cardTitleSmall}>طلبات المتجر السابقة ({orders.length})</Text>
-          {orders.length ? orders.map((order, index) => (
-            <View key={String(order._id || index)} style={{ paddingVertical: 9, borderTopWidth: index ? 1 : 0, borderTopColor: COLORS.border }}>
-              <Text style={styles.detailBold}>{order.productName || order.name || 'طلب متجر'}</Text>
-              <Text style={styles.detail}>الكمية: {order.quantity || 1} • {money(order.total)} • الحالة: {order.status || 'قيد المراجعة'}</Text>
-              {order.createdAt ? <Text style={styles.detailSmall}>{new Date(order.createdAt).toLocaleString('ar-EG')}</Text> : null}
-            </View>
-          )) : <Text style={styles.emptyText}>لسه مفيش طلبات شراء.</Text>}
+        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 8 }}>
+          <Button title={refreshing ? 'جاري التحديث...' : 'تحديث'} secondary onPress={() => load(true)} disabled={loading || refreshing} />
         </View>
         {loading ? <ActivityIndicator color={COLORS.teal} size="large" /> : error ? <View style={styles.dataCard}><Text style={styles.errorText}>{error}</Text><Button title="إعادة المحاولة" onPress={() => load()} /></View> :
           products.length ? products.map((item, index) => (
