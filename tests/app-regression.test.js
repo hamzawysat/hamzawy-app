@@ -567,12 +567,18 @@ test('central API config validates HTTPS URLs and preserves a last-known-good co
 test('app config does not embed a backend URL in Expo metadata', () => {
   const config = JSON.parse(fs.readFileSync(path.join(root, 'app.json'), 'utf8'));
   assert.equal(config.expo.extra.apiUrl, undefined);
+  assert.equal(config.expo.android.minSdkVersion, 23);
 });
 
 test('APK workflow pads the official launcher mark and uploads the actual Lite APK filename', () => {
   const workflow = fs.readFileSync(path.join(root, '.github/workflows/build.yml'), 'utf8');
   assert.equal((workflow.match(/logo\.thumbnail\(\(860, 860\)/g) || []).length, 2);
   assert.equal((workflow.match(/path: hamzawy-sat-lite-arm64\.apk/g) || []).length, 1);
-  assert.ok(workflow.includes('cp "$APK" ../hamzawy-sat-lite-arm64.apk'));
-  assert.ok(!workflow.includes('path: hamzawy-sat-lite-armv7.apk'));
+  const liteJob = workflow.slice(workflow.indexOf('  build-lite:'));
+  assert.ok(liteJob.includes('reactNativeArchitectures: armv7-v7a') || liteJob.includes('reactNativeArchitectures: armeabi-v7a'));
+  assert.ok(liteJob.includes('armeabi-v7a'));
+  assert.ok(liteJob.includes('cp "$APK" ../hamzawy-sat-lite-armv7.apk'));
+  assert.ok(liteJob.includes('name: hamzawy-sat-lite-armv7-apk'));
+  assert.ok(liteJob.includes('path: hamzawy-sat-lite-armv7.apk'));
+  assert.ok(!liteJob.includes('arm64-v8a'));
 });
