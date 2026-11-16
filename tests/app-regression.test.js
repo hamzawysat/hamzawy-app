@@ -399,7 +399,7 @@ test('technician profile edit loads shared service categories before rendering s
 test('modular screen files are connected and app assets resolve from their new locations', () => {
   const screen = fs.readFileSync(path.join(root, 'src/screens/AppScreens.js'), 'utf8');
   const appEntry = fs.readFileSync(path.join(root, 'App.js'), 'utf8');
-  assert.match(screen, /import \{ api \} from '\.\.\/services\/api';/);
+  assert.match(screen, /import \{ api(?:, uploadRegistrationIdentity)? \} from '\.\.\/services\/api';/);
   assert.match(screen, /from '\.\/auth\/AuthScreens'/);
   assert.match(screen, /from '\.\/account\/AccountScreens'/);
   assert.ok(!screen.includes('require("./assets/'), 'screen assets must use the path relative to src/screens');
