@@ -25,6 +25,7 @@ import AreaPicker from '../../components/AreaPicker';
 import StoreScreen, { StoreAdBanner } from '../shared/StoreScreen';
 import ClientWalletScreen from './ClientWalletScreen';
 import ClientSubscriptionsScreen from './ClientSubscriptionsScreen';
+import PublicContentBanner from '../shared/PublicContentBanner';
 
 export function ClientDashboard({ context }) {
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
@@ -75,6 +76,7 @@ export function ClientDashboard({ context }) {
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 8, gap: 6 }}><View style={styles.tabRowPremium}>{[{key:'home',label:'الرئيسية'},{key:'new',label:'طلب جديد',icon:'＋'},{key:'current',label:'الطلبات الجارية',count:clientData.orders.filter(o => !['تم الانتهاء','منتهي','ملغي','مؤرشف','منتهي - اعتذار'].includes(o.status)).length},{key:'previous',label:'سابقة',count:clientData.orders.filter(o => ['تم الانتهاء','منتهي','ملغي','مؤرشف','منتهي - اعتذار'].includes(o.status)).length},{key:'track',label:'تتبع'},{key:'complaint',label:'شكوى'},{key:'wallet',label:'المحفظة'},{key:'subscriptions',label:'الاشتراكات'},{key:'store',label:'المتجر'}].map(t => <TouchableOpacity key={t.key} onPress={() => { setClientTab(t.key); if (t.key === 'new') setClientNewRequestChoice(''); }} style={[styles.pillPremium, clientTab===t.key && styles.pillPremiumActive]}><Text style={[styles.pillPremiumText,clientTab===t.key && styles.pillPremiumTextActive]}>{t.icon ? t.icon + ' ' : ''}{t.label}{t.count ? ` (${t.count})` : ''}</Text></TouchableOpacity>)}</View></ScrollView>
       <StoreAdBanner role="client" session={session} visible={clientTab !== 'store'} onOpenStore={() => setClientTab('store')} />
+      <PublicContentBanner />
 
     <ScrollView ref={clientScrollRef} contentContainerStyle={[styles.page, { paddingBottom: 110 }]} showsVerticalScrollIndicator={false}>
       {clientTab === 'home' ? <View style={styles.formCard}><Text style={styles.cardTitlePremium}>أهلاً {session.user?.name || 'بك'} 👋</Text><Text style={styles.detail}>كل خدمات حمزاوي سات في مكان واحد.</Text><View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 }}><View style={{ flexGrow: 1, flexBasis: '45%', padding: 12, borderRadius: 12, backgroundColor: '#F1F5F9' }}><Text style={styles.detail}>إجمالي طلباتي</Text><Text style={styles.cardTitlePremium}>{clientData.orders.length}</Text></View><View style={{ flexGrow: 1, flexBasis: '45%', padding: 12, borderRadius: 12, backgroundColor: '#F1F5F9' }}><Text style={styles.detail}>رصيد محفظتي</Text><Text style={styles.cardTitlePremium}>{walletBalance.toLocaleString('ar-EG')} ج</Text></View></View><Button title="طلب خدمة أو شراء من المتجر" onPress={() => { setClientTab('new'); setClientNewRequestChoice(''); }} /><Button title="فتح المحفظة" secondary onPress={() => setClientTab('wallet')} /><Button title="الاشتراكات" secondary onPress={() => setClientTab('subscriptions')} /><Button title="الدعم الفني" secondary onPress={() => setScreen('support')} /></View> : null}
