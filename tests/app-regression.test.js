@@ -515,8 +515,8 @@ test('technician registration and profile edits use approved multi-select areas,
   assert.ok(screens.includes('<AreaPicker label="مناطق العمل *" options={areas} multiple'));
   assert.match(screens, /areas: selectedAreas/);
   assert.ok(account.includes('<AreaPicker label="مناطق العمل *" options={areas} multiple'));
-  assert.doesNotMatch(screens, /مناطق العمل \(اكتب المناطق وافصل بينها بفاصلة\\)/);
-  assert.doesNotMatch(account, /مناطق العمل \(افصل بين المناطق بفاصلة\\)/);
+  assert.doesNotMatch(screens, /مناطق العمل \(اكتب المناطق وافصل بينها بفاصلة\)/);
+  assert.doesNotMatch(account, /مناطق العمل \(افصل بين المناطق بفاصلة\)/);
 });
 
 test('client order area is selected from approved options and service counts react to selected area', () => {
