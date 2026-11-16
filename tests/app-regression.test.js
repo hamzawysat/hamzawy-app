@@ -282,14 +282,13 @@ test('technician available orders and offers are deduplicated on initial load an
 });
 
 test('wallet transfer notice is limited to technician wallet and explains accepted transfer routes', () => {
-  const walletStart = app.indexOf("{tab === 'wallet' && <ScrollView");
-  const walletEnd = app.indexOf("</ScrollView>}", walletStart);
-  assert.notEqual(walletStart, -1);
-  const walletBody = app.slice(walletStart, walletEnd);
-  assert.ok(walletBody.includes('تنويه بخصوص التحويلات'));
-  assert.ok(walletBody.includes('من محفظة إلكترونية إلى محفظة إلكترونية'));
-  assert.ok(walletBody.includes('من إنستا باي إلى محفظة إلكترونية فقط'));
-  assert.ok(walletBody.includes('لا نقبل التحويل من إنستا باي إلى إنستا باي'));
+  const technicianWallet = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianWalletScreen.js'), 'utf8');
+  const clientWallet = fs.readFileSync(path.join(root, 'src/screens/client/ClientWalletScreen.js'), 'utf8');
+  assert.ok(technicianWallet.includes('تنويه بخصوص التحويلات'));
+  assert.ok(technicianWallet.includes('من محفظة إلكترونية إلى محفظة إلكترونية'));
+  assert.ok(technicianWallet.includes('من إنستا باي إلى محفظة إلكترونية فقط'));
+  assert.ok(technicianWallet.includes('لا نقبل التحويل من إنستا باي إلى إنستا باي'));
+  assert.ok(!clientWallet.includes('تنويه بخصوص التحويلات'), 'transfer notice should remain limited to technician wallet');
   assert.ok(app.includes('walletNotice:'));
 });
 
