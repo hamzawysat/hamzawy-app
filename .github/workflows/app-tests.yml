@@ -2,7 +2,7 @@ name: App Automated Tests
 
 on:
   push:
-    branches: [ main, 'refactor/app-organization-2026-10-31', 'feature/sync-web-updates-20261103', 'feature/central-api-config-20261116', 'fix/native-tab-grid-20261116' ]
+    branches: [ main, 'refactor/app-organization-2026-10-31', 'feature/sync-web-updates-20261103', 'feature/central-api-config-20261116', 'fix/native-tab-grid-20261116', 'fix/technician-id-card-upload-20261116' ]
     paths:
       - 'tests/**'
       - 'src/**'
