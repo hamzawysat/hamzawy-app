@@ -13,6 +13,30 @@ function collectJavaScript(directory) {
 const app = fs.readFileSync(path.join(root, 'App.js'), 'utf8') + '\n' + collectJavaScript(path.join(root, 'src'));
 const packageJson = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 
+test('all project JavaScript and JSX files parse successfully', () => {
+  const parser = require('@babel/parser');
+  const files = [
+    path.join(root, 'App.js'),
+    path.join(root, 'babel.config.js'),
+    ...['src', 'tests'].flatMap(directory => {
+      const collect = current => fs.readdirSync(current, { withFileTypes: true }).flatMap(entry => {
+        const fullPath = path.join(current, entry.name);
+        return entry.isDirectory() ? collect(fullPath) : /\\.js$/.test(entry.name) ? [fullPath] : [];
+      });
+      return collect(path.join(root, directory));
+    })
+  ];
+  const failures = [];
+  for (const file of files) {
+    try {
+      parser.parse(fs.readFileSync(file, 'utf8'), { sourceType: 'unambiguous', plugins: ['jsx'] });
+    } catch (error) {
+      failures.push(path.relative(root, file) + ': ' + error.message);
+    }
+  }
+  assert.deepEqual(failures, [], 'JavaScript/JSX syntax errors detected');
+});
+
 test('app resolves its API from the stable GitHub Pages configuration and has no embedded backend host', () => {
   const apiSource = fs.readFileSync(path.join(root, 'src/services/api.js'), 'utf8');
   assert.match(apiSource, /https:\/\/hamzawysat\.github\.io\/hamzawy-download\/server-config\.json/);
