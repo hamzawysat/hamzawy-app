@@ -6,6 +6,10 @@ import { COLORS } from '../../theme/colors';
 import { styles } from '../../theme/styles';
 import { Button, Field } from '../../components/FormControls';
 
+function transactionLabel(type) {
+  return ({ technician_settlement: 'مستحقات تنفيذ طلب', commission: 'عمولة المنصة', topup: 'شحن محفظة', admin_adjustment: 'تسوية إدارية', refund: 'استرداد' })[type] || 'حركة مالية';
+}
+
 const METHODS = [
   { id: 'vodafone_cash', label: 'فودافون كاش' },
   { id: 'orange_cash', label: 'أورنج كاش' },
@@ -101,7 +105,8 @@ export default function TechnicianWalletScreen({ session, user, transferNumbers,
       {tab === 'transactions' ? <View style={styles.dataCard}>
         <Text style={styles.cardTitlePremium}>سجل الحركات المالية</Text>
         {transactions.length ? transactions.map((item, index) => <View key={String(item._id || index)} style={{ paddingVertical: 10, borderTopWidth: index ? 1 : 0, borderColor: COLORS.border }}>
-          <Text style={styles.detailBold}>{item.description || item.type || 'حركة مالية'} • <Text style={{ color: Number(item.amount) >= 0 ? COLORS.greenDark : COLORS.red }}>{Number(item.amount || 0) > 0 ? '+' : ''}{item.amount ?? '—'} ج</Text></Text>
+          <Text style={styles.detailBold}>{transactionLabel(item.type)} • <Text style={{ color: Number(item.amount) >= 0 ? COLORS.greenDark : COLORS.red }}>{Number(item.amount || 0) > 0 ? '+' : ''}{item.amount ?? '—'} ج</Text></Text>
+          <Text style={styles.detail}>{item.description || ''}</Text>
           {item.createdAt ? <Text style={styles.detailSmall}>{new Date(item.createdAt).toLocaleString('ar-EG')}</Text> : null}
         </View>) : <Text style={styles.emptyText}>لا توجد حركات مالية مسجلة حتى الآن.</Text>}
       </View> : null}
