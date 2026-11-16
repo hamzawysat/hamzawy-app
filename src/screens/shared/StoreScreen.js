@@ -92,12 +92,14 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
     if (silent) setRefreshing(true); else setLoading(true);
     setError('');
     try {
-      const [catalog, history] = await Promise.all([
+      const results = await Promise.allSettled([
         api('/store/products'),
         api('/store/' + role + '/orders', { token: session.token })
       ]);
+      if (results[0].status === 'rejected') throw results[0].reason;
+      const catalog = results[0].value;
       setProducts(Array.isArray(catalog.products) ? catalog.products : []);
-      setOrders(Array.isArray(history.orders) ? history.orders : []);
+      setOrders(results[1].status === 'fulfilled' && Array.isArray(results[1].value.orders) ? results[1].value.orders : []);
     } catch (e) {
       setError(e.message || 'تعذر تحميل المتجر حاليًا.');
     } finally {
@@ -118,7 +120,7 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
   const submitPurchase = async () => {
     if (!selected || submitting) return;
     const qty = Number(quantity);
-    if (!Number.isInteger(qty) || qty < 1 || qty > 99) {
+    if (!Number.isInteger(qty) || qty < 1 || qty > 1000) {
       Alert.alert('الكمية غير صحيحة', 'اكتب كمية من 1 إلى 99.');
       return;
     }
