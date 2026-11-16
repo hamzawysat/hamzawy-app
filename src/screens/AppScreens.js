@@ -1103,7 +1103,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     const reference = String(topup.reference || '').trim().slice(0, 50);
     const technicianStatus = String(techData.profile?.status || session?.user?.status || '').trim();
     if (technicianStatus !== 'معتمد') { Alert.alert('الحساب غير معتمد', 'شحن المحفظة متاح بعد اعتماد حسابك من الإدارة.'); return; }
-    if (!Number.isInteger(amount) || amount < 10 || amount > 10000 || !/^01[0-9]{9}$/.test(phone) || !topup.method || String(topup.reference || '').trim().length > 50) { Alert.alert('بيانات غير صحيحة', 'اكتب مبلغًا من 10 إلى 10000 جنيه ورقم محوّل صحيحًا واختار نوع المحفظة.'); return; }
+    if (!Number.isInteger(amount) || amount < 10 || amount > 10000 || !/^01[0125][0-9]{8}$/.test(phone) || !topup.method || String(topup.reference || '').trim().length > 50) { Alert.alert('بيانات غير صحيحة', 'اكتب مبلغًا من 10 إلى 10000 جنيه ورقم محوّل صحيحًا واختار نوع المحفظة.'); return; }
     try {
       const result = await api('/fanni/wallet/topup', { method: 'POST', token: session.token, body: { amount, fromPhone: phone, phone, reference, referenceCode: reference, method: topup.method, note: ('تحويل من ' + phone + ' بقيمة ' + amount + ' - كود: ' + (reference || 'بدون')).slice(0, 200) } });
       Alert.alert('تم إرسال طلب الشحن', result.message || 'طلبك قيد مراجعة الإدارة.');
@@ -1313,7 +1313,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
   async function saveProfileEdits() {
     if (!session || profileEditForm.loading) return;
     const phone = String(profileEditForm.phone || '').replace(/[^0-9]/g, '');
-    if (!/^01[0-9]{9}$/.test(phone)) { setProfileEditForm(current => ({ ...current, error: 'رقم الهاتف لازم يكون 11 رقمًا ويبدأ بـ 01.' })); return; }
+    if (!/^01[0125][0-9]{8}$/.test(phone)) { setProfileEditForm(current => ({ ...current, error: 'رقم الهاتف لازم يكون 11 رقمًا ويبدأ بـ 01.' })); return; }
     if (session.role === 'client') {
       const name = String(profileEditForm.name || '').trim();
       if (name.length < 2 || name.length > 50) { setProfileEditForm(current => ({ ...current, error: 'اكتب الاسم بشكل صحيح (من حرفين إلى 50 حرفًا).' })); return; }
@@ -1353,7 +1353,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
 
   async function startPasswordRecovery() {
     const phone = recoveryForm.phone.replace(/[^0-9]/g, '');
-    if (!/^01[0-9]{9}$/.test(phone)) { setRecoveryForm(v => ({ ...v, error: 'اكتب رقم الهاتف المسجل بالحساب بشكل صحيح.' })); return; }
+    if (!/^01[0125][0-9]{8}$/.test(phone)) { setRecoveryForm(v => ({ ...v, error: 'اكتب رقم الهاتف المسجل بالحساب بشكل صحيح.' })); return; }
     setRecoveryForm(v => ({ ...v, loading: true, error: '', info: '' }));
     try {
       const result = await api('/password-recovery/request', { method: 'POST', body: { role: recoveryForm.role, phone } });
@@ -1591,7 +1591,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
   async function adminSaveProfileEdit() {
     if (!adminProfileEdit.id || adminProfileEdit.loading) return;
     const phone = String(adminProfileEdit.phone || '').replace(/[^0-9]/g, '');
-    if (!/^01[0-9]{9}$/.test(phone)) { setAdminProfileEdit(current => ({ ...current, error: 'رقم الهاتف لازم يكون 11 رقمًا ويبدأ بـ 01.' })); return; }
+    if (!/^01[0125][0-9]{8}$/.test(phone)) { setAdminProfileEdit(current => ({ ...current, error: 'رقم الهاتف لازم يكون 11 رقمًا ويبدأ بـ 01.' })); return; }
     setAdminProfileEdit(current => ({ ...current, loading: true, error: '', message: '' }));
     try {
       let result;
