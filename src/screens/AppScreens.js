@@ -170,6 +170,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         }
         if (!mounted) return;
         setSession(saved);
+        if (saved.role === 'client') setClientTab('home');
         const target = saved.role === 'client' ? 'client' : 'technician';
         screenRef.current = target;
         setScreenState(target);
@@ -193,8 +194,12 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         setNotificationsOpen(false);
         return true;
       }
+      // داخل لوحة العميل، الرجوع يعيد إلى الرئيسية قبل مغادرة اللوحة.
+      if (screen === 'client' && clientTab !== 'home') {
+        setClientTab('home');
+        return true;
+      }
       let previous = screenHistoryRef.current.pop();
-      if (screen === 'home') return false;
       while (previous && ['home', 'login', 'clientRegister', 'technicianRegister'].includes(previous) && session) {
         previous = screenHistoryRef.current.pop();
       }
@@ -203,21 +208,25 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         setScreenState(previous);
         return true;
       }
-      if (session) {
-        logout();
+      const rootScreen = session
+        ? (session.role === 'client' ? 'client' : session.role === 'admin' ? 'admin' : 'technician')
+        : 'home';
+      if (screen !== rootScreen) {
+        screenHistoryRef.current = [];
+        screenRef.current = rootScreen;
+        setScreenState(rootScreen);
+        if (rootScreen === 'client') setClientTab('home');
         return true;
       }
-      if (screen !== 'home') {
-        screenRef.current = 'home';
-        setScreenState('home');
-        return true;
-      }
-      Alert.alert('صُنّاع', 'أنت بالفعل في الصفحة الرئيسية.');
+      Alert.alert('الخروج من التطبيق؟', 'هل تريد الخروج من تطبيق حمزاوي سات؟', [
+        { text: 'إلغاء', style: 'cancel' },
+        { text: 'خروج', style: 'destructive', onPress: () => BackHandler.exitApp() },
+      ]);
       return true;
     };
     const subscription = BackHandler.addEventListener('hardwareBackPress', onHardwareBack);
     return () => subscription.remove();
-  }, [screen, offerDraft, notificationsOpen, session]);
+  }, [screen, offerDraft, notificationsOpen, session, clientTab, setClientTab]);
 
   useEffect(() => {
     if (!['client', 'technician', 'admin', 'clientRegister', 'technicianRegister', 'profileEdit'].includes(screen)) return;
@@ -540,7 +549,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         await SecureStore.setItemAsync('sonaa.auth.session.v1', JSON.stringify(nextSession));
       }
       setSession(nextSession);
-      if (role === 'client') setClientTab('new');
+      if (role === 'client') setClientTab('home');
       if (role === 'fanni') setTechData(current => ({ ...current, tab: 'offers' }));
       setPassword('');
       setScreen(role === 'admin' ? 'admin' : role === 'client' ? 'client' : 'technician');
@@ -558,7 +567,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
       const nextSession = { token: result.token, user: result.client, role: 'client' };
       await SecureStore.setItemAsync('sonaa.auth.session.v1', JSON.stringify(nextSession));
       setSession(nextSession);
-      setClientTab('new');
+      setClientTab('home');
       setScreen('client');
     } catch (err) { Alert.alert('تعذر إنشاء الحساب', err.message || 'راجع البيانات وحاول مرة أخرى.'); }
     finally { setLoginLoading(false); }
