@@ -10,7 +10,7 @@
     ],
     "android": {
       "package": "com.sonaa.app",
-      "versionCode": 15,
+      "versionCode": 16,
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
