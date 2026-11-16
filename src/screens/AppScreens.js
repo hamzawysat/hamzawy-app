@@ -350,6 +350,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         profile: results[0].status === 'fulfilled' ? (results[0].value.user || results[0].value) : session.user,
         orders: results[1].status === 'fulfilled' ? uniqueByOrderSN(toList(results[1].value, ['orders'])) : [],
         offers: results[2].status === 'fulfilled' ? uniqueByOrderSN(toList(results[2].value, ['offers'])) : [],
+        ordersPagination: results[1].status === 'fulfilled' ? (results[1].value.pagination || null) : current.ordersPagination,
         wallet: results[3].status === 'fulfilled' ? toList(results[3].value, ['history', 'transactions', 'requests']) : [],
         loading: false,
         error: failed ? failed.reason?.message || 'تعذر تحميل بعض بيانات الفني' : '',
@@ -774,7 +775,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
   useEffect(() => {
     if (!session || screen !== 'technician' || session.role !== 'fanni') return;
     let active = true, busy = false;
-    const refreshTechnicianData = async () => { if (busy) return; busy = true; try { const results = await Promise.allSettled([api('/orders/available', { token: session.token }), api('/orders/my-offers', { token: session.token }), api('/fanni/wallet/history', { token: session.token })]); if (active) setTechData(current => ({ ...current, orders: results[0].status === 'fulfilled' ? uniqueByOrderSN(toList(results[0].value, ['orders'])) : current.orders, offers: results[1].status === 'fulfilled' ? uniqueByOrderSN(toList(results[1].value, ['offers'])) : current.offers, wallet: results[2].status === 'fulfilled' ? toList(results[2].value, ['history', 'transactions', 'requests']) : current.wallet })); } catch {} finally { busy = false; } };
+    const refreshTechnicianData = async () => { if (busy) return; busy = true; try { const results = await Promise.allSettled([api('/orders/available', { token: session.token }), api('/orders/my-offers', { token: session.token }), api('/fanni/wallet/history', { token: session.token })]); if (active) setTechData(current => ({ ...current, orders: results[0].status === 'fulfilled' ? uniqueByOrderSN(toList(results[0].value, ['orders'])) : current.orders, offers: results[1].status === 'fulfilled' ? uniqueByOrderSN(toList(results[1].value, ['offers'])) : current.offers, ordersPagination: current.ordersPagination, wallet: results[2].status === 'fulfilled' ? toList(results[2].value, ['history', 'transactions', 'requests']) : current.wallet })); } catch {} finally { busy = false; } };
     const timer = setInterval(refreshTechnicianData, 5000);
     return () => { active = false; clearInterval(timer); };
   }, [session, screen]);
