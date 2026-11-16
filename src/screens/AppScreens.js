@@ -11,7 +11,7 @@ import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
-import { api } from '../services/api';
+import { api, uploadRegistrationIdentity } from '../services/api';
 import { COLORS } from '../theme/colors';
 import { styles } from '../theme/styles';
 import { getOrderChatTimeline, toList, dateLabel, getServiceEmoji } from '../utils/app-helpers';
