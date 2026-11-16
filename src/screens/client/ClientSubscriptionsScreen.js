@@ -38,7 +38,9 @@ export default function ClientSubscriptionsScreen({ session, walletBalance = 0, 
   useEffect(() => { load(); }, [load]);
 
   const purchase = item => {
-    Alert.alert('تأكيد طلب الاشتراك', 'إرسال طلب الاشتراك في ' + item.name + ' بقيمة ' + item.price + ' جنيه؟ لن يتم خصم أي مبلغ الآن. سيتم إشعار الإدارة، والخصم يتم فقط بعد الموافقة والتفعيل.', [
+    const price = Number(item.price || 0);
+    if (!Number.isFinite(price) || price < 0) { Alert.alert('سعر غير صحيح', 'سعر الباقة غير صحيح.'); return; }
+    Alert.alert('تأكيد طلب الاشتراك', 'إرسال طلب الاشتراك في ' + item.name + ' بقيمة ' + price + ' جنيه؟ لن يتم خصم أي مبلغ الآن. سيتم إشعار الإدارة، والخصم يتم فقط بعد الموافقة والتفعيل.', [
       { text: 'رجوع', style: 'cancel' },
       { text: 'إرسال الطلب', onPress: async () => {
         setSubmitting(String(item._id)); setError('');
