@@ -568,3 +568,11 @@ test('app config does not embed a backend URL in Expo metadata', () => {
   const config = JSON.parse(fs.readFileSync(path.join(root, 'app.json'), 'utf8'));
   assert.equal(config.expo.extra.apiUrl, undefined);
 });
+
+test('APK workflow pads the official launcher mark and uploads the actual Lite APK filename', () => {
+  const workflow = fs.readFileSync(path.join(root, '.github/workflows/build.yml'), 'utf8');
+  assert.equal((workflow.match(/logo\.thumbnail\(\(860, 860\)/g) || []).length, 2);
+  assert.equal((workflow.match(/path: hamzawy-sat-lite-arm64\.apk/g) || []).length, 1);
+  assert.ok(workflow.includes('cp "$APK" ../hamzawy-sat-lite-arm64.apk'));
+  assert.ok(!workflow.includes('path: hamzawy-sat-lite-armv7.apk'));
+});
