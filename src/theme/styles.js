@@ -161,8 +161,8 @@ export const styles = StyleSheet.create({
   successText: { color: COLORS.greenMedium, fontWeight: '900', textAlign: 'right', fontSize: 13 },
 
   // TABS PREMIUM
-  tabRowPremium: { flexDirection: 'row-reverse', flexWrap: 'nowrap', alignItems: 'center', gap: 3, marginVertical: 8, paddingHorizontal: 4, paddingVertical: 4, backgroundColor: COLORS.white, borderBottomWidth: 1, borderBottomColor: COLORS.paleIndigo },
-  pillPremium: { flex: 1, minWidth: 0, alignItems: 'center', borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.background, paddingHorizontal: 2, paddingVertical: 7, marginVertical: 2 },
+  tabRowPremium: { width: '100%', flexDirection: 'row-reverse', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'stretch', gap: 8, marginVertical: 8, paddingHorizontal: 10, paddingVertical: 8, backgroundColor: COLORS.white, borderBottomWidth: 1, borderBottomColor: COLORS.paleIndigo },
+  pillPremium: { flexGrow: 1, flexBasis: '30%', maxWidth: '32%', minWidth: 0, minHeight: 50, alignItems: 'center', justifyContent: 'center', borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.background, paddingHorizontal: 5, paddingVertical: 8, marginVertical: 2 },
   pillPremiumActive: { backgroundColor: COLORS.blue, borderColor: COLORS.indigo700, borderBottomWidth: 2, elevation: 3 }, 
   pillPremiumText: { color: COLORS.slateMuted, fontSize: 10, fontWeight: '800', textAlign: 'center' },
   pillPremiumTextActive: { color: COLORS.white },
