@@ -36,7 +36,20 @@
         {
           "microphonePermission": "السماح لحمزاوي سات بتسجيل وصف الطلب الصوتي."
         }
-      ]
-    ]
+      ],
+      "expo-updates"
+    ],
+    "updates": {
+      "url": "https://u.expo.dev/01cd6ee6-73a2-4404-8381-d60446befcc5",
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0,
+      "requestHeaders": {
+        "expo-channel-name": "production"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    }
   }
 }
