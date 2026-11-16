@@ -558,7 +558,7 @@ test('central API config validates HTTPS URLs and preserves a last-known-good co
   assert.match(source, /CONFIG_CACHE_KEY/);
   assert.match(source, /isValidConfig/);
   assert.match(source, /last-known-good|last known good/i);
-  assert.match(source, /protocol !== 'https:'/);
+  assert.match(source, /value\.apiProtocol !== 'https'/);
   assert.match(source, /configVersion/);
 });
 
