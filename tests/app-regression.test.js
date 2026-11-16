@@ -756,3 +756,16 @@ test('technician registration requires both private identity card uploads and se
   assert.equal(pkg.dependencies['expo-image-picker'], '~15.0.7');
   assert.equal(pkg.dependencies['expo-image-manipulator'], '~12.0.5');
 });
+
+
+test('client and technician always start on their home tab after login and session restore', () => {
+  const screens = fs.readFileSync(path.join(root, 'src/screens/AppScreens.js'), 'utf8');
+  const state = fs.readFileSync(path.join(root, 'src/hooks/useAppState.js'), 'utf8');
+  assert.match(state, /const \\[techData, setTechData\\] = useState\\([^;]*tab: 'home'/);
+  assert.ok(screens.includes("if (saved.role === 'client') setClientTab('home')"));
+  assert.ok(screens.includes("if (saved.role === 'fanni') setTechData(current => ({ ...current, tab: 'home' }))"));
+  assert.ok(screens.includes("if (role === 'client') setClientTab('home')"));
+  assert.ok(screens.includes("if (role === 'fanni') setTechData(current => ({ ...current, tab: 'home' }))"));
+  assert.ok(screens.includes("tab: 'home' }), 'logout should reset the technician tab to home'));
+  assert.ok(!screens.includes("if (role === 'fanni') setTechData(current => ({ ...current, tab: 'offers' }))"));
+});
