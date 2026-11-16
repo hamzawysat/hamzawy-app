@@ -414,7 +414,7 @@ test('client account displays the shared store ad banner above the account headi
   const screens = fs.readFileSync(path.join(root, 'src/screens/AppScreens.js'), 'utf8');
   assert.match(account, /import \{ StoreAdBanner \} from '\.\.\/shared\/StoreScreen';/);
   assert.match(account, /isClientAccount \? <StoreAdBanner role="client" session=\{session\} onOpenStore=\{onOpenStore\} \/> : null/);
-  assert.match(screens, /onOpenStore=\{\(\) => \{ setClientTab\('store'\); setScreen\('client'\); \} \}/);
+  assert.match(screens, /onOpenStore=\{\(\) => \{ setClientTab\('store'\); setScreen\('client'\); \}\s*\}/);
 });
  
 test('authentication and account screens are extracted from the main screen controller', () => {
