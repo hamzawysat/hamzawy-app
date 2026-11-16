@@ -102,7 +102,7 @@ export default function ClientWalletScreen({ session, onBalanceChange }) {
   const tabs = [{ id: 'topup', label: 'شحن المحفظة' }, { id: 'requests', label: 'طلبات الشحن' }, { id: 'transactions', label: 'سجل العمليات' }];
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 14, paddingBottom: 30 }} showsVerticalScrollIndicator={false}>
+    <View style={{ padding: 14, paddingBottom: 30 }}>
       <View style={[styles.dataCard, { backgroundColor: COLORS.navy, borderColor: COLORS.navy }]}>
         <Text style={{ color: '#DCEBFA', fontSize: 12, fontWeight: '800' }}>رصيد محفظتك</Text>
         <Text style={{ color: '#FFFFFF', fontSize: 28, fontWeight: '900', marginTop: 6 }}>{wallet.balance.toLocaleString('ar-EG')} جنيه</Text>
@@ -152,6 +152,6 @@ export default function ClientWalletScreen({ session, onBalanceChange }) {
           {item.createdAt ? <Text style={styles.detailSmall}>{new Date(item.createdAt).toLocaleString('ar-EG')}</Text> : null}
         </View>) : <Text style={styles.emptyText}>لا توجد حركات مالية مسجلة.</Text>}
       </View> : null}
-    </ScrollView>
+    </View>
   );
 }
