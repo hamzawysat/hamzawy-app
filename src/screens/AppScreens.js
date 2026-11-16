@@ -1828,17 +1828,17 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
           <Image source={require('../../assets/LOGO_UPLOAD_HERE/logo.png')} style={styles.homeLogoImage} resizeMode="contain" />
         </View>
         <Text style={styles.homeBrandTitlePremium}>حمزاوي سات</Text>
-        <Text style={styles.homeTaglinePremium}>كُلُّ خِدْمَةٍ تَبْدَأُ بِخُطْوَةٍ</Text>
-        <Text style={styles.homeIntroPremium}>أكثر من عشرين مهنة في مكان واحد، وطلب خدمتك بخطوات بسيطة وسريعة.</Text>
+        <Text style={styles.homeTaglinePremium}>خدمات الدش وكاميرات المراقبة والشاشات</Text>
+        <Text style={styles.homeIntroPremium}>تركيب وصيانة وضبط الدش وكاميرات المراقبة والشاشات، بخطوات بسيطة وخدمة موثوقة.</Text>
       </View>
       <View style={styles.roleCardsPremium}>
         <TouchableOpacity activeOpacity={0.88} onPress={() => goLogin('client')} style={[styles.roleCardPremium, styles.clientRoleCardPremium]}>
           <View style={styles.clientIconCirclePremium}><Text style={styles.roleIconPremium}>⌂</Text></View>
-          <View style={styles.roleCardCopy}><Text style={styles.roleTitlePremium}>الدخول كعميل</Text><Text style={styles.roleDescriptionPremium}>اطلب الخدمة اللي محتاجها وتابع عروض الفنيين بسهولة.</Text><View style={styles.roleActionBadge}><Text style={styles.roleActionBadgeText}>اطلب الآن ←</Text></View></View>
+          <View style={styles.roleCardCopy}><Text style={styles.roleTitlePremium}>الدخول كعميل</Text><Text style={styles.roleDescriptionPremium}>اطلب تركيب أو صيانة الدش أو الكاميرات أو الشاشات، وتابع عروض الفنيين بسهولة.</Text><View style={styles.roleActionBadge}><Text style={styles.roleActionBadgeText}>اطلب الآن ←</Text></View></View>
         </TouchableOpacity>
         <TouchableOpacity activeOpacity={0.88} onPress={() => goLogin('fanni')} style={[styles.roleCardPremium, styles.technicianRoleCardPremium]}>
           <View style={styles.technicianIconCirclePremium}><Text style={styles.roleIconPremium}>⚒</Text></View>
-          <View style={styles.roleCardCopy}><Text style={styles.roleTitlePremium}>الدخول كفني</Text><Text style={styles.roleDescriptionPremium}>استقبل الطلبات وقدّم عروضك وتابع مكسبك.</Text><View style={[styles.roleActionBadge, {backgroundColor:COLORS.navy}]}><Text style={styles.roleActionBadgeText}>شوف فرص الشغل ←</Text></View></View>
+          <View style={styles.roleCardCopy}><Text style={styles.roleTitlePremium}>الدخول كفني</Text><Text style={styles.roleDescriptionPremium}>استقبل طلبات الدش والكاميرات والشاشات، وقدّم عروضك وتابع شغلك.</Text><View style={[styles.roleActionBadge, {backgroundColor:COLORS.navy}]}><Text style={styles.roleActionBadgeText}>شوف فرص الشغل ←</Text></View></View>
         </TouchableOpacity>
       </View>
       <View style={styles.homeFooterPremium}><View style={styles.homeFooterDot} /><Text style={styles.homeFooterText}>اختار طريقة الدخول وابدأ مع حمزاوي سات</Text></View>
