@@ -23,15 +23,17 @@ export default function ClientSubscriptionsScreen({ session, walletBalance = 0, 
     if (!session?.token) return;
     setLoading(true); setError('');
     try {
-      const [catalog, current] = await Promise.all([
+      const [catalog, current, wallet] = await Promise.all([
         api('/client/commerce/catalog', { token: session.token }),
-        api('/client/commerce/subscriptions', { token: session.token })
+        api('/client/commerce/subscriptions', { token: session.token }),
+        api('/client/wallet', { token: session.token })
       ]);
       setItems(Array.isArray(catalog.items) ? catalog.items : []);
       setSubscriptions(Array.isArray(current.subscriptions) ? current.subscriptions : []);
+      if (wallet.balance !== undefined || wallet.walletBalance !== undefined) onWalletBalanceChange?.(Number(wallet.balance ?? wallet.walletBalance));
     } catch (e) { setError(e.message || 'تعذر تحميل الاشتراكات.'); }
     finally { setLoading(false); }
-  }, [session?.token]);
+  }, [session?.token, onWalletBalanceChange]);
 
   useEffect(() => { load(); }, [load]);
 
