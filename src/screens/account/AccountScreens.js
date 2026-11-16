@@ -10,7 +10,7 @@ const isClientAccount = session?.role === 'client';
     const completedHistory = (history || []).filter(item => ['تم الانتهاء', 'مكتمل', 'مكتملة', 'completed', 'complete', 'finished'].includes(String(item.status || item.orderStatus || '').trim().toLowerCase()));
     return <SafeAreaView style={styles.safe}><ScrollView contentContainerStyle={styles.page}>
       <Button title="‹ رجوع" secondary onPress={() => setScreen(session?.role === 'client' ? 'client' : session?.role === 'fanni' ? 'technician' : 'admin')} />
-      <Text style={styles.title}>حسابي</Text>
+      <Text style={[styles.title, { textAlign: 'right', alignSelf: 'stretch', width: '100%' }]}>حسابي</Text>
       <View style={styles.dataCard}>
         <Text style={styles.sectionTitle}>بيانات الحساب</Text>
         <View style={styles.detailRow}><Text style={styles.detailLabel}>الاسم</Text><Text style={styles.detailValue}>{session?.user?.name || '—'}</Text></View>
