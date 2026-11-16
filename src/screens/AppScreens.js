@@ -1828,7 +1828,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
 
   if (screen === 'login') return <LoginScreen authMode={authMode} username={username} setUsername={setUsername} password={password} setPassword={setPassword} handleLogin={handleLogin} loginLoading={loginLoading} setRecoveryForm={setRecoveryForm} setScreen={setScreen} />;
 
-  if (screen === 'account') return <AccountScreen session={session} clientData={clientData} techData={techData} setScreen={setScreen} beginProfileEdit={beginProfileEdit} setRatingPrompt={setRatingPrompt} getOrderSN={getOrderSN} />;
+  if (screen === 'account') return <AccountScreen session={session} clientData={clientData} techData={techData} setScreen={setScreen} beginProfileEdit={beginProfileEdit} setRatingPrompt={setRatingPrompt} getOrderSN={getOrderSN} onOpenStore={() => { setClientTab('store'); setScreen('client'); }} />;
 
   if (screen === 'profileEdit') return <ProfileEditScreen session={session} techData={techData} categories={categories} profileEditForm={profileEditForm} setProfileEditForm={setProfileEditForm} areas={areas} profileEditOpenCategory={profileEditOpenCategory} setProfileEditOpenCategory={setProfileEditOpenCategory} toggleProfileEditSpecialty={toggleProfileEditSpecialty} saveProfileEdits={saveProfileEdits} setScreen={setScreen} />;
 
