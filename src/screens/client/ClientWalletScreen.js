@@ -144,7 +144,7 @@ export default function ClientWalletScreen({ session, onBalanceChange }) {
         {wallet.topupRequests.length ? wallet.topupRequests.map((item, index) => <View key={String(item._id || index)} style={{ paddingVertical: 10, borderTopWidth: index ? 1 : 0, borderColor: COLORS.border }}>
           <Text style={styles.detailBold}>{Number(item.amount || 0).toLocaleString('ar-EG')} جنيه • {item.status || 'قيد المراجعة'}</Text>
           <Text style={styles.detail}>{(METHODS.find(x => x.id === item.method)?.label || 'تحويل محفظة') + ' • ' + (item.senderNumber || item.fromPhone || '')}</Text>
-          {item.reviewReason ? <Text style={styles.errorText}>{item.reviewReason}</Text> : null}
+          {item.referenceNumber ? <Text style={styles.detail}>الكود المرجعي: {item.referenceNumber}</Text> : null}{item.reviewReason ? <Text style={styles.errorText}>{item.reviewReason}</Text> : null}
           {item.createdAt ? <Text style={styles.detailSmall}>{new Date(item.createdAt).toLocaleString('ar-EG')}</Text> : null}
         </View>) : <Text style={styles.emptyText}>لا توجد طلبات شحن حتى الآن.</Text>}
       </View> : null}
