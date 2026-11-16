@@ -39,9 +39,11 @@ export function StoreAdBanner({ role, session, visible = true, onOpenStore }) {
   useEffect(() => {
     let active = true;
     let loaded = false;
+    let loadingAds = false;
     let retryTimer = null;
     const loadAds = async () => {
-      if (!active || loaded) return;
+      if (!active || loaded || loadingAds) return;
+      loadingAds = true;
       try {
         const result = await api('/store/products');
         if (!active) return;
@@ -60,7 +62,8 @@ export function StoreAdBanner({ role, session, visible = true, onOpenStore }) {
         setIndex(0);
         loaded = true;
         if (retryTimer) clearInterval(retryTimer);
-      } catch (_) {}
+      } catch (_) { }
+      finally { loadingAds = false; }
     };
     loadAds();
     retryTimer = setInterval(loadAds, 3000);
