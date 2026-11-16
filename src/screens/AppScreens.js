@@ -9,7 +9,7 @@ import * as Clipboard from 'expo-clipboard';
 import * as SecureStore from 'expo-secure-store';
 import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system';
-import { API_BASE, api } from '../services/api';
+import { api } from '../services/api';
 import { COLORS } from '../theme/colors';
 import { styles } from '../theme/styles';
 import { getOrderChatTimeline, toList, dateLabel, getServiceEmoji } from '../utils/app-helpers';

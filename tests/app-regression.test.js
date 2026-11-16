@@ -13,8 +13,14 @@ function collectJavaScript(directory) {
 const app = fs.readFileSync(path.join(root, 'App.js'), 'utf8') + '\n' + collectJavaScript(path.join(root, 'src'));
 const packageJson = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 
-test('app points to the production Sonaa API', () => {
-  assert.match(app, /const API_BASE = 'https:\/\/sonaa-backend-v2\.vercel\.app\/api';/);
+test('app resolves its API from the stable GitHub Pages configuration and has no embedded backend host', () => {
+  const apiSource = fs.readFileSync(path.join(root, 'src/services/api.js'), 'utf8');
+  assert.match(apiSource, /https:\/\/hamzawysat\.github\.io\/hamzawy-download\/server-config\.json/);
+  assert.match(apiSource, /SecureStore\.getItemAsync/);
+  assert.match(apiSource, /SecureStore\.setItemAsync/);
+  assert.match(apiSource, /schemaVersion === 1/);
+  assert.match(apiSource, /getApiUrl/);
+  assert.doesNotMatch(app, /(?:sonaa-backend-v2|hamzawy-sat)\.(?:vercel\.app|dynv6\.net)/);
 });
 
 test('rating dismissal uses versioned encrypted storage and keeps migration keys', () => {
@@ -311,7 +317,7 @@ test('mobile client can record, preview, delete, and submit voice order descript
 });
 test('technician can play voice descriptions in available and accepted jobs through authenticated backend endpoint', () => {
   assert.equal(app.split('function VoicePlayback({ orderSN, token, hasVoiceRecording })').length - 1, 1);
-  assert.ok(app.includes("API_BASE + '/orders/' + encodeURIComponent(String(orderSN)) + '/voice'"));
+  assert.ok(app.includes("getApiUrl('/orders/' + encodeURIComponent(String(orderSN)) + '/voice')"));
   assert.ok(app.includes("headers: { Authorization: 'Bearer ' + token }"));
   assert.ok(app.includes('<VoicePlayback orderSN={sn} token={session?.token} hasVoiceRecording={Boolean(item.hasVoiceRecording)} />'));
   assert.ok(app.includes('assignedDetails[sn].order.hasVoiceRecording || item.hasVoiceRecording'));
@@ -356,7 +362,7 @@ test('technician profile edit loads shared service categories before rendering s
 test('modular screen files are connected and app assets resolve from their new locations', () => {
   const screen = fs.readFileSync(path.join(root, 'src/screens/AppScreens.js'), 'utf8');
   const appEntry = fs.readFileSync(path.join(root, 'App.js'), 'utf8');
-  assert.match(screen, /import \{ API_BASE, api \} from '\.\.\/services\/api';/);
+  assert.match(screen, /import \{ api \} from '\.\.\/services\/api';/);
   assert.match(screen, /from '\.\/auth\/AuthScreens'/);
   assert.match(screen, /from '\.\/account\/AccountScreens'/);
   assert.ok(!screen.includes('require("./assets/'), 'screen assets must use the path relative to src/screens');
@@ -542,4 +548,19 @@ test('client area selection hides the search field, reveals the detailed address
 test('technician dashboard opens on the opportunities tab by default', () => {
   const state = fs.readFileSync(path.join(root, 'src/hooks/useAppState.js'), 'utf8');
   assert.match(state, /tab: 'available'/);
+});
+
+
+test('central API config validates HTTPS URLs and preserves a last-known-good configuration', () => {
+  const source = fs.readFileSync(path.join(root, 'src/services/api.js'), 'utf8');
+  assert.match(source, /CONFIG_CACHE_KEY/);
+  assert.match(source, /isValidConfig/);
+  assert.match(source, /last-known-good|last known good/i);
+  assert.match(source, /protocol !== 'https:'/);
+  assert.match(source, /configVersion/);
+});
+
+test('app config does not embed a backend URL in Expo metadata', () => {
+  const config = JSON.parse(fs.readFileSync(path.join(root, 'app.json'), 'utf8'));
+  assert.equal(config.expo.extra.apiUrl, undefined);
 });

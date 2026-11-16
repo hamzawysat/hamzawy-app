@@ -18,7 +18,6 @@
       }
     },
     "extra": {
-      "apiUrl": "https://sonaa-backend-v2.vercel.app/api",
       "eas": {
         "projectId": "01cd6ee6-73a2-4404-8381-d60446befcc5"
       }
