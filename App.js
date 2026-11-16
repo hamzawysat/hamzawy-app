@@ -64,7 +64,8 @@ function AppContent() {
         <Animated.Image source={require("./assets/LOGO_UPLOAD_HERE/logo.png")} style={[splashStyles.logo, { transform: [{ rotate: logoRotation }] }]} resizeMode="contain" />
       </View>
       <Text style={splashStyles.title}>حمزاوي سات</Text>
-      <Text style={splashStyles.caption}>الدش • كاميرات المراقبة • الشاشات • اختبار التحديث</Text>
+      <Text style={splashStyles.caption}>الدش • كاميرات المراقبة • الشاشات</Text>
+      <Text style={splashStyles.caption}>اختبار تحديث OTA</Text>
       <View style={splashStyles.loadingTrack}><View style={splashStyles.loadingFill} /></View>
     </View> : null}
   </View>;
