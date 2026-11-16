@@ -161,8 +161,8 @@ export const styles = StyleSheet.create({
   successText: { color: COLORS.greenMedium, fontWeight: '900', textAlign: 'right', fontSize: 13 },
 
   // TABS PREMIUM
-  tabRowPremium: { width: '100%', flexDirection: 'row-reverse', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'stretch', gap: 8, marginVertical: 8, paddingHorizontal: 10, paddingVertical: 8, backgroundColor: COLORS.white, borderBottomWidth: 1, borderBottomColor: COLORS.paleIndigo },
-  pillPremium: { flexGrow: 1, flexBasis: '30%', maxWidth: '32%', minWidth: 0, minHeight: 50, alignItems: 'center', justifyContent: 'center', borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.background, paddingHorizontal: 5, paddingVertical: 8, marginVertical: 2 },
+  tabRowPremium: { width: '100%', direction: 'rtl', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'stretch', alignContent: 'flex-start', gap: 6, marginVertical: 4, paddingHorizontal: 8, paddingVertical: 5, backgroundColor: COLORS.white, borderBottomWidth: 1, borderBottomColor: COLORS.paleIndigo },
+  pillPremium: { flexGrow: 0, flexBasis: '17.5%', maxWidth: '18%', minWidth: 0, minHeight: 42, alignItems: 'center', justifyContent: 'center', borderRadius: 10, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.background, paddingHorizontal: 3, paddingVertical: 5, marginVertical: 0 },
   pillPremiumActive: { backgroundColor: COLORS.blue, borderColor: COLORS.indigo700, borderBottomWidth: 2, elevation: 3 }, 
   pillPremiumText: { color: COLORS.slateMuted, fontSize: 10, fontWeight: '800', textAlign: 'center' },
   pillPremiumTextActive: { color: COLORS.white },
