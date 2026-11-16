@@ -10,27 +10,37 @@ let activeConfig = null;
 let lastConfigRefreshAt = 0;
 let configLoadPromise = null;
 
-function normalizeBaseUrl(value) {
-  if (typeof value !== 'string' || !value.trim()) return null;
-  try {
-    const parsed = new URL(value.trim());
-    if (parsed.protocol !== 'https:' || parsed.username || parsed.password) return null;
-    return parsed.toString().replace(/\/+$/, '');
-  } catch (_) {
-    return null;
-  }
+function normalizePath(value, fallback) {
+  const path = typeof value === 'string' && value.trim() ? value.trim() : fallback;
+  if (!path.startsWith('/') || path.startsWith('//') || path.includes('..') || /[?#\\s]/.test(path)) return null;
+  return path.replace(/\\/+$/, '') || '/';
 }
 
 function isValidConfig(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   if (value.schemaVersion !== 1 || !Number.isInteger(value.configVersion) || value.configVersion < 1) return false;
-  const apiBaseUrl = normalizeBaseUrl(value.apiBaseUrl);
-  if (!apiBaseUrl || !apiBaseUrl.endsWith('/api')) return false;
-  const mediaBaseUrl = value.mediaBaseUrl === '' || value.mediaBaseUrl == null
-    ? ''
-    : normalizeBaseUrl(value.mediaBaseUrl);
-  if (value.mediaBaseUrl && !mediaBaseUrl) return false;
-  return { schemaVersion: 1, configVersion: value.configVersion, apiBaseUrl, mediaBaseUrl };
+  if (value.apiProtocol !== 'https' || typeof value.apiHost !== 'string') return false;
+  const apiHost = value.apiHost.trim().toLowerCase();
+  if (!apiHost || apiHost.includes('/') || apiHost.includes('@') || apiHost.includes(':')) return false;
+  let parsedHost;
+  try { parsedHost = new URL('https://' + apiHost); } catch (_) { return false; }
+  if (parsedHost.hostname !== apiHost || parsedHost.username || parsedHost.password || parsedHost.port) return false;
+  if (!Number.isInteger(value.apiPort) || value.apiPort < 1 || value.apiPort > 65535) return false;
+  const apiPath = normalizePath(value.apiPath, '/api');
+  const mediaPath = normalizePath(value.mediaPath, '/api/media');
+  if (!apiPath || !mediaPath) return false;
+  const origin = 'https://' + apiHost + (value.apiPort === 443 ? '' : ':' + value.apiPort);
+  return {
+    schemaVersion: 1,
+    configVersion: value.configVersion,
+    apiProtocol: 'https',
+    apiHost,
+    apiPort: value.apiPort,
+    apiPath,
+    mediaPath,
+    apiBaseUrl: origin + apiPath,
+    mediaBaseUrl: origin + mediaPath
+  };
 }
 
 async function readCachedConfig() {
