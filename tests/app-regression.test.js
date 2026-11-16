@@ -573,9 +573,9 @@ test('app config does not embed a backend URL in Expo metadata', () => {
 test('APK workflow pads the official launcher mark and uploads the actual Lite APK filename', () => {
   const workflow = fs.readFileSync(path.join(root, '.github/workflows/build.yml'), 'utf8');
   assert.equal((workflow.match(/logo\.thumbnail\(\(860, 860\)/g) || []).length, 2);
-  assert.equal((workflow.match(/path: hamzawy-sat-lite-arm64\.apk/g) || []).length, 1);
+  assert.equal((workflow.match(/path: hamzawy-sat-lite-arm64\.apk/g) || []).length, 0);
   const liteJob = workflow.slice(workflow.indexOf('  build-lite:'));
-  assert.ok(liteJob.includes('reactNativeArchitectures: armv7-v7a') || liteJob.includes('reactNativeArchitectures: armeabi-v7a'));
+  assert.ok(liteJob.includes('"reactNativeArchitectures": "armeabi-v7a"'));
   assert.ok(liteJob.includes('armeabi-v7a'));
   assert.ok(liteJob.includes('cp "$APK" ../hamzawy-sat-lite-armv7.apk'));
   assert.ok(liteJob.includes('name: hamzawy-sat-lite-armv7-apk'));
