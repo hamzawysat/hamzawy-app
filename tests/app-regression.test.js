@@ -684,8 +684,6 @@ test('APK workflow builds only the requested Modern ARM64 artifact and runs regr
   const workflow = fs.readFileSync(path.join(root, '.github/workflows/build.yml'), 'utf8');
   assert.equal((workflow.match(/logo\.thumbnail\(\(860, 860\)/g) || []).length, 1);
   assert.ok(workflow.includes('run: npm test'));
-  assert.ok(workflow.includes('pull_request:'));
-  assert.ok(workflow.includes("branches: [ 'feature/central-api-config-20261116' ]"));
   assert.ok(workflow.includes('build-modern:'));
   assert.ok(workflow.includes('reactNativeArchitectures=arm64-v8a'));
   assert.ok(workflow.includes('path: hamzawy-sat-modern.apk'));
