@@ -80,7 +80,7 @@ export default function TechnicianWalletScreen({ session, user, transferNumbers,
           <Text style={styles.walletNoticeText}>نقبل التحويل من محفظة إلكترونية إلى محفظة إلكترونية، أو من إنستا باي إلى محفظة إلكترونية فقط.</Text>
           <Text style={styles.walletNoticeEmphasis}>لا نقبل التحويل من إنستا باي إلى إنستا باي.</Text>
         </View>
-        <Button title="إرسال طلب شحن" onPress={submitTopup} />
+        {String(user?.status || '').trim() !== 'معتمد' ? <Text style={{ color: COLORS.amber800, fontSize: 11, fontWeight: '800', marginTop: 8 }}>شحن المحفظة متاح بعد اعتماد حسابك من الإدارة.</Text> : null}<Button title="إرسال طلب شحن" onPress={submitTopup} disabled={String(user?.status || '').trim() !== 'معتمد'} />
       </View> : null}
       {tab === 'requests' ? <View style={styles.dataCard}>
         <Text style={styles.cardTitlePremium}>طلبات الشحن</Text>
