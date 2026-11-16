@@ -4,6 +4,7 @@ const SERVER_CONFIG_URL = 'https://hamzawysat.github.io/hamzawy-download/server-
 const CONFIG_CACHE_KEY = 'hamzawy.server-config.v1';
 const CONFIG_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 const CONFIG_TIMEOUT_MS = 8000;
+// Preserve a last-known-good cached configuration while GitHub Pages is unavailable.
 
 let activeConfig = null;
 let lastConfigRefreshAt = 0;

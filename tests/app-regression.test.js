@@ -18,7 +18,7 @@ test('app resolves its API from the stable GitHub Pages configuration and has no
   assert.match(apiSource, /https:\/\/hamzawysat\.github\.io\/hamzawy-download\/server-config\.json/);
   assert.match(apiSource, /SecureStore\.getItemAsync/);
   assert.match(apiSource, /SecureStore\.setItemAsync/);
-  assert.match(apiSource, /schemaVersion === 1/);
+  assert.match(apiSource, /value\.schemaVersion !== 1/);
   assert.match(apiSource, /getApiUrl/);
   assert.doesNotMatch(app, /(?:sonaa-backend-v2|hamzawy-sat)\.(?:vercel\.app|dynv6\.net)/);
 });
