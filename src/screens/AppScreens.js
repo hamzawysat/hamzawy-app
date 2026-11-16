@@ -28,6 +28,15 @@ import { useAppState } from '../hooks/useAppState';
 import { useScreenNavigation } from '../hooks/useScreenNavigation';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 
+function normalizePhoneDigits(value) {
+  const arabic = '٠١٢٣٤٥٦٧٨٩';
+  const persian = '۰۱۲۳۴۵۶۷۸۹';
+  return String(value || '').replace(/[٠-٩۰-۹]/g, digit => {
+    const index = arabic.indexOf(digit);
+    return String(index >= 0 ? index : persian.indexOf(digit));
+  }).replace(/\\D/g, '');
+}
+
 function AppScreens({ onScreenChange, onAuthRestoringChange }) {
   const { screen, setScreenState, screenHistoryRef, screenRef, setScreen } = useScreenNavigation();
   const appState = useAppState();
