@@ -196,7 +196,7 @@ export default function StoreScreen({ role, session, onWalletBalanceChange }) {
                 {item.details ? <Text style={styles.detail}>{item.details}</Text> : null}
                 <Text style={[styles.detail, { fontWeight: '900', color: COLORS.navy }]}>{money(item.price)}</Text>
                 {item.originalPrice != null && Number(item.originalPrice) > Number(item.price) ? <Text style={[styles.detail, { textDecorationLine: 'line-through' }]}>بدلًا من {money(item.originalPrice)}</Text> : null}
-                {item.offerText ? <Text style={[styles.detail, { color: COLORS.success }]}>{item.offerText}</Text> : null}
+                {item.offerText ? <Text style={[styles.detail, { color: COLORS.greenDark }]}>{item.offerText}</Text> : null}
                 <Button title="اطلب المنتج" onPress={() => openPurchase(item)} />
               </View>
             </View>
@@ -212,8 +212,8 @@ export default function StoreScreen({ role, session, onWalletBalanceChange }) {
             {selected?.type !== 'subscription' ? <>
               <Text style={styles.sectionTitle}>طريقة الدفع</Text>
               <View style={{ flexDirection: 'row', gap: 8 }}>
-                <TouchableOpacity onPress={() => setPaymentMethod('wallet')} style={{ flex: 1, padding: 12, borderRadius: 10, borderWidth: 1, borderColor: paymentMethod === 'wallet' ? COLORS.teal : COLORS.border, backgroundColor: paymentMethod === 'wallet' ? COLORS.infoBg : COLORS.white }}><Text style={{ textAlign: 'center', fontWeight: '900', color: COLORS.text }}>من المحفظة</Text></TouchableOpacity>
-                <TouchableOpacity onPress={() => setPaymentMethod('cash_on_delivery')} style={{ flex: 1, padding: 12, borderRadius: 10, borderWidth: 1, borderColor: paymentMethod === 'cash_on_delivery' ? COLORS.teal : COLORS.border, backgroundColor: paymentMethod === 'cash_on_delivery' ? COLORS.infoBg : COLORS.white }}><Text style={{ textAlign: 'center', fontWeight: '900', color: COLORS.text }}>عند الاستلام</Text></TouchableOpacity>
+                <TouchableOpacity onPress={() => setPaymentMethod('wallet')} style={{ flex: 1, padding: 12, borderRadius: 10, borderWidth: 1, borderColor: paymentMethod === 'wallet' ? COLORS.teal : COLORS.border, backgroundColor: paymentMethod === 'wallet' ? COLORS.indigo50 : COLORS.white }}><Text style={{ textAlign: 'center', fontWeight: '900', color: COLORS.text }}>من المحفظة</Text></TouchableOpacity>
+                <TouchableOpacity onPress={() => setPaymentMethod('cash_on_delivery')} style={{ flex: 1, padding: 12, borderRadius: 10, borderWidth: 1, borderColor: paymentMethod === 'cash_on_delivery' ? COLORS.teal : COLORS.border, backgroundColor: paymentMethod === 'cash_on_delivery' ? COLORS.indigo50 : COLORS.white }}><Text style={{ textAlign: 'center', fontWeight: '900', color: COLORS.text }}>عند الاستلام</Text></TouchableOpacity>
               </View>
             </> : <Text style={styles.detail}>طلب الاشتراك لا يخصم أي مبلغ الآن؛ يتم تأكيده وفق إجراءات المتجر.</Text>}
             <Button title={submitting ? 'جاري إرسال الطلب...' : 'تأكيد طلب الشراء'} onPress={submitPurchase} disabled={submitting} />
