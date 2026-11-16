@@ -15,7 +15,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#F4F8FC"
-      }
+      },
+      "minSdkVersion": 23
     },
     "extra": {
       "eas": {
