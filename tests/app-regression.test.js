@@ -315,14 +315,15 @@ test('technician available orders and offers are deduplicated on initial load an
   assert.ok(app.includes("offers: results[1].status === 'fulfilled' ? uniqueByOrderSN(toList(results[1].value, ['offers'])) : current.offers"));
 });
 
-test('wallet transfer notice is limited to technician wallet and explains accepted transfer routes', () => {
+test('wallet transfer notice explains accepted routes in both client and technician wallets', () => {
   const technicianWallet = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianWalletScreen.js'), 'utf8');
   const clientWallet = fs.readFileSync(path.join(root, 'src/screens/client/ClientWalletScreen.js'), 'utf8');
-  assert.ok(technicianWallet.includes('تنويه بخصوص التحويلات'));
-  assert.ok(technicianWallet.includes('من محفظة إلكترونية إلى محفظة إلكترونية'));
-  assert.ok(technicianWallet.includes('من إنستا باي إلى محفظة إلكترونية فقط'));
-  assert.ok(technicianWallet.includes('لا نقبل التحويل من إنستا باي إلى إنستا باي'));
-  assert.ok(!clientWallet.includes('تنويه بخصوص التحويلات'), 'transfer notice should remain limited to technician wallet');
+  for (const [role, source] of [['client', clientWallet], ['technician', technicianWallet]]) {
+    assert.ok(source.includes('تنويه بخصوص التحويلات'), role + ' wallet should explain accepted transfer routes');
+    assert.ok(source.includes('من محفظة إلكترونية إلى محفظة إلكترونية'), role + ' wallet should state wallet-to-wallet transfers');
+    assert.ok(source.includes('من إنستا باي إلى محفظة إلكترونية فقط'), role + ' wallet should state InstaPay-to-wallet transfers');
+    assert.ok(source.includes('لا نقبل التحويل من إنستا باي إلى إنستا باي'), role + ' wallet should reject InstaPay-to-InstaPay transfers');
+  }
   assert.ok(app.includes('walletNotice:'));
 });
 
