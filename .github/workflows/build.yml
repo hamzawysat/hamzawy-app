@@ -64,7 +64,7 @@ jobs:
           echo "Modern APK bytes: $(stat -c%s "$APK")"
           du -h "$APK"
           echo "Modern APK ABIs:"
-          unzip -Z1 "$APK" | cut -d/ -f2 | sort -u | grep -v "^$"
+          unzip -Z1 "$APK" | grep "^lib/" | cut -d/ -f2 | sort -u
           cp "$APK" ../hamzawy-sat-modern.apk
       - uses: actions/upload-artifact@v4
         with:
@@ -135,7 +135,7 @@ jobs:
           echo "Lite APK bytes: $(stat -c%s "$APK")"
           du -h "$APK"
           echo "Lite APK ABIs:"
-          unzip -Z1 "$APK" | cut -d/ -f2 | sort -u | grep -v "^$"
+          unzip -Z1 "$APK" | grep "^lib/" | cut -d/ -f2 | sort -u
           cp "$APK" ../hamzawy-sat-lite-armv7.apk
       - uses: actions/upload-artifact@v4
         with:
