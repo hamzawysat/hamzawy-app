@@ -161,4 +161,4 @@ async function api(path, options = {}) {
   return data;
 }
 
-export { api, getMediaUrl };
+export { api };
