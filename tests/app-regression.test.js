@@ -399,7 +399,7 @@ test('technician profile edit loads shared service categories before rendering s
 test('modular screen files are connected and app assets resolve from their new locations', () => {
   const screen = fs.readFileSync(path.join(root, 'src/screens/AppScreens.js'), 'utf8');
   const appEntry = fs.readFileSync(path.join(root, 'App.js'), 'utf8');
-  assert.match(screen, /import \{ api \} from '\.\.\/services\/api';/);
+  assert.match(screen, /import \{ api(?:, uploadRegistrationIdentity)? \} from '\.\.\/services\/api';/);
   assert.match(screen, /from '\.\/auth\/AuthScreens'/);
   assert.match(screen, /from '\.\/account\/AccountScreens'/);
   assert.ok(!screen.includes('require("./assets/'), 'screen assets must use the path relative to src/screens');
@@ -735,4 +735,24 @@ test('native client and technician tabs render as a compact RTL two-row grid wit
   assert.ok(client.includes('<View style={styles.tabRowPremium}>'));
   assert.ok(tech.includes('<View style={styles.tabRowPremium}>'));
   assert.ok(!tech.includes('<ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 8, gap: 6 }}><View style={styles.tabRowPremium}>'));
+});
+
+
+test('technician registration requires both private identity card uploads and sends backend file IDs', () => {
+  const screens = fs.readFileSync(path.join(root, 'src/screens/AppScreens.js'), 'utf8');
+  const api = fs.readFileSync(path.join(root, 'src/services/api.js'), 'utf8');
+  const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
+  assert.ok(screens.includes("import * as ImagePicker from 'expo-image-picker'")); 
+  assert.ok(screens.includes("import * as ImageManipulator from 'expo-image-manipulator'"));
+  assert.ok(screens.includes("import { api, uploadRegistrationIdentity } from '../services/api'"));
+  assert.ok(screens.includes('uploadRegistrationIdentity(side, uploadUri, uploadMime)'));
+  assert.ok(screens.includes('identityCardFrontFileId: identityCardUploads.front.fileId'));
+  assert.ok(screens.includes('identityCardBackFileId: identityCardUploads.back.fileId'));
+  assert.ok(screens.includes('identityCardUploads.front.uploading') && screens.includes('identityCardUploads.back.uploading'));
+  assert.ok(screens.indexOf('ميثاق صُنّاع – التعامل المهني مع العملاء') < screens.indexOf('صورة بطاقة الرقم القومي *'));
+  assert.ok(screens.indexOf('صورة بطاقة الرقم القومي *') < screens.indexOf('<TouchableOpacity disabled={!guidelinesReachedEnd}'));
+  assert.ok(api.includes('FileSystem.uploadAsync'));
+  assert.ok(api.includes("'/fanni/registration-media?side='"));
+  assert.equal(pkg.dependencies['expo-image-picker'], '~15.0.7');
+  assert.equal(pkg.dependencies['expo-image-manipulator'], '~12.0.5');
 });
