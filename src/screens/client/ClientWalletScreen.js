@@ -149,7 +149,7 @@ export default function ClientWalletScreen({ session, onBalanceChange }) {
           <Text style={styles.walletNoticeTitle}>⚠️ تنويه بخصوص التحويلات</Text>
           <Text style={styles.walletNoticeText}>نقبل التحويل من محفظة إلكترونية إلى محفظة إلكترونية، أو من إنستا باي إلى محفظة إلكترونية فقط.</Text>
           <Text style={styles.walletNoticeEmphasis}>لا نقبل التحويل من إنستا باي إلى إنستا باي.</Text>
-          <Text style={styles.walletNoticeText}>اختبار وصول تحديث OTA</Text>
+          
         </View>
         {success ? <Text style={{ color: COLORS.greenDark, fontWeight: '800', marginVertical: 6 }}>{success}</Text> : null}
         <Button title={submitting ? 'جاري إرسال الطلب...' : 'إرسال طلب الشحن'} onPress={submitTopup} disabled={submitting || wallet.frozen || !numbers.length} />
