@@ -1105,7 +1105,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     if (technicianStatus !== 'معتمد') { Alert.alert('الحساب غير معتمد', 'شحن المحفظة متاح بعد اعتماد حسابك من الإدارة.'); return; }
     if (!Number.isInteger(amount) || amount < 10 || amount > 10000 || !/^01[0-9]{9}$/.test(phone) || !topup.method || String(topup.reference || '').trim().length > 50) { Alert.alert('بيانات غير صحيحة', 'اكتب مبلغًا من 10 إلى 10000 جنيه ورقم محوّل صحيحًا واختار نوع المحفظة.'); return; }
     try {
-      const result = await api('/fanni/wallet/topup', { method: 'POST', token: session.token, body: { amount, fromPhone: phone, reference, method: topup.method } });
+      const result = await api('/fanni/wallet/topup', { method: 'POST', token: session.token, body: { amount, fromPhone: phone, phone, reference, referenceCode: reference, method: topup.method, note: ('تحويل من ' + phone + ' بقيمة ' + amount + ' - كود: ' + (reference || 'بدون')).slice(0, 200) } });
       Alert.alert('تم إرسال طلب الشحن', result.message || 'طلبك قيد مراجعة الإدارة.');
       setTopup({ amount: '', fromPhone: '', reference: '', method: 'vodafone_cash' });
       setReloadKey(value => value + 1);
