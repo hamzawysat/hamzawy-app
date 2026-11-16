@@ -155,7 +155,7 @@ async function api(path, options = {}) {
     const error = new Error(data.message || data.error || `خطأ من الخادم (${response.status})`);
     error.status = response.status;
     error.data = data;
-    error.canUseCashOnDelivery = data.canUseCashOnDelivery === true;
+    error.canUseCashOnDelivery = data?.canUseCashOnDelivery === true;
     throw error;
   }
   return data;
