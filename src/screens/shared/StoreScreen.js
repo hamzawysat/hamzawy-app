@@ -9,11 +9,17 @@ function requestKey(prefix) {
   return prefix + '-' + Date.now() + '-' + Math.random().toString(36).slice(2);
 }
 
-function imageUri(value) {
-  const raw = String(value || '').trim();
-  if (!raw) return '';
-  if (/^https?:\/\//i.test(raw)) return raw;
-  return getMediaUrl(raw.replace(/^\/api\/store\/media\/?/, '').replace(/^\/+/, ''));
+function StoreImage({ value, style }) {
+  const [resolved, setResolved] = useState('');
+  useEffect(() => {
+    let active = true;
+    const raw = String(value || '').trim();
+    if (!raw) { setResolved(''); return () => { active = false; }; }
+    if (/^https?:\\/\\//i.test(raw)) { setResolved(raw); return () => { active = false; }; }
+    getMediaUrl(raw.replace(/^\\/api\\/store\\/media\\/?/, '').replace(/^\\/+/, '')).then(url => { if (active) setResolved(url); }).catch(() => { if (active) setResolved(''); });
+    return () => { active = false; };
+  }, [value]);
+  return resolved ? <Image source={{ uri: resolved }} style={style} resizeMode="cover" /> : <View style={[style, { backgroundColor: '#EEF2F7', alignItems: 'center', justifyContent: 'center' }]}><Text style={{ fontSize: 28 }}>📦</Text></View>;
 }
 
 function money(value) {
@@ -55,8 +61,7 @@ export function StoreAdBanner({ role, session, visible = true, onOpenStore }) {
   return (
     <TouchableOpacity accessibilityRole="button" onPress={onOpenStore}
       style={{ marginHorizontal: 14, marginTop: 8, marginBottom: 4, padding: 10, borderRadius: 14, borderWidth: 1, borderColor: '#DCE6F2', backgroundColor: '#FFFFFF', flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-      {item.imageUrl ? <Image source={{ uri: imageUri(item.imageUrl) }} style={{ width: 62, height: 62, borderRadius: 10, backgroundColor: '#EEF2F7' }} resizeMode="cover" /> :
-        <View style={{ width: 62, height: 62, borderRadius: 10, backgroundColor: '#EEF2F7', alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 25 }}>🛍️</Text></View>}
+      <StoreImage value={item.imageUrl} style={{ width: 62, height: 62, borderRadius: 10 }} />
       <View style={{ flex: 1 }}>
         <Text style={{ color: '#64748B', fontSize: 10, fontWeight: '800' }}>عرض من متجر حمزاوي سات</Text>
         <Text numberOfLines={1} style={{ color: COLORS.text, fontSize: 13, fontWeight: '900', marginTop: 3 }}>{item.name || 'منتج مميز'}</Text>
@@ -189,8 +194,7 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
         {loading ? <ActivityIndicator color={COLORS.teal} size="large" /> : error ? <View style={styles.dataCard}><Text style={styles.errorText}>{error}</Text><Button title="إعادة المحاولة" onPress={() => load()} /></View> :
           products.length ? products.map((item, index) => (
             <View key={String(item._id || index)} style={[styles.dataCard, { marginBottom: 10, flexDirection: 'row', alignItems: 'flex-start', gap: 12 }]}>
-              {item.imageUrl ? <Image source={{ uri: imageUri(item.imageUrl) }} style={{ width: 96, height: 96, borderRadius: 12, backgroundColor: '#EEF2F7' }} resizeMode="cover" /> :
-                <View style={{ width: 96, height: 96, borderRadius: 12, backgroundColor: '#EEF2F7', alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 32 }}>📦</Text></View>}
+              <StoreImage value={item.imageUrl} style={{ width: 96, height: 96, borderRadius: 12 }} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.cardTitleSmall}>{item.name || 'منتج'}</Text>
                 <Text style={[styles.detail, { color: COLORS.teal, fontWeight: '900' }]}>{item.type === 'subscription' ? 'اشتراك / تجديد اشتراك' : 'منتج وبضاعة'}{item.subscriptionDuration ? ' • ' + item.subscriptionDuration : ''}</Text>
