@@ -409,14 +409,18 @@ test('modular screen files are connected and app assets resolve from their new l
   assert.match(appEntry, /from '\.\/src\/screens\/AppScreens'/);
 });
 
-test('client account displays the shared store ad banner above the account heading and can open the store', () => {
+test('client account is a dashboard tab and uses the shared ad banner above its content', () => {
+  const client = fs.readFileSync(path.join(root, 'src/screens/client/ClientDashboard.js'), 'utf8');
   const account = fs.readFileSync(path.join(root, 'src/screens/account/AccountScreens.js'), 'utf8');
-  const screens = fs.readFileSync(path.join(root, 'src/screens/AppScreens.js'), 'utf8');
-  assert.match(account, /import \{ StoreAdBanner \} from '\.\.\/shared\/StoreScreen';/);
-  assert.match(account, /isClientAccount \? <StoreAdBanner role="client" session=\{session\} onOpenStore=\{onOpenStore\} \/> : null/);
-  assert.match(screens, /onOpenStore=\{\(\) => \{ setClientTab\('store'\); setScreen\('client'\); \}\s*\}/);
+  assert.match(client, /\{key:'profile',label:'حسابي'\}/);
+  assert.doesNotMatch(client, /Button title="حسابي"[^\n]*setScreen\('account'\)/);
+  assert.match(client, /clientTab === 'profile' \? <AccountScreen embedded session=\{session\}/);
+  assert.match(client, /<StoreAdBanner role="client" session=\{session\} visible=\{clientTab !== 'store'\}/);
+  assert.match(account, /embedded = false/);
+  assert.match(account, /!embedded \? <Button title="‹ رجوع"/);
+  assert.doesNotMatch(account, /StoreAdBanner/);
 });
- 
+
 test('authentication and account screens are extracted from the main screen controller', () => {
   const authScreens = fs.readFileSync(path.join(root, 'src/screens/auth/AuthScreens.js'), 'utf8');
   const accountScreens = fs.readFileSync(path.join(root, 'src/screens/account/AccountScreens.js'), 'utf8');
