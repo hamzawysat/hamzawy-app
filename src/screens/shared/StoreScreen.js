@@ -46,7 +46,7 @@ export function StoreAdBanner({ role, session, visible = true, onOpenStore }) {
         .filter(item => !item.adAudience || item.adAudience === 'both' || item.adAudience === role)
         .filter(item => !item.adExpiresAt || new Date(item.adExpiresAt).getTime() > now)
         .filter(item => item.stock === null || item.stock === undefined || Number(item.stock) > 0)
-        .filter(item => Boolean(String(item.name || '').trim() && /^https?:\\/\\//i.test(String(item.imageUrl || ''))))
+        .filter(item => { const imageUrl = String(item.imageUrl || ''); return Boolean(String(item.name || '').trim() && (imageUrl.startsWith('https://') || imageUrl.startsWith('http://'))); })
         .sort((a, b) => (Number(b.adPriority) || 0) - (Number(a.adPriority) || 0) ||
           new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
       setAds(eligible);
