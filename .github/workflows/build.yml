@@ -62,7 +62,7 @@ jobs:
           APK="app/build/outputs/apk/release/app-release.apk"
           test -s "$APK"
           echo "Modern APK bytes: $(stat -c%s "$APK")"
-          stat -c%s "$APK" | awk '{printf "Modern APK MiB: %.2f\\n", $1/1048576}'
+          du -h "$APK"
           echo "Modern APK ABIs:"
           unzip -Z1 "$APK" | cut -d/ -f2 | sort -u | grep -v "^$"
           cp "$APK" ../hamzawy-sat-modern.apk
@@ -133,7 +133,7 @@ jobs:
           APK="app/build/outputs/apk/release/app-release.apk"
           test -s "$APK"
           echo "Lite APK bytes: $(stat -c%s "$APK")"
-          stat -c%s "$APK" | awk '{printf "Lite APK MiB: %.2f\\n", $1/1048576}'
+          du -h "$APK"
           echo "Lite APK ABIs:"
           unzip -Z1 "$APK" | cut -d/ -f2 | sort -u | grep -v "^$"
           cp "$APK" ../hamzawy-sat-lite-armv7.apk
