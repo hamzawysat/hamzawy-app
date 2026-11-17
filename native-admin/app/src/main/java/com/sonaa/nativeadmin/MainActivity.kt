@@ -1987,12 +1987,14 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
             val price=o.get("price")?.toString().orEmpty()
             val days=o.get("durationDays")?.toString().orEmpty()
             val description=o.get("description")?.asString.orEmpty()
+            val features=o.get("features")?.takeIf{it.isJsonArray}?.asJsonArray?.mapNotNull{it.takeIf{v->v.isJsonPrimitive}?.asString}.orEmpty()
             val active=o.get("active")?.asBoolean!=false
             Card(Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=Color.White)){
                 Column(Modifier.padding(14.dp),verticalArrangement=Arrangement.spacedBy(5.dp)){
                     Text(name.ifBlank{"باقة بدون اسم"},fontWeight=FontWeight.Bold,color=DarkAccent)
                     Text("$price جنيه • $days يوم • "+if(active)"متاحة" else "متوقفة",color=if(active)Color(0xFF16834B) else Color(0xFFB3261E))
                     if(description.isNotBlank())Text(description,color=Color.DarkGray,style=MaterialTheme.typography.bodySmall)
+                    if(features.isNotEmpty())Text("المميزات: "+features.joinToString(" • "),style=MaterialTheme.typography.bodySmall,color=Color.DarkGray)
                     Text("معرّف الباقة: $id",style=MaterialTheme.typography.labelSmall,color=Color.Gray)
                     Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(7.dp)){
                         if(canWrite("api/admin/commerce/catalog/$id"))OutlinedButton(onClick={editing=item},enabled=!busy,modifier=Modifier.weight(1f)){Text("تعديل")}
