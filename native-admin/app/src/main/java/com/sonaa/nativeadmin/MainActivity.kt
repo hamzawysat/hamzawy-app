@@ -1501,7 +1501,7 @@ private data class RowAction(val label:String,val method:String,val path:String,
         simple+multiple
     }.filter{it.isNotBlank()}.distinct().sorted()}
     val visibleOfferKeys=if(section==AdminSection.OFFERS)filtered.flatMap{entry->
-        val order=entry.takeIf{it.isJsonObject}?.asJsonObject?:return@flatMap emptyList()
+        val order=entry.takeIf{it.isJsonObject}?.asJsonObject?:return@flatMap emptyList<String>()
         val sn=order.get("sn")?.takeIf{!it.isJsonNull}?.asString.orEmpty()
         order.get("offers")?.takeIf{it.isJsonArray}?.asJsonArray?.mapIndexedNotNull{index,offer->
             if(sn.isNotBlank()&&offerCategory(order,offer)!="accepted"&&(offerStatusFilter=="all"||offerCategory(order,offer)==offerStatusFilter))"$sn|$index" else null
