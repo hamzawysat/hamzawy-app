@@ -308,10 +308,69 @@ class MainActivity : ComponentActivity() {
             state.section == AdminSection.CLIENT_SUBSCRIPTIONS -> ClientSubscriptionsScreen(state.items,state.busy,{path->canWriteApi(state.adminInfo,path)}) { method,path,body -> vm.mutate(method,path,body) }
             state.section == AdminSection.STORE_PRODUCTS -> StoreProductsScreen(state.payload,state.items,state.busy,state.storeUploadedImageUrl,state.storeUploadedImageFileId,{uri,purpose->vm.uploadStoreImage(uri,purpose)},vm::clearStoreUpload,{path->canWriteApi(state.adminInfo,path)}) { method,path,body -> vm.mutate(method,path,body) }
             state.section == AdminSection.STORE_ORDERS -> StoreOrdersScreen(state.payload,state.items,state.busy,{path->canWriteApi(state.adminInfo,path)}) { method,path,body -> vm.mutate(method,path,body) }
-            else -> ListScreen(state.section, state.items, state.sectionSearch, vm::retry, vm::loadVoice, vm::openFanniProfile, vm::openFanniIdentity, vm::issueSupportPassword, vm::revealSupportPassword, vm::issueClientSupportPassword, vm::revealClientSupportPassword, vm::openWalletTransactions, vm::openClientWalletTransactions, vm::openClientOrders, vm::openClientProfile, vm::searchSupport, vm::filterAuditLogs, vm::bulkPublish, vm::openRecovery, { section, ids, action -> vm.bulkAction(section, ids, action) }, vm::bulkRenameRegions, { path -> canWriteApi(state.adminInfo,path) }, { path -> canReadApi(state.adminInfo,path) }) { method, path, body -> vm.mutate(method, path, body) }
+            else -> ListScreen(state.section, state.items, state.sectionSearch, state.adminInbox, state.adminUnreadCount, state.notificationDeliveries, state.adminNotificationError, vm::retry, vm::loadVoice, vm::openFanniProfile, vm::openFanniIdentity, vm::issueSupportPassword, vm::revealSupportPassword, vm::issueClientSupportPassword, vm::revealClientSupportPassword, vm::openWalletTransactions, vm::openClientWalletTransactions, vm::openClientOrders, vm::openClientProfile, vm::searchSupport, vm::filterAuditLogs, vm::bulkPublish, vm::openRecovery, { section, ids, action -> vm.bulkAction(section, ids, action) }, vm::bulkRenameRegions, { path -> canWriteApi(state.adminInfo,path) }, { path -> canReadApi(state.adminInfo,path) }, { id -> vm.markAdminNotificationRead(id); Unit }, { vm.markAllAdminNotificationsRead(); Unit }) { method, path, body -> vm.mutate(method, path, body) }
         }
     }
 }
+@Composable private fun AdminNotificationAuditPanel(
+    inbox:List<JsonElement>,
+    unreadCount:Int,
+    deliveries:List<JsonElement>,
+    loadError:String?,
+    canRead:Boolean,
+    canMarkRead:Boolean,
+    onMarkRead:(String)->Unit,
+    onMarkAllRead:()->Unit
+){
+    var tab by remember{mutableStateOf(0)}
+    Column(Modifier.fillMaxWidth().padding(top=8.dp,bottom=8.dp),verticalArrangement=Arrangement.spacedBy(8.dp)){
+        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(6.dp)){
+            TextButton(onClick={tab=0}){Text("الوارد ($unreadCount)")}
+            TextButton(onClick={tab=1}){Text("تتبع التسليم")}
+        }
+        if(loadError!=null)Text("تعذر تحميل بعض بيانات الإشعارات: $loadError",color=MaterialTheme.colorScheme.error,style=MaterialTheme.typography.bodySmall)
+        if(!canRead)Text("لا تملك صلاحية قراءة صندوق وارد الإدارة.",color=Color.Gray)
+        else if(tab==0){
+            Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){
+                Text("صندوق وارد الإدارة",fontWeight=FontWeight.Bold,color=DarkAccent,modifier=Modifier.weight(1f))
+                if(unreadCount>0&&canMarkRead)TextButton(onClick=onMarkAllRead){Text("قراءة الكل")}
+            }
+            if(inbox.isEmpty())Text("لا توجد إشعارات واردة.",color=Color.Gray)
+            inbox.forEach{entry->
+                val o=entry.takeIf{it.isJsonObject}?.asJsonObject?:return@forEach
+                val id=o.get("id")?.takeIf{!it.isJsonNull}?.asString.orEmpty()
+                val read=o.get("read")?.asBoolean==true
+                Card(Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=if(read)Color(0xFFF7F8FA) else Color(0xFFEAF6F8))){
+                    Column(Modifier.padding(10.dp),verticalArrangement=Arrangement.spacedBy(4.dp)){
+                        Text(o.get("title")?.takeIf{!it.isJsonNull}?.asString.orEmpty(),fontWeight=FontWeight.Bold,color=DarkAccent)
+                        Text(o.get("message")?.takeIf{!it.isJsonNull}?.asString.orEmpty(),style=MaterialTheme.typography.bodySmall)
+                        Text((if(read)"مقروء" else "غير مقروء")+" • "+(o.get("createdAt")?.toString()?.trim('"')?: ""),style=MaterialTheme.typography.labelSmall,color=Color.Gray)
+                        if(!read&&id.isNotBlank()&&canMarkRead)TextButton(onClick={onMarkRead(id)}){Text("تعليم كمقروء")}
+                    }
+                }
+            }
+        }else{
+            Text("سجل تسليم الإشعارات حسب القناة",fontWeight=FontWeight.Bold,color=DarkAccent)
+            if(deliveries.isEmpty())Text("لا توجد سجلات تسليم متاحة.",color=Color.Gray)
+            deliveries.forEach{entry->
+                val o=entry.takeIf{it.isJsonObject}?.asJsonObject?:return@forEach
+                val status=o.get("overallStatus")?.toString()?.trim('"').orEmpty()
+                val role=o.get("role")?.toString()?.trim('"').orEmpty()
+                val type=o.get("type")?.toString()?.trim('"').orEmpty()
+                val channels=o.get("channels")?.toString().orEmpty()
+                Card(Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=Color.White)){
+                    Column(Modifier.padding(10.dp),verticalArrangement=Arrangement.spacedBy(3.dp)){
+                        Text("الحالة: $status • المستلم: $role",fontWeight=FontWeight.SemiBold,color=DarkAccent)
+                        Text("النوع: $type",style=MaterialTheme.typography.bodySmall)
+                        Text("القنوات: $channels",style=MaterialTheme.typography.bodySmall,color=Color.Gray)
+                        Text(o.get("createdAt")?.toString()?.trim('"').orEmpty(),style=MaterialTheme.typography.labelSmall,color=Color.Gray)
+                    }
+                }
+            }
+        }
+    }
+}
+
 private fun sectionGlyph(section:AdminSection):String=when(section){
  AdminSection.DASHBOARD->"⌂";AdminSection.STATS->"▥";AdminSection.ORDERS->"▤"
  AdminSection.TECHNICIANS->"♟";AdminSection.PENDING->"◷";AdminSection.PROFILE_EDITS->"✎"
@@ -386,6 +445,7 @@ private fun isRootAdminInfo(info:JsonElement?):Boolean{
 }
 private fun permissionKeyForNativePath(path:String):String?{
  val clean=path.substringBefore("?").removePrefix("/")
+ if(clean.startsWith("api/notifications/admin"))return "notifications"
  if(clean.startsWith("api/orders/admin/")&&clean.endsWith("/publish"))return "publishOrders"
  if(clean.startsWith("api/orders/admin/")&&clean.endsWith("/voice-reviewed"))return "voiceReview"
  if(clean.startsWith("api/orders/")&&clean.endsWith("/voice"))return "voiceReview"
@@ -1117,7 +1177,7 @@ private fun monthlyOrderStats(orders:List<JsonElement>):List<MonthlyOrderStat>{
 }
 
 private data class RowAction(val label:String,val method:String,val path:String,val body:JsonObject=JsonObject(),val inputKey:String?=null,val inputHint:String="",val secondInputKey:String?=null,val secondInputHint:String="")
-@Composable private fun ListScreen(section: AdminSection, items: List<JsonElement>, initialQuery:String, retry: () -> Unit, onVoice:(String)->Unit, onEditProfile:(String)->Unit, onOpenIdentity:(String)->Unit, onIssueSupportPassword:(String,String)->Unit, onRevealSupportPassword:(String,String)->Unit, onIssueClientSupportPassword:(String)->Unit, onRevealClientSupportPassword:(String)->Unit, onOpenWallet:(String)->Unit, onOpenClientWallet:(String)->Unit, onOpenClientOrders:(String)->Unit, onEditClient:(String)->Unit, onSupportSearch:(String)->Unit, onAuditFilter:(String)->Unit, onBulkPublish:(List<String>)->Unit, onOpenRecovery:(String)->Unit, onBulkAction:(AdminSection,List<String>,String)->Unit, onBulkRenameRegions:(Map<String,String>)->Unit, onCanWriteApi:(String)->Boolean, onCanReadApi:(String)->Boolean, onAction:(String,String,JsonObject)->Unit) {
+@Composable private fun ListScreen(section: AdminSection, items: List<JsonElement>, initialQuery:String, adminInbox:List<JsonElement>, adminUnreadCount:Int, notificationDeliveries:List<JsonElement>, notificationLoadError:String?, retry: () -> Unit, onVoice:(String)->Unit, onEditProfile:(String)->Unit, onOpenIdentity:(String)->Unit, onIssueSupportPassword:(String,String)->Unit, onRevealSupportPassword:(String,String)->Unit, onIssueClientSupportPassword:(String)->Unit, onRevealClientSupportPassword:(String)->Unit, onOpenWallet:(String)->Unit, onOpenClientWallet:(String)->Unit, onOpenClientOrders:(String)->Unit, onEditClient:(String)->Unit, onSupportSearch:(String)->Unit, onAuditFilter:(String)->Unit, onBulkPublish:(List<String>)->Unit, onOpenRecovery:(String)->Unit, onBulkAction:(AdminSection,List<String>,String)->Unit, onBulkRenameRegions:(Map<String,String>)->Unit, onCanWriteApi:(String)->Boolean, onCanReadApi:(String)->Boolean, onMarkNotificationRead:(String)->Unit, onMarkAllNotificationsRead:()->Unit, onAction:(String,String,JsonObject)->Unit) {
     var query by remember(section,initialQuery) { mutableStateOf(initialQuery) }
     var deleteClientOrdersPhone by remember(section){mutableStateOf("")}
     var statusFilter by remember(section) { mutableStateOf("") }
@@ -1320,6 +1380,7 @@ private data class RowAction(val label:String,val method:String,val path:String,
         if(section==AdminSection.SERVICES&&onCanWriteApi("api/admin/services/categories/order")) Button(onClick={categoryOrderOpen=true},modifier=Modifier.fillMaxWidth()){Text("ترتيب أقسام الخدمات")}
         if(section==AdminSection.SERVICES&&onCanWriteApi("api/admin/services/order")) OutlinedButton(onClick={serviceOrderOpen=true},modifier=Modifier.fillMaxWidth()){Text("ترتيب الخدمات داخل القسم")}
         if(section==AdminSection.NOTIFICATIONS&&onCanWriteApi("api/admin/notifications/direct")) Button(onClick={notifyOpen=true},modifier=Modifier.fillMaxWidth()){Text("إنشاء وإرسال إشعار")}
+        if(section==AdminSection.NOTIFICATIONS) AdminNotificationAuditPanel(adminInbox,adminUnreadCount,notificationDeliveries,notificationLoadError,onCanReadApi("api/notifications/admin"),onCanWriteApi("api/notifications/admin/read-all"),onMarkNotificationRead,onMarkAllNotificationsRead)
         if(section==AdminSection.SUPPORT) Button(onClick={onSupportSearch(query)},enabled=query.trim().length>=2,modifier=Modifier.fillMaxWidth()){Text("بحث في الطلبات والشكاوى وأرقام الهواتف")}
         if(selectedBulk.isNotEmpty()){
             Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(vertical=6.dp),horizontalArrangement=Arrangement.spacedBy(6.dp)){
