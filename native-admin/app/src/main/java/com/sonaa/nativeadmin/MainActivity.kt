@@ -1112,7 +1112,7 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
     Text(announcement.ifBlank{"لا يوجد إعلان حاليًا."},style=MaterialTheme.typography.bodyMedium)
     Divider()
     Text("الأسئلة الشائعة",fontWeight=FontWeight.Bold,color=DarkAccent)
-    if(faqs.isNullOrEmpty())Text("لا توجد أسئلة شائعة.")
+    if(faqs==null||faqs.size()==0)Text("لا توجد أسئلة شائعة.")
     faqs?.forEachIndexed{index,entry->
      val item=entry.takeIf{it.isJsonObject}?.asJsonObject?:return@forEachIndexed
      Column(verticalArrangement=Arrangement.spacedBy(3.dp)){
