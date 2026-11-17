@@ -2137,7 +2137,24 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
                             }
                         }
                     }
-                    preview.errors.take(8).forEach{Text(it,color=Color(0xFFB3261E),style=MaterialTheme.typography.labelSmall)}
+                    Text("معاينة أول 8 صفوف من الملف",fontWeight=FontWeight.Bold,color=DarkAccent)
+                    fun previewCell(row:List<String>,key:String):String{
+                        val column=preview.mapping[key]?:-1
+                        return if(column in row.indices)row[column].trim() else ""
+                    }
+                    preview.rows.take(8).forEachIndexed{index,row->
+                        val rowNumber=index+2
+                        val imported=preview.products.firstOrNull{it.get("rowNumber")?.asInt==rowNumber}?.get("product")?.takeIf{it.isJsonObject}?.asJsonObject
+                        val issue=preview.errors.firstOrNull{it.startsWith("الصف "+rowNumber+":")}
+                        Card(Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=Color(0xFFF8FAFC))){
+                            Column(Modifier.padding(9.dp),verticalArrangement=Arrangement.spacedBy(3.dp)){
+                                Text("الصف "+rowNumber+" • "+(imported?.get("name")?.asString?:previewCell(row,"name").ifBlank{"بدون اسم"}),fontWeight=FontWeight.SemiBold)
+                                Text("السعر: "+(imported?.get("price")?.toString()?:previewCell(row,"price").ifBlank{"—"})+" • القسم: "+(imported?.get("category")?.asString?:previewCell(row,"category").ifBlank{"عام"}),style=MaterialTheme.typography.bodySmall)
+                                Text(issue?:if(imported!=null)"جاهز للاستيراد" else "راجع ربط الأعمدة",style=MaterialTheme.typography.labelSmall,color=if(issue!=null)Color(0xFFB3261E) else Color(0xFF16834B))
+                            }
+                        }
+                    }
+                    Text("المعاينة تعرض أول 8 صفوف فقط. سيتم فحص جميع الصفوف قبل الاستيراد.",style=MaterialTheme.typography.labelSmall,color=Color.Gray)
                     Button(onClick={
                         val body=JsonObject().apply{add("products",com.google.gson.JsonArray().apply{preview.products.forEach{add(it)}})}
                         onAction("POST","api/admin/store/products/import",body);csvPreview=null;csvFileName="";csvSource="";csvMapping=emptyMap()
@@ -2392,7 +2409,8 @@ private data class StoreCsvPreview(
     val products:List<JsonObject>,
     val errors:List<String>,
     val headers:List<String> = emptyList(),
-    val mapping:Map<String,Int> = emptyMap()
+    val mapping:Map<String,Int> = emptyMap(),
+    val rows:List<List<String>> = emptyList()
 )
 private fun parseStoreCsvProducts(source:String,columnMapping:Map<String,Int>?=null):StoreCsvPreview{
     val firstLine=source.lineSequence().firstOrNull().orEmpty()
@@ -2496,7 +2514,7 @@ private fun parseStoreCsvProducts(source:String,columnMapping:Map<String,Int>?=n
         valid.add(JsonObject().apply{addProperty("rowNumber",rowNumber);add("product",product)})
     }
     if(valid.size>500)error("الحد الأقصى للاستيراد 500 منتج في الدفعة الواحدة. قسّم الملف إلى دفعات.")
-    return StoreCsvPreview(valid,errors,headers,mapping)
+    return StoreCsvPreview(valid,errors,headers,mapping,rows.drop(1))
 }
 
 
