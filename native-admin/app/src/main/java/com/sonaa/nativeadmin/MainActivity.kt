@@ -1424,6 +1424,27 @@ private data class RowAction(val label:String,val method:String,val path:String,
                                 }
                             }
                         }
+                        if(section in listOf(AdminSection.TECHNICIANS,AdminSection.PENDING,AdminSection.DISABLED)&&item.isJsonObject){
+                            val technician=item.asJsonObject
+                            val activeServices=technician.get("activeSpecialties")?.takeIf{it.isJsonArray}?.asJsonArray?.mapNotNull{it.takeIf{v->!v.isJsonNull}?.asString}?.toSet().orEmpty()
+                            val works=technician.get("works")?.takeIf{it.isJsonArray}?.asJsonArray?.mapNotNull{it.takeIf{v->!v.isJsonNull}?.asString}?.filter{activeServices.isEmpty()||it.trim() in activeServices}.orEmpty()
+                            val prices=technician.get("prices")?.takeIf{it.isJsonObject}?.asJsonObject
+                            val priceRows=prices?.entrySet()?.filter{activeServices.isEmpty()||it.key in activeServices}.orEmpty()
+                            if(works.isNotEmpty()||priceRows.isNotEmpty()){
+                                Card(Modifier.fillMaxWidth().padding(top=7.dp),colors=CardDefaults.cardColors(containerColor=Color(0xFFF4F8FA))){
+                                    Column(Modifier.padding(10.dp),verticalArrangement=Arrangement.spacedBy(4.dp)){
+                                        Text("الأعمال والأسعار المسجلة",fontWeight=FontWeight.Bold,color=DarkAccent)
+                                        works.forEach{Text("• "+it,style=MaterialTheme.typography.bodySmall)}
+                                        priceRows.forEach{entry->
+                                            val value=entry.value.takeIf{it.isJsonObject}?.asJsonObject
+                                            val from=value?.get("from")?.takeIf{!it.isJsonNull}?.toString().orEmpty()
+                                            val desc=value?.get("desc")?.takeIf{!it.isJsonNull}?.asString.orEmpty()
+                                            Text(entry.key+" — "+listOf(from,desc).filter{it.isNotBlank()}.joinToString(" • "),style=MaterialTheme.typography.bodySmall)
+                                        }
+                                    }
+                                }
+                            }
+                        }
                         if(section==AdminSection.OFFERS && item.isJsonObject){
                             val orderSn=item.asJsonObject.get("sn")?.asString.orEmpty()
                             item.asJsonObject.get("offers")?.takeIf{it.isJsonArray}?.asJsonArray?.forEachIndexed{index,offer->
