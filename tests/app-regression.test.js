@@ -139,6 +139,15 @@ test('native admin push service handles order and wallet notification types and 
 
 });
 
+test('client can confirm service receipt and sees the fixed 14-day warranty window', () => {
+  const screen = fs.readFileSync(path.join(root, 'src/screens/client/ClientDashboard.js'), 'utf8');
+  assert.match(screen, /confirm-completion/);
+  assert.match(screen, /تأكيد استلام الخدمة وبدء ضمان 14 يومًا/);
+  assert.match(screen, /clientConfirmedAt/);
+  assert.match(screen, /warrantyExpiresAt/);
+  assert.match(screen, /completionDeclaredAt/);
+});
+
 test('required runtime packages are declared', () => {
   for (const name of ['expo', 'react', 'react-native', 'expo-notifications', 'expo-secure-store']) {
     assert.ok(packageJson.dependencies[name], 'missing dependency: ' + name);
