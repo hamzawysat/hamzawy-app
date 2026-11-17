@@ -478,12 +478,12 @@ private fun permissionKeyForNativePath(path:String):String?{
  if(clean.startsWith("api/orders/")&&clean.endsWith("/voice"))return "voiceReview"
  if(clean.startsWith("api/password-recovery/admin/requests")||clean.startsWith("api/password-recovery/admin/support-passwords"))return "passwordRecovery"
  if(clean.startsWith("api/support/admin"))return "support"
- if(clean.startsWith("api/admin/admin-users")||clean.startsWith("api/admin/audit-logs")||clean.startsWith("api/admin/page-visits")||clean.startsWith("api/admin/ui-layout"))return null
+ if(clean.startsWith("api/admin/admin-users")||clean.startsWith("api/admin/audit-logs")||clean.startsWith("api/admin/ui-layout"))return null
  if(clean.startsWith("api/admin/wallet/")||clean.startsWith("api/admin/client-wallet/")||(clean.startsWith("api/admin/clients/")&&Regex("/wallet/(add-balance|deduct-balance|set-balance)$").containsMatchIn(clean))||clean.endsWith("/set-balance")||clean.endsWith("/add-balance"))return "wallet"
  val prefix="api/admin/"
  if(!clean.startsWith(prefix))return null
  return when(clean.removePrefix(prefix).substringBefore("/")){
-  "me","counts","stats","reports","mobile-panel"->"dashboard"
+  "me","counts","stats","reports","mobile-panel","page-visits"->"dashboard"
   "fannis","fanni-profile-edits"->"fannis"
   "orders"->"orders"
   "offers"->"offers"
