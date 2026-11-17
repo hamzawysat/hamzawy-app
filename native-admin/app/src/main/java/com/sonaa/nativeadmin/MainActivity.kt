@@ -1734,8 +1734,8 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
             val status=o.get("status")?.asString.orEmpty()
             val payment=o.get("paymentStatus")?.asString.orEmpty()
             val amount=o.get("amount")?.toString().orEmpty()
-            val end=o.get("endsAt")?.asString.orEmpty().take(10)
-            val details=o.get("subscriptionDetails")?.asString.orEmpty()
+            val end=o.get("endsAt")?.takeIf{!it.isJsonNull}?.asString.orEmpty().take(10)
+            val details=o.get("subscriptionDetails")?.takeIf{!it.isJsonNull}?.asString.orEmpty()
             Card(Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=Color.White)){
                 Column(Modifier.padding(13.dp),verticalArrangement=Arrangement.spacedBy(5.dp)){
                     Text(clientName.ifBlank{"عميل"}+" • "+itemName,fontWeight=FontWeight.Bold,color=DarkAccent)
