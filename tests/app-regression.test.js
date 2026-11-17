@@ -833,3 +833,16 @@ test('native customer and technician stores use managed category artwork with pr
   assert.ok(store.includes('selectedGroup.items.map(({ item, index }) => ('));
   assert.ok(store.includes("onPress={() => setSelectedCategory('')}"));
 });
+
+test('push notification taps route technician and client wallet events to the wallet screen, including cold starts', () => {
+  const hook = fs.readFileSync(path.join(root, 'src/hooks/usePushNotifications.js'), 'utf8');
+  const screens = fs.readFileSync(path.join(root, 'src/screens/AppScreens.js'), 'utf8');
+  assert.match(hook, /addNotificationResponseReceivedListener/);
+  assert.match(hook, /getLastNotificationResponseAsync/);
+  assert.match(hook, /clearLastNotificationResponseAsync/);
+  assert.match(screens, /fanni_wallet_credit/);
+  assert.match(screens, /fanni_wallet_settlement/);
+  assert.match(screens, /setTechData\(current => \(\{ \.\.\.current, tab: 'wallet' \}\)\)/);
+  assert.match(screens, /type\.startsWith\('client_wallet_'\)/);
+  assert.match(screens, /setClientTab\('wallet'\)/);
+});
