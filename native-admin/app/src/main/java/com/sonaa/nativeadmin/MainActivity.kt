@@ -2394,7 +2394,7 @@ private data class StoreCsvPreview(
 )
 private fun parseStoreCsvProducts(source:String,columnMapping:Map<String,Int>?=null):StoreCsvPreview{
     val firstLine=source.lineSequence().firstOrNull().orEmpty()
-    val delimiter=listOf(',', ';', '\\t').maxByOrNull{candidate->
+    val delimiter=listOf(',', ';', '\t').maxByOrNull{candidate->
         var count=0;var quoted=false;var cursor=0
         while(cursor<firstLine.length){
             val ch=firstLine[cursor]
