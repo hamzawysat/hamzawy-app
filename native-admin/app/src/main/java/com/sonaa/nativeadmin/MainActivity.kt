@@ -1824,7 +1824,7 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
     val root=payload?.takeIf{it.isJsonObject}?.asJsonObject
     val categories=root?.get("categories")?.takeIf{it.isJsonArray}?.asJsonArray?.toList().orEmpty()
     val adSettings=root?.get("storeAdSettings")?.takeIf{it.isJsonObject}?.asJsonObject
-    var rotation by remember(adSettings){mutableStateOf(adSettings?.get("rotationSeconds")?.asInt?.toString()?: "5")}
+    var rotation by remember(adSettings){mutableStateOf(adSettings?.get("rotationSeconds")?.asInt?.toString().orEmpty())}
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(14.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){
         Text("إدارة متجر حمزاوي سات",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold,color=DarkAccent)
         Text("المنتجات والأقسام والإعلانات والمخزون",style=MaterialTheme.typography.bodySmall,color=Color.Gray)
@@ -1953,7 +1953,7 @@ private fun storeProductCopy(source:com.google.gson.JsonObject):com.google.gson.
             OutlinedTextField(priority,{priority=it},label={Text("أولوية الإعلان 0 - 100")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Number),singleLine=true)
             OutlinedTextField(adDays,{adDays=it},label={Text("مدة الإعلان بالأيام 1 - 365")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Number),singleLine=true)
         }},
-        confirmButton={TextButton(enabled=!busy&&name.trim().length>=2&&price.toDoubleOrNull()?.let{it>=0}==true&&audience in listOf("both","client","fanni")&&priority.toIntOrNull()?.let{it in 0..100}==true&&(stock.isBlank()||stock.toIntOrNull()?.let{it>=0}==true),onClick={
+        confirmButton={TextButton(enabled=!busy&&name.trim().length>=2&&price.toDoubleOrNull()?.let{it>=0}==true&&(originalPrice.isBlank()||originalPrice.toDoubleOrNull()?.let{it>=0}==true)&&audience in listOf("both","client","fanni")&&priority.toIntOrNull()?.let{it in 0..100}==true&&(!advertised||adDays.toIntOrNull()?.let{it in 1..365}==true)&&(stock.isBlank()||stock.toIntOrNull()?.let{it>=0}==true),onClick={
             val adUntil=if(advertised){java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",java.util.Locale.US).apply{timeZone=java.util.TimeZone.getTimeZone("UTC")}.format(java.util.Date(System.currentTimeMillis()+(adDays.toIntOrNull()?.coerceIn(1,365)?:7)*86400000L))}else null
             val body=JsonObject().apply{
                 addProperty("name",name.trim());addProperty("category",category.trim().ifBlank{"عام"});addProperty("price",price.toDouble())
@@ -2042,10 +2042,17 @@ private fun storeProductCopy(source:com.google.gson.JsonObject):com.google.gson.
                     Text("الكمية: "+(o.get("quantity")?.toString()?: "0")+" • الإجمالي: "+(o.get("total")?.toString()?: "0")+" جنيه",style=MaterialTheme.typography.bodySmall)
                     Text("المشتري: "+if(o.get("buyerRole")?.asString=="client")"عميل" else "فني",style=MaterialTheme.typography.bodySmall,color=Color.Gray)
                     Text("الدفع: "+(o.get("paymentStatus")?.asString?: "غير مدفوع"),style=MaterialTheme.typography.bodySmall)
-                    OutlinedTextField(status,{status=it},label={Text("الحالة")},singleLine=true)
-                    OutlinedTextField(payment,{payment=it},label={Text("طريقة الدفع")},singleLine=true)
-                    OutlinedTextField(note,{note=it},label={Text("ملاحظة للمشتري")},minLines=2)
-                    Button(onClick={onAction("PATCH","api/admin/store/orders/"+id,JsonObject().apply{addProperty("status",status);addProperty("paymentMethod",payment);addProperty("adminNote",note.trim())})},enabled=!busy&&canWrite("api/admin/store/orders/"+id)&&status in statuses,modifier=Modifier.fillMaxWidth()){Text("حفظ الحالة وإشعار المشتري")}
+                    Text("تحديث الحالة",style=MaterialTheme.typography.labelMedium,fontWeight=FontWeight.Bold)
+                    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(4.dp)){
+                        statuses.forEach{value->FilterChip(selected=status==value,onClick={status=value},label={Text(value)})}
+                    }
+                    Text("طريقة الدفع",style=MaterialTheme.typography.labelMedium,fontWeight=FontWeight.Bold)
+                    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(4.dp)){
+                        listOf("غير محدد","محفظة العميل","عند الاستلام","تحويل").forEach{value->FilterChip(selected=payment==value,onClick={payment=value},label={Text(value)})}
+                    }
+                    Text("ملاحظة المشتري الحالية: "+(o.get("buyerNote")?.takeIf{!it.isJsonNull}?.asString.orEmpty()),style=MaterialTheme.typography.bodySmall,color=Color.Gray)
+                    OutlinedTextField(note,{note=it},label={Text("ملاحظة الإدارة للمشتري")},minLines=2)
+                    Button(onClick={onAction("PATCH","api/admin/store/orders/"+id,JsonObject().apply{addProperty("status",status);addProperty("paymentMethod",payment);addProperty("adminNote",note.trim())})},enabled=!busy&&canWrite("api/admin/store/orders/"+id)&&status in statuses&&payment in listOf("غير محدد","محفظة العميل","عند الاستلام","تحويل"),modifier=Modifier.fillMaxWidth()){Text("حفظ الحالة وإشعار المشتري")}
                 }
             }
         }
