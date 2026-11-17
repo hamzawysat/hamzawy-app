@@ -30,69 +30,43 @@ function money(value) {
   return (Number.isFinite(amount) ? amount : 0).toLocaleString('ar-EG') + ' جنيه';
 }
 
-const storeAdRotationMemory = { client: 0, fanni: 0 };
-
 export function StoreAdBanner({ role, session, visible = true, onOpenStore }) {
-  const [ads, setAds] = useState([]);
-  const [index, setIndex] = useState(() => Math.max(0, Number(storeAdRotationMemory[role]) || 0));
-  const [rotationSeconds, setRotationSeconds] = useState(5);
+  const [item, setItem] = useState(null);
   const [displayReady, setDisplayReady] = useState(false);
 
   useEffect(() => {
     let active = true;
-    let loaded = false;
-    let loadingAds = false;
+    let boundaryTimer = null;
     let retryTimer = null;
-    const loadAds = async () => {
-      if (!active || loaded || loadingAds) return;
-      loadingAds = true;
+    let loading = false;
+    const syncAdvertisement = async () => {
+      if (!active || loading) return;
+      loading = true;
       try {
-        const result = await api('/store/products');
+        const result = await api('/store/advertisement/current?audience=' + encodeURIComponent(role));
         if (!active) return;
-        const now = Date.now();
-        const eligible = (Array.isArray(result.products) ? result.products : [])
-          .filter(item => item.isAdvertised === true)
-          .filter(item => !item.adAudience || item.adAudience === 'both' || item.adAudience === role)
-          .filter(item => !item.adExpiresAt || new Date(item.adExpiresAt).getTime() > now)
-          .filter(item => item.stock === null || item.stock === undefined || Number(item.stock) > 0)
-          .filter(item => { const imageUrl = String(item.imageUrl || '').trim(); const hasUsableImage = imageUrl.startsWith('https://') || imageUrl.startsWith('http://') || /^\/api\/store\/media\/[a-f0-9]{24}$/i.test(imageUrl); return Boolean(String(item.name || '').trim() && hasUsableImage); })
-          .sort((a, b) => (Number(b.adPriority) || 0) - (Number(a.adPriority) || 0) ||
-            new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
-        setAds(eligible);
-        const configuredSeconds = Number(result.adRotationSeconds);
-        setRotationSeconds(Number.isInteger(configuredSeconds) && configuredSeconds >= 5 && configuredSeconds <= 60 ? configuredSeconds : 5);
-        setIndex(() => {
-          const nextIndex = Math.max(0, Number(storeAdRotationMemory[role]) || 0) % Math.max(eligible.length, 1);
-          storeAdRotationMemory[role] = nextIndex;
-          return nextIndex;
-        });
-        loaded = true;
-        if (retryTimer) clearInterval(retryTimer);
-      } catch (_) { }
-      finally { loadingAds = false; }
+        setItem(result.currentAdvertisement || null);
+        if (boundaryTimer) clearTimeout(boundaryTimer);
+        const delay = Math.max(250, Number(result.nextChangeAt) - Number(result.serverTime) + 100);
+        boundaryTimer = setTimeout(syncAdvertisement, delay);
+      } catch (_) {
+        if (active) retryTimer = setTimeout(syncAdvertisement, 5000);
+      } finally { loading = false; }
     };
-    loadAds();
-    retryTimer = setInterval(loadAds, 3000);
-    return () => { active = false; if (retryTimer) clearInterval(retryTimer); };
+    syncAdvertisement();
+    return () => {
+      active = false;
+      if (boundaryTimer) clearTimeout(boundaryTimer);
+      if (retryTimer) clearTimeout(retryTimer);
+    };
   }, [role, session?.token]);
 
   useEffect(() => {
-    if (!visible || !ads.length || displayReady) return undefined;
+    if (!visible || !item || displayReady) return undefined;
     const firstDisplay = setTimeout(() => setDisplayReady(true), 9000);
     return () => clearTimeout(firstDisplay);
-  }, [ads.length, visible, displayReady]);
+  }, [item?._id, visible, displayReady]);
 
-  useEffect(() => {
-    if (!visible || !displayReady || ads.length < 2) return undefined;
-    const timer = setInterval(() => setIndex(current => {
-      const nextIndex = (current + 1) % ads.length;
-      storeAdRotationMemory[role] = nextIndex;
-      return nextIndex;
-    }), rotationSeconds * 1000);
-    return () => clearInterval(timer);
-  }, [ads.length, visible, displayReady, rotationSeconds]);
-
-  const item = ads[index];
   if (!visible || !displayReady || !item) return null;
   return (
     <TouchableOpacity accessibilityRole="button" onPress={onOpenStore}
