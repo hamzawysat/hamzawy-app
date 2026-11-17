@@ -5,6 +5,8 @@ import java.io.File
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -50,13 +52,13 @@ class AdminRepository(context:Context){
   val requestPath=response?.raw()?.request?.url?.encodedPath.orEmpty()
   return IllegalStateException("فشل الطلب (HTTP ${e.code()}): $detail"+if(requestPath.isNotBlank())"\nالمسار: $requestPath" else "",e)
  }
- suspend fun uploadStoreMedia(uri:Uri,purpose:String):JsonElement{
+ suspend fun uploadStoreMedia(uri:Uri,purpose:String):JsonElement=withContext(Dispatchers.IO){
   if(purpose !in listOf("product","category"))error("نوع صورة المتجر غير صالح")
   val mime=appContext.contentResolver.getType(uri)?.substringBefore(";")?.lowercase()?:error("تعذر تحديد نوع الصورة")
   if(mime !in listOf("image/jpeg","image/png","image/webp"))error("اختار صورة JPG أو PNG أو WebP")
   val bytes=appContext.contentResolver.openInputStream(uri)?.use{it.readBytes()}?:error("تعذر قراءة ملف الصورة")
   if(bytes.isEmpty()||bytes.size>5*1024*1024)error("حجم الصورة يجب ألا يتجاوز 5 ميجابايت")
-  return try{api.uploadStoreMedia("api/admin/store/media?purpose=$purpose",mime,bytes.toRequestBody(mime.toMediaType()))}
+  try{api.uploadStoreMedia("api/admin/store/media?purpose=$purpose",mime,bytes.toRequestBody(mime.toMediaType()))}
   catch(e:HttpException){throw apiFailure(e)}
  }
  suspend fun downloadVoice(sn:String):File{
