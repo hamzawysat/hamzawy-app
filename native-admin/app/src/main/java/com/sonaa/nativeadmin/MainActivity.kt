@@ -1956,7 +1956,7 @@ private fun storeProductCopy(source:com.google.gson.JsonObject):com.google.gson.
     var advertised by remember(initial){mutableStateOf(source?.get("isAdvertised")?.asBoolean==true)}
     var audience by remember(initial){mutableStateOf(source?.get("adAudience")?.asString?: "both")}
     var priority by remember(initial){mutableStateOf(source?.get("adPriority")?.toString()?: "0")}
-    var adDays by remember(initial){mutableStateOf("7")}
+    var adDays by remember(initial){mutableStateOf(source?.get("adExpiresAt")?.takeIf{!it.isJsonNull}?.asString?.let{raw->val remaining=(parseAdminDate(raw)?.time?:System.currentTimeMillis())-System.currentTimeMillis();((remaining.coerceAtLeast(0L)+86400000L-1L)/86400000L).coerceAtLeast(1L).toString()}?: "7")}
     LaunchedEffect(uploadedImageUrl,uploadedImageFileId){
         if(!uploadedImageUrl.isNullOrBlank()&&!uploadedImageFileId.isNullOrBlank()){
             imageUrl=uploadedImageUrl;imageFileId=uploadedImageFileId;onClearUpload()
