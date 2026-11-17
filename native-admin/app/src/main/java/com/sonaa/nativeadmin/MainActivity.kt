@@ -14,6 +14,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -296,6 +299,7 @@ class MainActivity : ComponentActivity() {
             state.section == AdminSection.REPORTS -> ReportEditor(state.payload) { method, path, body -> vm.mutate(method, path, body) }
             state.section == AdminSection.SETTINGS || state.section == AdminSection.PRICING || state.section == AdminSection.CONTENT -> ConfigEditor(state.section, state.payload,{path->canWriteApi(state.adminInfo,path)}) { method, path, body -> vm.mutate(method, path, body) }
             state.walletFanniId!=null -> WalletTransactionsScreen(state.walletTransactions,vm::closeWalletTransactions)
+            state.identityFanniId!=null -> FanniIdentityScreen(state.identityFrontPath,state.identityBackPath,state.busy,vm::closeFanniIdentity)
             state.editingClient!=null -> ClientProfileEditor(state.editingClient,state.editingClientId.orEmpty(),{vm.closeClientProfile()}) { method:String,path:String,body:JsonObject -> vm.saveEditedProfile(method,path,body) }
             state.editingProfile!=null -> ProfileEditor(state.editingProfile,state.editingProfileId.orEmpty(),{vm.closeProfile()}) { method:String,path:String,body:JsonObject -> vm.saveEditedProfile(method,path,body) }
             state.recoveryDetail!=null -> RecoveryConversationScreen(state.recoveryDetail,state.busy,state.error,state.actionMessage,vm::closeRecovery,{path->canWriteApi(state.adminInfo,path)}) { method,path,body -> vm.recoveryAction(method,path,body) }
@@ -1475,6 +1479,7 @@ private data class RowAction(val label:String,val method:String,val path:String,
                         }
                         if(section in listOf(AdminSection.TECHNICIANS,AdminSection.PENDING,AdminSection.DISABLED)&&item.isJsonObject){
                             val fanniId=item.asJsonObject.get("_id")?.asString?:item.asJsonObject.get("id")?.asString.orEmpty()
+                            if(fanniId.isNotBlank())OutlinedButton(onClick={vm.openFanniIdentity(fanniId)},modifier=Modifier.fillMaxWidth().padding(top=6.dp)){Text("عرض صور بطاقة الرقم القومي")}
                             if(fanniId.isNotBlank()&&(onCanWriteApi("api/password-recovery/admin/support-passwords")||onCanReadApi("api/password-recovery/admin/support-passwords"))){
                                 Row(Modifier.fillMaxWidth().padding(top=6.dp),horizontalArrangement=Arrangement.spacedBy(6.dp)){
                                     if(onCanWriteApi("api/password-recovery/admin/support-passwords"))OutlinedButton(onClick={vm.issueSupportPassword("fanni",fanniId)},modifier=Modifier.weight(1f)){Text("إصدار كلمة دعم")}
