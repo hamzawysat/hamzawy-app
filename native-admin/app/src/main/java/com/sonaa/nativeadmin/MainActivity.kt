@@ -1805,3 +1805,222 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
         )
     }
 }
+
+@Composable private fun StoreProductsScreen(
+    payload:JsonElement?,
+    products:List<JsonElement>,
+    busy:Boolean,
+    canWrite:(String)->Boolean,
+    onAction:(String,String,JsonObject)->Unit
+){
+    var editing by remember{mutableStateOf<JsonElement?>(null)}
+    var categoryEditing by remember{mutableStateOf<JsonElement?>(null)}
+    var categoryCreate by remember{mutableStateOf(false)}
+    val root=payload?.takeIf{it.isJsonObject}?.asJsonObject
+    val categories=root?.get("categories")?.takeIf{it.isJsonArray}?.asJsonArray?.toList().orEmpty()
+    val adSettings=root?.get("storeAdSettings")?.takeIf{it.isJsonObject}?.asJsonObject
+    var rotation by remember(adSettings){mutableStateOf(adSettings?.get("rotationSeconds")?.asInt?.toString()?: "5")}
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(14.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){
+        Text("إدارة متجر حمزاوي سات",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold,color=DarkAccent)
+        Text("المنتجات والأقسام والإعلانات والمخزون",style=MaterialTheme.typography.bodySmall,color=Color.Gray)
+        if(canWrite("api/admin/store/products"))Button(onClick={editing=null;categoryCreate=false;categoryEditing=null;editing=JsonObject()},enabled=!busy,modifier=Modifier.fillMaxWidth()){Text("إضافة منتج جديد")}
+        Card(Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=Color.White)){
+            Column(Modifier.padding(12.dp),verticalArrangement=Arrangement.spacedBy(6.dp)){
+                Text("مدة عرض الإعلان",fontWeight=FontWeight.Bold,color=DarkAccent)
+                Text("المدة المحفوظة من الخادم: "+(adSettings?.get("rotationSeconds")?.toString()?: "غير متاحة"),style=MaterialTheme.typography.bodySmall,color=Color.Gray)
+                OutlinedTextField(rotation,{rotation=it},label={Text("مدة العرض بالثواني")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Number),singleLine=true)
+                Button(onClick={onAction("PUT","api/admin/store/ad-settings",JsonObject().apply{addProperty("rotationSeconds",rotation.toIntOrNull()?:0)})},enabled=!busy&&canWrite("api/admin/store/ad-settings")&&rotation.toIntOrNull() in listOf(5,10,15,20,30,45,60),modifier=Modifier.fillMaxWidth()){Text("حفظ مدة الإعلان")}
+            }
+        }
+        Card(Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=Color.White)){
+            Column(Modifier.padding(12.dp),verticalArrangement=Arrangement.spacedBy(7.dp)){
+                Row(verticalAlignment=Alignment.CenterVertically){
+                    Text("أقسام المتجر",modifier=Modifier.weight(1f),fontWeight=FontWeight.Bold,color=DarkAccent)
+                    if(canWrite("api/admin/store/categories/new"))TextButton(onClick={categoryCreate=true;categoryEditing=null}){Text("إضافة قسم")}
+                }
+                if(categories.isEmpty())Text("لا توجد أقسام معرفة بعد.",style=MaterialTheme.typography.bodySmall,color=Color.Gray)
+                categories.forEach{cat->
+                    val obj=cat.takeIf{it.isJsonObject}?.asJsonObject
+                    val name=obj?.get("name")?.takeIf{!it.isJsonNull}?.asString.orEmpty()
+                    val count=obj?.get("productCount")?.takeIf{!it.isJsonNull}?.toString().orEmpty()
+                    Row(verticalAlignment=Alignment.CenterVertically){
+                        Column(Modifier.weight(1f)){
+                            Text(name,fontWeight=FontWeight.SemiBold)
+                            Text(count+" منتج",style=MaterialTheme.typography.labelSmall,color=Color.Gray)
+                        }
+                        if(canWrite("api/admin/store/categories/"+name))TextButton(onClick={categoryEditing=cat;categoryCreate=false}){Text("تعديل")}
+                        if(name!="عام"&&canWrite("api/admin/store/categories/"+name))TextButton(onClick={onAction("DELETE","api/admin/store/categories/"+android.net.Uri.encode(name),JsonObject())}){Text("حذف",color=Color(0xFFB3261E))}
+                    }
+                }
+            }
+        }
+        Text("المنتجات ("+products.size+")",fontWeight=FontWeight.Bold,color=DarkAccent)
+        if(products.isEmpty())Text(if(busy)"جاري تحميل المنتجات..." else "لا توجد منتجات في المتجر",color=Color.Gray)
+        products.forEach{item->
+            val o=item.takeIf{it.isJsonObject}?.asJsonObject?:return@forEach
+            val id=o.get("_id")?.asString?:o.get("id")?.asString.orEmpty()
+            val name=o.get("name")?.asString.orEmpty()
+            val category=o.get("category")?.asString.orEmpty()
+            val price=o.get("price")?.toString().orEmpty()
+            val active=o.get("isActive")?.asBoolean!=false
+            val advertised=o.get("isAdvertised")?.asBoolean==true
+            Card(Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=Color.White)){
+                Column(Modifier.padding(12.dp),verticalArrangement=Arrangement.spacedBy(5.dp)){
+                    Text(name,fontWeight=FontWeight.Bold,color=DarkAccent)
+                    Text(category+" • "+price+" جنيه • "+if(active)"ظاهر" else "مخفي",style=MaterialTheme.typography.bodySmall,color=if(active)Color(0xFF16834B) else Color(0xFFB3261E))
+                    Text(if(advertised)"منشور كإعلان" else "غير منشور كإعلان",style=MaterialTheme.typography.labelSmall,color=if(advertised)Color(0xFF9A6700) else Color.Gray)
+                    Text("المخزون: "+(o.get("stock")?.takeIf{!it.isJsonNull}?.toString()?: "غير محدد"),style=MaterialTheme.typography.bodySmall,color=Color.Gray)
+                    Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(5.dp)){
+                        if(canWrite("api/admin/store/products/"+id))OutlinedButton(onClick={editing=item},enabled=!busy,modifier=Modifier.weight(1f)){Text("تعديل")}
+                        if(canWrite("api/admin/store/products/"+id))OutlinedButton(onClick={onAction("PUT","api/admin/store/products/"+id,storeProductCopy(o).apply{addProperty("isActive",!active)})},enabled=!busy,modifier=Modifier.weight(1f)){Text(if(active)"إخفاء" else "إظهار")}
+                        if(canWrite("api/admin/store/products/"+id))OutlinedButton(onClick={onAction("DELETE","api/admin/store/products/"+id,JsonObject())},enabled=!busy,modifier=Modifier.weight(1f)){Text("حذف")}
+                    }
+                }
+            }
+        }
+    }
+    if(editing!=null)StoreProductEditor(editing?.takeIf{it.isJsonObject&&it.asJsonObject.size()>0},busy,{editing=null}){method,path,body->onAction(method,path,body);editing=null}
+    if(categoryCreate||categoryEditing!=null)StoreCategoryEditor(categoryEditing,categoryCreate,busy,{categoryCreate=false;categoryEditing=null}){method,path,body->onAction(method,path,body);categoryCreate=false;categoryEditing=null}
+}
+
+private fun storeProductCopy(source:com.google.gson.JsonObject):com.google.gson.JsonObject{
+    val result=com.google.gson.JsonObject()
+    listOf("name","category","description","details","price","originalPrice","offerText","type","subscriptionDuration","imageUrl","imageFileId","isActive","isAdvertised","adAudience","adPriority","adExpiresAt","stock").forEach{key->
+        source.get(key)?.let{result.add(key,it.deepCopy())}
+    }
+    return result
+}
+
+@Composable private fun StoreProductEditor(
+    initial:JsonElement?,
+    busy:Boolean,
+    onDismiss:()->Unit,
+    onSave:(String,String,JsonObject)->Unit
+){
+    val source=initial?.asJsonObject
+    var name by remember(initial){mutableStateOf(source?.get("name")?.asString.orEmpty())}
+    var category by remember(initial){mutableStateOf(source?.get("category")?.asString?: "عام")}
+    var price by remember(initial){mutableStateOf(source?.get("price")?.toString().orEmpty())}
+    var originalPrice by remember(initial){mutableStateOf(source?.get("originalPrice")?.takeIf{!it.isJsonNull}?.toString().orEmpty())}
+    var offer by remember(initial){mutableStateOf(source?.get("offerText")?.asString.orEmpty())}
+    var type by remember(initial){mutableStateOf(source?.get("type")?.asString?: "product")}
+    var duration by remember(initial){mutableStateOf(source?.get("subscriptionDuration")?.asString.orEmpty())}
+    var description by remember(initial){mutableStateOf(source?.get("description")?.asString.orEmpty())}
+    var details by remember(initial){mutableStateOf(source?.get("details")?.asString.orEmpty())}
+    var imageUrl by remember(initial){mutableStateOf(source?.get("imageUrl")?.asString.orEmpty())}
+    var imageFileId by remember(initial){mutableStateOf(source?.get("imageFileId")?.takeIf{!it.isJsonNull}?.asString.orEmpty())}
+    var stock by remember(initial){mutableStateOf(source?.get("stock")?.takeIf{!it.isJsonNull}?.toString().orEmpty())}
+    var active by remember(initial){mutableStateOf(source?.get("isActive")?.asBoolean!=false)}
+    var advertised by remember(initial){mutableStateOf(source?.get("isAdvertised")?.asBoolean==true)}
+    var audience by remember(initial){mutableStateOf(source?.get("adAudience")?.asString?: "both")}
+    var priority by remember(initial){mutableStateOf(source?.get("adPriority")?.toString()?: "0")}
+    var adDays by remember(initial){mutableStateOf("7")}
+    AlertDialog(
+        onDismissRequest=onDismiss,
+        title={Text(if(initial==null)"إضافة منتج" else "تعديل المنتج")},
+        text={Column(Modifier.heightIn(max=540.dp).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(6.dp)){
+            OutlinedTextField(name,{name=it},label={Text("اسم المنتج *")},singleLine=true)
+            OutlinedTextField(category,{category=it},label={Text("القسم")},singleLine=true)
+            OutlinedTextField(price,{price=it},label={Text("السعر الحالي *")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Decimal),singleLine=true)
+            OutlinedTextField(originalPrice,{originalPrice=it},label={Text("السعر قبل العرض")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Decimal),singleLine=true)
+            OutlinedTextField(offer,{offer=it},label={Text("تفاصيل العرض")})
+            Row(horizontalArrangement=Arrangement.spacedBy(6.dp)){FilterChip(selected=type=="product",onClick={type="product"},label={Text("منتج")});FilterChip(selected=type=="subscription",onClick={type="subscription"},label={Text("اشتراك/تجديد")})}
+            OutlinedTextField(duration,{duration=it},label={Text("مدة الاشتراك")},singleLine=true)
+            OutlinedTextField(description,{description=it},label={Text("الوصف المختصر")},minLines=2)
+            OutlinedTextField(details,{details=it},label={Text("التفاصيل والمواصفات")},minLines=3)
+            OutlinedTextField(imageUrl,{imageUrl=it},label={Text("رابط الصورة أو مسار صورة المتجر")},singleLine=true)
+            OutlinedTextField(imageFileId,{imageFileId=it},label={Text("معرّف ملف الصورة (اختياري)")},singleLine=true)
+            OutlinedTextField(stock,{stock=it},label={Text("الكمية — اتركها فارغة بدون تحديد")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Number),singleLine=true)
+            Row(verticalAlignment=Alignment.CenterVertically){Text("المنتج ظاهر في المتجر",modifier=Modifier.weight(1f));Switch(active,{active=it})}
+            Row(verticalAlignment=Alignment.CenterVertically){Text("نشر المنتج كإعلان",modifier=Modifier.weight(1f));Switch(advertised,{advertised=it})}
+            OutlinedTextField(audience,{audience=it},label={Text("الجمهور: both / client / fanni")},singleLine=true)
+            OutlinedTextField(priority,{priority=it},label={Text("أولوية الإعلان 0 - 100")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Number),singleLine=true)
+            OutlinedTextField(adDays,{adDays=it},label={Text("مدة الإعلان بالأيام 1 - 365")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Number),singleLine=true)
+        }},
+        confirmButton={TextButton(enabled=!busy&&name.trim().length>=2&&price.toDoubleOrNull()?.let{it>=0}==true&&audience in listOf("both","client","fanni")&&priority.toIntOrNull()?.let{it in 0..100}==true&&(stock.isBlank()||stock.toIntOrNull()?.let{it>=0}==true),onClick={
+            val adUntil=if(advertised){java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",java.util.Locale.US).apply{timeZone=java.util.TimeZone.getTimeZone("UTC")}.format(java.util.Date(System.currentTimeMillis()+(adDays.toIntOrNull()?.coerceIn(1,365)?:7)*86400000L))}else null
+            val body=JsonObject().apply{
+                addProperty("name",name.trim());addProperty("category",category.trim().ifBlank{"عام"});addProperty("price",price.toDouble())
+                if(originalPrice.isBlank())add("originalPrice",com.google.gson.JsonNull.INSTANCE)else addProperty("originalPrice",originalPrice.toDoubleOrNull())
+                addProperty("offerText",offer.trim());addProperty("type",type);addProperty("subscriptionDuration",duration.trim())
+                addProperty("description",description.trim());addProperty("details",details.trim());addProperty("imageUrl",imageUrl.trim())
+                if(imageFileId.isBlank())add("imageFileId",com.google.gson.JsonNull.INSTANCE)else addProperty("imageFileId",imageFileId.trim())
+                addProperty("isActive",active);addProperty("isAdvertised",advertised);addProperty("adAudience",audience)
+                addProperty("adPriority",priority.toInt());if(adUntil==null)add("adExpiresAt",com.google.gson.JsonNull.INSTANCE)else addProperty("adExpiresAt",adUntil)
+                if(stock.isBlank())add("stock",com.google.gson.JsonNull.INSTANCE)else addProperty("stock",stock.toInt())
+            }
+            val id=source?.get("_id")?.asString?:source?.get("id")?.asString
+            onSave(if(id==null)"POST" else "PUT",if(id==null)"api/admin/store/products" else "api/admin/store/products/"+id,body)
+        }){Text("حفظ المنتج")}},
+        dismissButton={TextButton(onClick=onDismiss){Text("إلغاء")}}
+    )
+}
+
+@Composable private fun StoreCategoryEditor(
+    initial:JsonElement?,
+    create:Boolean,
+    busy:Boolean,
+    onDismiss:()->Unit,
+    onSave:(String,String,JsonObject)->Unit
+){
+    val source=initial?.asJsonObject
+    var name by remember(initial,create){mutableStateOf(source?.get("name")?.asString.orEmpty())}
+    var imageUrl by remember(initial,create){mutableStateOf(source?.get("customImageUrl")?.asString.orEmpty())}
+    var imageFileId by remember(initial,create){mutableStateOf(source?.get("imageFileId")?.takeIf{!it.isJsonNull}?.asString.orEmpty())}
+    val oldName=source?.get("name")?.asString?:name
+    AlertDialog(
+        onDismissRequest=onDismiss,
+        title={Text(if(create)"إضافة قسم متجر" else "تعديل قسم المتجر")},
+        text={Column(verticalArrangement=Arrangement.spacedBy(7.dp)){
+            OutlinedTextField(name,{name=it},label={Text("اسم القسم")},singleLine=true)
+            OutlinedTextField(imageUrl,{imageUrl=it},label={Text("رابط صورة القسم (اختياري)")},singleLine=true)
+            OutlinedTextField(imageFileId,{imageFileId=it},label={Text("معرّف ملف صورة القسم (اختياري)")},singleLine=true)
+        }},
+        confirmButton={TextButton(enabled=!busy&&name.trim().length in 2..80,onClick={
+            val body=JsonObject().apply{addProperty("name",name.trim());addProperty("imageUrl",imageUrl.trim());if(imageFileId.isBlank())add("imageFileId",com.google.gson.JsonNull.INSTANCE)else addProperty("imageFileId",imageFileId.trim())}
+            onSave("PUT","api/admin/store/categories/"+android.net.Uri.encode(oldName.ifBlank{name.trim()}),body)
+        }){Text("حفظ القسم")}},
+        dismissButton={TextButton(onClick=onDismiss){Text("إلغاء")}}
+    )
+}
+
+@Composable private fun StoreOrdersScreen(
+    payload:JsonElement?,
+    orders:List<JsonElement>,
+    busy:Boolean,
+    canWrite:(String)->Boolean,
+    onAction:(String,String,JsonObject)->Unit
+){
+    val statuses=listOf("جديد","تم التواصل","قيد التجهيز","ملغي","مكتمل")
+    var selected by remember{mutableStateOf("جديد")}
+    val filtered=orders.filter{it.isJsonObject&&(it.asJsonObject.get("status")?.takeIf{v->!v.isJsonNull}?.asString?: "جديد")==selected}
+    val pending=payload?.takeIf{it.isJsonObject}?.asJsonObject?.get("storeOrderCount")?.takeIf{it.isJsonObject}?.asJsonObject?.get("pendingCount")?.toString()
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(14.dp),verticalArrangement=Arrangement.spacedBy(9.dp)){
+        Text("طلبات ومبيعات المتجر",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold,color=DarkAccent)
+        Text("طلبات جديدة: "+(pending?:orders.count{it.isJsonObject&&it.asJsonObject.get("status")?.asString=="جديد"}),style=MaterialTheme.typography.bodySmall,color=Color.Gray)
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(5.dp)){
+            statuses.forEach{status->FilterChip(selected=selected==status,onClick={selected=status},label={Text(status+" "+orders.count{it.isJsonObject&&it.asJsonObject.get("status")?.asString==status})})}
+        }
+        if(filtered.isEmpty())Text(if(busy)"جاري تحميل الطلبات..." else "لا توجد طلبات في الحالة المحددة",color=Color.Gray)
+        filtered.forEach{item->
+            val o=item.asJsonObject
+            val id=o.get("_id")?.asString?:o.get("id")?.asString.orEmpty()
+            var status by remember(item){mutableStateOf(o.get("status")?.asString?: "جديد")}
+            var payment by remember(item){mutableStateOf(o.get("paymentMethod")?.asString?: "غير محدد")}
+            var note by remember(item){mutableStateOf(o.get("adminNote")?.asString.orEmpty())}
+            Card(Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=Color.White)){
+                Column(Modifier.padding(12.dp),verticalArrangement=Arrangement.spacedBy(5.dp)){
+                    Text(o.get("productName")?.asString.orEmpty(),fontWeight=FontWeight.Bold,color=DarkAccent)
+                    Text((o.get("productType")?.asString?: "product")+" • "+o.get("buyerName")?.asString.orEmpty()+" • "+o.get("buyerPhone")?.asString.orEmpty(),style=MaterialTheme.typography.bodySmall)
+                    Text("الكمية: "+(o.get("quantity")?.toString()?: "0")+" • الإجمالي: "+(o.get("total")?.toString()?: "0")+" جنيه",style=MaterialTheme.typography.bodySmall)
+                    Text("المشتري: "+if(o.get("buyerRole")?.asString=="client")"عميل" else "فني",style=MaterialTheme.typography.bodySmall,color=Color.Gray)
+                    Text("الدفع: "+(o.get("paymentStatus")?.asString?: "غير مدفوع"),style=MaterialTheme.typography.bodySmall)
+                    OutlinedTextField(status,{status=it},label={Text("الحالة")},singleLine=true)
+                    OutlinedTextField(payment,{payment=it},label={Text("طريقة الدفع")},singleLine=true)
+                    OutlinedTextField(note,{note=it},label={Text("ملاحظة للمشتري")},minLines=2)
+                    Button(onClick={onAction("PATCH","api/admin/store/orders/"+id,JsonObject().apply{addProperty("status",status);addProperty("paymentMethod",payment);addProperty("adminNote",note.trim())})},enabled=!busy&&canWrite("api/admin/store/orders/"+id)&&status in statuses,modifier=Modifier.fillMaxWidth()){Text("حفظ الحالة وإشعار المشتري")}
+                }
+            }
+        }
+    }
+}
