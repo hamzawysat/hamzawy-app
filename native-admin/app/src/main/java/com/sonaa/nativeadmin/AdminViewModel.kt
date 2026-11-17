@@ -8,7 +8,7 @@ import com.google.gson.JsonObject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-data class AdminUiState(val checking:Boolean=true,val authenticated:Boolean=false,val adminInfo:JsonElement?=null,val busy:Boolean=false,val error:String?=null,val section:AdminSection=AdminSection.DASHBOARD,val stats:JsonElement?=null,val items:List<JsonElement> = emptyList(),val actionMessage:String?=null,val payload:JsonElement?=null,val voicePath:String?=null,val editingProfile:JsonElement?=null,val editingProfileId:String?=null,val walletFanniId:String?=null,val walletTransactions:List<JsonElement> = emptyList(),val editingClient:JsonElement?=null,val editingClientId:String?=null,val recoveryDetail:JsonElement?=null,val recoveryDetailId:String?=null,val supportCases:List<JsonElement> = emptyList(),val supportSelectedCase:JsonElement?=null,val supportPasswordText:String?=null,val supportPasswordTitle:String="كلمة دعم العميل",val sectionSearch:String="",val storeUploadedImageUrl:String?=null,val storeUploadedImageFileId:String?=null)
+data class AdminUiState(val checking:Boolean=true,val authenticated:Boolean=false,val adminInfo:JsonElement?=null,val busy:Boolean=false,val error:String?=null,val section:AdminSection=AdminSection.DASHBOARD,val stats:JsonElement?=null,val items:List<JsonElement> = emptyList(),val actionMessage:String?=null,val payload:JsonElement?=null,val voicePath:String?=null,val editingProfile:JsonElement?=null,val editingProfileId:String?=null,val walletFanniId:String?=null,val walletTransactions:List<JsonElement> = emptyList(),val editingClient:JsonElement?=null,val editingClientId:String?=null,val recoveryDetail:JsonElement?=null,val recoveryDetailId:String?=null,val supportCases:List<JsonElement> = emptyList(),val supportSelectedCase:JsonElement?=null,val supportPasswordText:String?=null,val supportPasswordTitle:String="كلمة دعم العميل",val sectionSearch:String="",val storeUploadedImageUrl:String?=null,val storeUploadedImageFileId:String?=null,val identityFanniId:String?=null,val identityFrontPath:String?=null,val identityBackPath:String?=null)
 class AdminViewModel(app:Application):AndroidViewModel(app){
  private val repo=AdminRepository(app)
  private val _state=MutableStateFlow(AdminUiState())
@@ -94,6 +94,15 @@ class AdminViewModel(app:Application):AndroidViewModel(app){
    else{_state.value=_state.value.copy(busy=false,actionMessage=result.toString());load(_state.value.section,true)}
   }catch(e:Exception){_state.value=_state.value.copy(busy=false,error=e.message?: "تعذر تنفيذ العملية")}
  }
+ fun openFanniIdentity(id:String)=viewModelScope.launch{
+  _state.value=_state.value.copy(busy=true,error=null,identityFanniId=id,identityFrontPath=null,identityBackPath=null)
+  try{
+   val front=repo.downloadFanniIdentity(id,"front")
+   val back=repo.downloadFanniIdentity(id,"back")
+   _state.value=_state.value.copy(busy=false,identityFrontPath=front.absolutePath,identityBackPath=back.absolutePath)
+  }catch(e:Exception){_state.value=_state.value.copy(busy=false,error=e.message?: "تعذر تحميل صور بطاقة الفني")}
+ }
+ fun closeFanniIdentity(){_state.value=_state.value.copy(identityFanniId=null,identityFrontPath=null,identityBackPath=null)}
  fun openFanniProfile(id:String)=viewModelScope.launch{
   _state.value=_state.value.copy(busy=true,error=null,editingProfile=null,editingProfileId=null)
   try{
