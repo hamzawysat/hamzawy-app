@@ -2134,7 +2134,7 @@ private fun parseStoreCsvProducts(source:String):StoreCsvPreview{
         "subscriptionDuration" to listOf("duration","subscriptionduration","مدة الاشتراك"),
         "stock" to listOf("stock","quantity","qty","المخزون","الكمية")
     )
-    val headers=rows.first()
+    val headers=rows.first().mapIndexed{index,value->if(index==0)value.removePrefix("\\uFEFF") else value}
     val mapping=aliases.mapValues{(_,names)->headers.indexOfFirst{header->names.any{norm(header)==norm(it)}}}
     if((mapping["name"]?:-1)<0||(mapping["price"]?:-1)<0)error("لازم ملف CSV يحتوي على عمود اسم المنتج وعمود السعر")
     fun cellAt(cells:List<String>,key:String):String{
@@ -2160,8 +2160,9 @@ private fun parseStoreCsvProducts(source:String):StoreCsvPreview{
         val original=if(originalRaw.isBlank())null else number(originalRaw)
         if(originalRaw.isNotBlank()&&(original==null||original<0||original>100000000)){errors.add("الصف "+rowNumber+": السعر قبل العرض غير صحيح");return@forEachIndexed}
         val stockRaw=cellAt(cells,"stock")
-        val stock=if(stockRaw.isBlank())null else number(stockRaw)?.toInt()
-        if(stockRaw.isNotBlank()&&(stock==null||stock<0)){errors.add("الصف "+rowNumber+": الكمية يجب أن تكون عددًا صحيحًا غير سالب");return@forEachIndexed}
+        val stockNumber=if(stockRaw.isBlank())null else number(stockRaw)
+        val stock=stockNumber?.takeIf{it%1.0==0.0&&it>=0&&it<=100000000}?.toInt()
+        if(stockRaw.isNotBlank()&&stock==null){errors.add("الصف "+rowNumber+": الكمية يجب أن تكون عددًا صحيحًا غير سالب");return@forEachIndexed}
         val rawType=cellAt(cells,"type")
         val type=if(rawType.contains("اشتراك")||rawType.equals("subscription",true))"subscription" else "product"
         valid.add(JsonObject().apply{
