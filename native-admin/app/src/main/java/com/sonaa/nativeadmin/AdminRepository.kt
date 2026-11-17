@@ -65,7 +65,7 @@ class AdminRepository(context:Context){
   if(sourceBytes.size>5*1024*1024||maxOf(bounds.outWidth,bounds.outHeight)>1600){
    if(bounds.outWidth>0&&bounds.outHeight>0){
     var sample=1
-    while(maxOf(bounds.outWidth/sample,bounds.outHeight/sample)>1600)sample*=2
+    while(maxOf(bounds.outWidth/(sample*2),bounds.outHeight/(sample*2))>=1600)sample*=2
     val options=android.graphics.BitmapFactory.Options().apply{inSampleSize=sample}
     val bitmap=android.graphics.BitmapFactory.decodeByteArray(sourceBytes,0,sourceBytes.size,options)
     if(bitmap!=null){
