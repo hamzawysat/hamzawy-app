@@ -8,7 +8,7 @@ import com.google.gson.JsonObject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-data class AdminUiState(val checking:Boolean=true,val authenticated:Boolean=false,val adminInfo:JsonElement?=null,val busy:Boolean=false,val error:String?=null,val section:AdminSection=AdminSection.DASHBOARD,val stats:JsonElement?=null,val items:List<JsonElement> = emptyList(),val actionMessage:String?=null,val payload:JsonElement?=null,val voicePath:String?=null,val editingProfile:JsonElement?=null,val editingProfileId:String?=null,val walletFanniId:String?=null,val walletTransactions:List<JsonElement> = emptyList(),val editingClient:JsonElement?=null,val editingClientId:String?=null,val recoveryDetail:JsonElement?=null,val recoveryDetailId:String?=null,val supportCases:List<JsonElement> = emptyList(),val supportViolations:List<JsonElement> = emptyList(),val supportSearchResults:List<JsonElement> = emptyList(),val supportSelectedCase:JsonElement?=null,val supportPasswordText:String?=null,val supportPasswordTitle:String="كلمة دعم العميل",val sectionSearch:String="",val storeUploadedImageUrl:String?=null,val storeUploadedImageFileId:String?=null,val identityFanniId:String?=null,val identityFrontPath:String?=null,val identityBackPath:String?=null,val adminInbox:List<JsonElement> = emptyList(),val adminUnreadCount:Int=0,val notificationDeliveries:List<JsonElement> = emptyList(),val adminNotificationError:String?=null)
+data class AdminUiState(val checking:Boolean=true,val authenticated:Boolean=false,val adminInfo:JsonElement?=null,val busy:Boolean=false,val error:String?=null,val section:AdminSection=AdminSection.DASHBOARD,val stats:JsonElement?=null,val items:List<JsonElement> = emptyList(),val actionMessage:String?=null,val payload:JsonElement?=null,val voicePath:String?=null,val editingProfile:JsonElement?=null,val editingProfileId:String?=null,val walletFanniId:String?=null,val walletTransactions:List<JsonElement> = emptyList(),val editingClient:JsonElement?=null,val editingClientId:String?=null,val recoveryDetail:JsonElement?=null,val recoveryDetailId:String?=null,val supportCases:List<JsonElement> = emptyList(),val supportViolations:List<JsonElement> = emptyList(),val supportSearchResults:List<JsonElement> = emptyList(),val supportSelectedCase:JsonElement?=null,val supportPasswordText:String?=null,val supportPasswordTitle:String="كلمة دعم العميل",val sectionSearch:String="",val storeUploadedImageUrl:String?=null,val storeUploadedImageFileId:String?=null,val identityFanniId:String?=null,val identityFrontPath:String?=null,val identityBackPath:String?=null,val adminInbox:List<JsonElement> = emptyList(),val adminUnreadCount:Int=0,val notificationDeliveries:List<JsonElement> = emptyList(),val adminNotificationError:String?=null,val uiLayoutPage:String="admin")
 class AdminViewModel(app:Application):AndroidViewModel(app){
  private val repo=AdminRepository(app)
  private val _state=MutableStateFlow(AdminUiState())
@@ -67,7 +67,13 @@ class AdminViewModel(app:Application):AndroidViewModel(app){
  }
  fun clearStoreUpload(){_state.value=_state.value.copy(storeUploadedImageUrl=null,storeUploadedImageFileId=null)}
  fun refresh()=load(AdminSection.DASHBOARD)
- fun open(section:AdminSection){_state.value=_state.value.copy(sectionSearch="");load(section)}
+ fun open(section:AdminSection){_state.value=_state.value.copy(sectionSearch="");if(section==AdminSection.UI_LAYOUT)loadUiLayout("admin")else load(section)}
+ fun loadUiLayout(page:String)=viewModelScope.launch{
+  val safePage=page.takeIf{it in listOf("admin","client","fanni","password","support")}?: "admin"
+  _state.value=_state.value.copy(section=AdminSection.UI_LAYOUT,uiLayoutPage=safePage,busy=true,error=null)
+  try{val data=repo.get("api/admin/ui-layout/$safePage");_state.value=_state.value.copy(busy=false,payload=data)}
+  catch(e:Exception){_state.value=_state.value.copy(busy=false,error=e.message?: "تعذر تحميل تخطيط الصفحة")}
+ }
  fun openClientOrders(phone:String){_state.value=_state.value.copy(sectionSearch=phone.trim());load(AdminSection.ORDERS)}
  fun searchClients(query:String)=viewModelScope.launch{
   val clean=query.trim()
@@ -113,6 +119,7 @@ class AdminViewModel(app:Application):AndroidViewModel(app){
     "تم الاستيراد: "+(response?.get("importedCount")?.toString()?: "0")+" منتج • المكرر والمتخطى: "+(response?.get("duplicateCount")?.toString()?: "0")+" • الصفوف المرفوضة: "+(response?.get("errorCount")?.toString()?: "0")
    }else serverMessage?:result.toString()
    if(_state.value.section==AdminSection.REPORTS)_state.value=_state.value.copy(busy=false,payload=result,actionMessage=actionMessage)
+   else if(_state.value.section==AdminSection.UI_LAYOUT){_state.value=_state.value.copy(busy=false,actionMessage=actionMessage);loadUiLayout(_state.value.uiLayoutPage)}
    else{_state.value=_state.value.copy(busy=false,actionMessage=actionMessage);load(_state.value.section,true)}
   }catch(e:Exception){_state.value=_state.value.copy(busy=false,error=e.message?: "تعذر تنفيذ العملية")}
  }
@@ -351,7 +358,7 @@ class AdminViewModel(app:Application):AndroidViewModel(app){
   load(_state.value.section,true)
  }
  fun loadVoice(sn:String)=viewModelScope.launch{_state.value=_state.value.copy(busy=true,error=null);try{val file=repo.downloadVoice(sn);_state.value=_state.value.copy(busy=false,voicePath=file.absolutePath)}catch(e:Exception){_state.value=_state.value.copy(busy=false,error=e.message?: "تعذر تحميل التسجيل الصوتي")}}
- fun retry(){load(_state.value.section)}
+ fun retry(){if(_state.value.section==AdminSection.UI_LAYOUT)loadUiLayout(_state.value.uiLayoutPage)else load(_state.value.section)}
  fun logout()=viewModelScope.launch{repo.logout();_state.value=AdminUiState(checking=false)}
  fun registerFcm(token:String)=viewModelScope.launch{runCatching{repo.registerFcm(token)}}
 }
