@@ -1720,7 +1720,6 @@ private data class RowAction(val label:String,val method:String,val path:String,
             if(section==AdminSection.CLIENTS){
                 Text("حالة حساب العميل",style=MaterialTheme.typography.labelSmall,color=Color.Gray)
                 Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(6.dp)){
-                    val registeredCount=items.count{it.isJsonObject&&it.asJsonObject.get("registered")?.asBoolean==true}
                     val activeCount=items.count{it.isJsonObject&&it.asJsonObject.get("registered")?.asBoolean==true&&it.asJsonObject.get("status")?.asString!="معلق"}
                     val suspendedCount=items.count{it.isJsonObject&&it.asJsonObject.get("registered")?.asBoolean==true&&it.asJsonObject.get("status")?.asString=="معلق"}
                     FilterChip(selected=clientStatusFilter=="all",onClick={clientStatusFilter="all"},label={Text("كل العملاء")})
