@@ -107,8 +107,13 @@ class AdminViewModel(app:Application):AndroidViewModel(app){
   _state.value=_state.value.copy(busy=true,error=null,actionMessage=null)
   try{
    val result=repo.mutate(method,path,body)
-   if(_state.value.section==AdminSection.REPORTS)_state.value=_state.value.copy(busy=false,payload=result,actionMessage=result.toString())
-   else{_state.value=_state.value.copy(busy=false,actionMessage=result.toString());load(_state.value.section,true)}
+   val response=result.takeIf{it.isJsonObject}?.asJsonObject
+   val serverMessage=response?.get("message")?.takeIf{!it.isJsonNull}?.asString
+   val actionMessage=if(path=="api/admin/store/products/import"){
+    "تم الاستيراد: "+(response?.get("importedCount")?.toString()?: "0")+" منتج • المكرر والمتخطى: "+(response?.get("duplicateCount")?.toString()?: "0")+" • الصفوف المرفوضة: "+(response?.get("errorCount")?.toString()?: "0")
+   }else serverMessage?:result.toString()
+   if(_state.value.section==AdminSection.REPORTS)_state.value=_state.value.copy(busy=false,payload=result,actionMessage=actionMessage)
+   else{_state.value=_state.value.copy(busy=false,actionMessage=actionMessage);load(_state.value.section,true)}
   }catch(e:Exception){_state.value=_state.value.copy(busy=false,error=e.message?: "تعذر تنفيذ العملية")}
  }
  fun openFanniIdentity(id:String)=viewModelScope.launch{
