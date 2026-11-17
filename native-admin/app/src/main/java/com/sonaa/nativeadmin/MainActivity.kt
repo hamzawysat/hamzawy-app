@@ -2013,7 +2013,7 @@ private fun storeProductCopy(source:com.google.gson.JsonObject):com.google.gson.
             OutlinedTextField(duration,{duration=it},label={Text("مدة الاشتراك")},singleLine=true)
             OutlinedTextField(description,{description=it},label={Text("الوصف المختصر")},minLines=2)
             OutlinedTextField(details,{details=it},label={Text("التفاصيل والمواصفات")},minLines=3)
-            OutlinedTextField(imageUrl,{imageUrl=it},label={Text("رابط الصورة أو مسار صورة المتجر")},singleLine=true)
+            OutlinedTextField(imageUrl,{imageUrl=it;if(!it.startsWith("/api/store/media/"))imageFileId=""},label={Text("رابط الصورة أو مسار صورة المتجر")},singleLine=true)
             OutlinedTextField(imageFileId,{imageFileId=it},label={Text("معرّف ملف الصورة (اختياري)")},singleLine=true)
             OutlinedButton(onClick={imagePicker.launch("image/*")},enabled=!busy,modifier=Modifier.fillMaxWidth()){Text("اختيار صورة من الجهاز ورفعها إلى MongoDB")}
             OutlinedTextField(stock,{stock=it},label={Text("الكمية — اتركها فارغة بدون تحديد")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Number),singleLine=true)
@@ -2069,7 +2069,7 @@ private fun storeProductCopy(source:com.google.gson.JsonObject):com.google.gson.
         title={Text(if(create)"إضافة قسم متجر" else "تعديل قسم المتجر")},
         text={Column(verticalArrangement=Arrangement.spacedBy(7.dp)){
             OutlinedTextField(name,{name=it},label={Text("اسم القسم")},singleLine=true)
-            OutlinedTextField(imageUrl,{imageUrl=it},label={Text("رابط صورة القسم (اختياري)")},singleLine=true)
+            OutlinedTextField(imageUrl,{imageUrl=it;if(!it.startsWith("/api/store/media/"))imageFileId=""},label={Text("رابط صورة القسم (اختياري)")},singleLine=true)
             OutlinedTextField(imageFileId,{imageFileId=it},label={Text("معرّف ملف صورة القسم (اختياري)")},singleLine=true)
             OutlinedButton(onClick={imagePicker.launch("image/*")},enabled=!busy,modifier=Modifier.fillMaxWidth()){Text("اختيار صورة للقسم من الجهاز")}
         }},
