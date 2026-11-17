@@ -60,7 +60,7 @@ export function TechnicianDashboard({ context }) {
     const serviceMatch = technicianServiceFilter === 'الكل' || String(item.service || item.specialty || '') === technicianServiceFilter;
     return (!query || haystack.includes(query)) && serviceMatch;
   });
-    const tabs = [{ key: 'home', label: 'الرئيسية' }, { key: 'available', label: `الفرص (${filteredAvailableOrders.length})` }, { key: 'offers', label: `عروضي (${technicianOffers.filter(o => !isAcceptedJob(o) && !isCompletedJob(o)).length})` }, { key: 'currentJobs', label: `الطلبات الجارية (${technicianOffers.filter(o => isAcceptedJob(o) && !isCompletedJob(o)).length})` }, { key: 'completed', label: 'المكتملة' }, { key: 'wallet', label: 'المحفظة' }, { key: 'store', label: 'المتجر' }, { key: 'profile', label: 'حسابي' }, { key: 'support', label: 'الدعم الفني' }, { key: '__empty', empty: true }];
+    const tabs = [{ key: 'home', label: 'الرئيسية' }, { key: 'profile', label: 'حسابي' }, { key: 'wallet', label: 'المحفظة' }, { key: 'store', label: 'المتجر' }, { key: 'support', label: 'الدعم' }, { key: 'available', label: 'الطلبات المتاحة' }, { key: 'offers', label: 'طلبات مقدمة' }, { key: 'currentJobs', label: 'طلبات جارية' }, { key: 'completed', label: 'طلبات مكتملة' }, { key: '__empty', empty: true }];
   const hasMoreAvailable = technicianOrdersPagination
     ? Number(technicianOrdersPagination.page || 1) < Number(technicianOrdersPagination.pages || 1)
     : technicianOrders.length >= 20;
