@@ -995,19 +995,22 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
     val warnings = root?.get("dashboardWarnings")?.takeIf { it.isJsonArray }?.asJsonArray?.mapNotNull { it.takeIf { value -> value.isJsonPrimitive }?.asString }.orEmpty()
     fun field(item: JsonElement, key: String): String = item.takeIf { it.isJsonObject }?.asJsonObject?.get(key)?.takeIf { !it.isJsonNull }?.asString.orEmpty()
     val approvedTopups = topups.filter { field(it, "status") == "approved" }.sumOf { field(it, "amount").toDoubleOrNull() ?: 0.0 }
-    val cards = buildList {
-        addAll(listOf(
-            "إجمالي الفنيين" to (data?.get("technicians")?.toString() ?: "—"),
-            "الفنيون المعتمدون" to (data?.get("verifiedTechnicians")?.toString() ?: "—"),
-            "العملاء المسجلون" to (data?.get("clients")?.toString() ?: "—"),
-            "إجمالي الطلبات" to orders.size.toString(),
-            "طلبات بانتظار النشر" to orders.count { field(it, "status") == "قيد المراجعة" }.toString(),
-            "طلبات شحن معلقة" to topups.count { field(it, "status") == "pending" }.toString(),
-            "شكاوى جديدة" to complaints.count { field(it, "status") == "جديدة" }.toString(),
-            "إجمالي الشحنات المقبولة" to String.format(java.util.Locale.US, "%.2f ج", approvedTopups)
-        ))
-        if(showMonthly) add("إجمالي طلبات الشحن" to topups.size.toString())
-    }
+    val cards = if(showMonthly) listOf(
+        "إجمالي الفنيين" to (data?.get("technicians")?.toString() ?: "—"),
+        "إجمالي العملاء المسجلين" to (data?.get("clients")?.toString() ?: "—"),
+        "إجمالي الفنيين المعتمدين" to (data?.get("verifiedTechnicians")?.toString() ?: "—"),
+        "إجمالي الطلبات" to orders.size.toString(),
+        "إجمالي طلبات الشحن" to topups.size.toString(),
+        "إجمالي الشحن المقبول" to String.format(java.util.Locale.US, "%.2f جنيه", approvedTopups)
+    ) else listOf(
+        "طلبات اليوم" to orders.size.toString(),
+        "إجمالي الفنيين" to (data?.get("technicians")?.toString() ?: "—"),
+        "إجمالي العملاء المسجلين" to (data?.get("clients")?.toString() ?: "—"),
+        "إيرادات الشحن المقبول" to String.format(java.util.Locale.US, "%.2f جنيه", approvedTopups),
+        "شكاوى جديدة" to complaints.count { field(it, "status") == "جديدة" }.toString(),
+        "طلبات متأخرة تحتاج نشر" to orders.count { field(it, "status") == "قيد المراجعة" }.toString(),
+        "طلبات شحن معلقة" to topups.count { field(it, "status") == "pending" }.toString()
+    )
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
         Text("ملخص المنصة", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = DarkAccent)
         Spacer(Modifier.height(12.dp))
@@ -1023,7 +1026,7 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
         if(showMonthly) MonthlyOrdersChart(monthlyOrderStats(orders))
         Text("أحدث الطلبات", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = DarkAccent, modifier = Modifier.padding(top = 8.dp, bottom = 8.dp))
         if (orders.isEmpty()) Text("لا توجد طلبات متاحة أو لا تملك صلاحية عرضها", color = Color.Gray)
-        orders.take(5).forEach { order ->
+        orders.take(3).forEach { order ->
             Card(Modifier.fillMaxWidth().padding(bottom = 7.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
                 Column(Modifier.padding(12.dp)) {
                     Text(field(order, "sn").ifBlank { "طلب بدون رقم" }, fontWeight = FontWeight.Bold, color = DarkAccent)
