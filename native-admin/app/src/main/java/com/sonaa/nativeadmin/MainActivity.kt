@@ -129,7 +129,7 @@ class MainActivity : ComponentActivity() {
     }
     private fun navigate(destination: String?, adminInfo: JsonElement?, vm: AdminViewModel?) {
         val section = when (destination) {
-            "orders", "storeOrders" -> AdminSection.ORDERS
+            "orders" -> AdminSection.ORDERS
             "commerceSubscriptions" -> AdminSection.CLIENT_SUBSCRIPTIONS
             "commercePlans" -> AdminSection.COMMERCE_PLANS
             "store" -> AdminSection.STORE_PRODUCTS
