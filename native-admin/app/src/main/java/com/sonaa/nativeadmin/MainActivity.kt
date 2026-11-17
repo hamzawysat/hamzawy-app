@@ -1634,7 +1634,7 @@ private data class RowAction(val label:String,val method:String,val path:String,
             }
             Text("تُطبّق الصلاحيات الافتراضية للمنصب تلقائيًا.",style=MaterialTheme.typography.bodySmall,color=Color.Gray)
         }},
-        confirmButton={TextButton(enabled=!busy&&selectedAdminFanniId.isNotBlank(),onClick={
+        confirmButton={TextButton(enabled=selectedAdminFanniId.isNotBlank(),onClick={
             val body=JsonObject().apply{addProperty("fanniId",selectedAdminFanniId);addProperty("role",selectedAdminRole)}
             onAction("POST","api/admin/admin-users",body);createAdminOpen=false
         }){Text("ترقية الفني")}},
