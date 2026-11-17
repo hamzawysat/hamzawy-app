@@ -2083,7 +2083,7 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
                             }
                             DropdownMenu(expanded=openCsvMapping==key,onDismissRequest={openCsvMapping=null},modifier=Modifier.heightIn(max=280.dp)){
                                 DropdownMenuItem(text={Text("بدون ربط")},onClick={
-                                    val next=csvMapping.toMutableMap().apply{remove(key)}
+                                    val next=csvMapping.toMutableMap().apply{put(key,-1)}
                                     csvMapping=next;csvPreview=parseStoreCsvProducts(csvSource,next);openCsvMapping=null
                                 })
                                 preview.headers.forEachIndexed{index,header->
@@ -2436,7 +2436,7 @@ private fun parseStoreCsvProducts(source:String,columnMapping:Map<String,Int>?=n
         })
     }
     if(valid.size>500)error("الحد الأقصى للاستيراد 500 منتج في الدفعة الواحدة. قسّم الملف إلى دفعات.")
-    return StoreCsvPreview(valid,errors,headers,mapping.filterValues{it>=0})
+    return StoreCsvPreview(valid,errors,headers,mapping)
 }
 
 
