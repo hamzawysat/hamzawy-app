@@ -488,8 +488,8 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
 
 @Composable private fun FanniControlsDialog(item:JsonElement,onDismiss:()->Unit,onSave:(JsonObject)->Unit){
  val f=item.asJsonObject
- var trust by remember(item){mutableStateOf(f.get("trustScore")?.toString().orEmpty())}
- var verified by remember(item){mutableStateOf(f.get("isVerified")?.asBoolean?:false)}
+ var trust by remember(item){mutableStateOf(f.get("trustScore")?.toString()?: "50")}
+ var verified by remember(item){mutableStateOf((f.get("isVerified")?.asBoolean?:false)||(f.get("badges")?.takeIf{it.isJsonArray}?.asJsonArray?.any{it.asString=="verified"}==true))}
  var featured by remember(item){mutableStateOf(f.get("isFeatured")?.asBoolean?:false)}
  var until by remember(item){mutableStateOf(f.get("featuredUntil")?.asString?.take(10).orEmpty())}
  AlertDialog(onDismissRequest=onDismiss,title={Text("الثقة والتحقق والظهور")},
@@ -1683,6 +1683,19 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
             value("budget").takeIf{it.isNotBlank()}?.let{"الميزانية: $it جنيه"},
             value("createdAt").takeIf{it.isNotBlank()}?.let{"التاريخ: $it"}
         ).filterNotNull().joinToString("  •  ")
+    }
+    if(section in listOf(AdminSection.TECHNICIANS,AdminSection.PENDING,AdminSection.DISABLED)){
+        fun value(key:String):String=obj.get(key)?.takeIf{!it.isJsonNull}?.toString()?.trim('"').orEmpty()
+        val parts=mutableListOf<String>()
+        value("phone").takeIf{it.isNotBlank()}?.let{parts.add("الهاتف: $it")}
+        value("status").takeIf{it.isNotBlank()}?.let{parts.add("الحالة: $it")}
+        value("level").ifBlank{value("experience")}.takeIf{it.isNotBlank()}?.let{parts.add("المستوى: $it")}
+        value("ratingAverage").takeIf{it.isNotBlank()}?.let{parts.add("التقييم: $it")}
+        value("ratingCount").takeIf{it.isNotBlank()}?.let{parts.add("عدد التقييمات: $it")}
+        value("completedJobs").takeIf{it.isNotBlank()}?.let{parts.add("أعمال مكتملة: $it")}
+        value("balance").ifBlank{value("walletBalance")}.takeIf{it.isNotBlank()}?.let{parts.add("الرصيد: $it ج")}
+        value("trustScore").takeIf{it.isNotBlank()}?.let{parts.add("الثقة: $it")}
+        return parts.joinToString("  •  ")
     }
     if(section==AdminSection.CLIENTS){
         fun value(key:String):String=obj.get(key)?.takeIf{!it.isJsonNull}?.toString()?.trim('"').orEmpty()
