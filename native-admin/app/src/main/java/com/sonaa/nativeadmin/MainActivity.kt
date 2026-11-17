@@ -1085,6 +1085,7 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
   var answer by remember(payload){mutableStateOf("")}
   var faqIndex by remember(payload){mutableStateOf(-1)}
   var previewOpen by remember(payload){mutableStateOf(false)}
+   var faqDeleteIndex by remember(payload){mutableStateOf<Int?>(null)}
   val faqs=p?.get("faqs")?.takeIf{it.isJsonArray}?.asJsonArray
   Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){
    Text("الإعلانات والأسئلة الشائعة",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold,color=DarkAccent)
@@ -1104,7 +1105,7 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
         val body=JsonObject().apply{addProperty("announcement",announcement.trim());val array=com.google.gson.JsonArray();faqs?.forEachIndexed{idx,entry->val copy=entry.asJsonObject.deepCopy();if(idx==index)copy.addProperty("active",copy.get("active")?.asBoolean==false);array.add(copy)};add("faqs",array)}
         onSave("PUT","api/admin/content",body)
        },enabled=canWrite("api/admin/content")){Text(if(faq.asJsonObject.get("active")?.asBoolean==false)"تفعيل" else "إيقاف")}
-       TextButton(onClick={onSave("DELETE","api/admin/content/faqs/$index",JsonObject())},enabled=canWrite("api/admin/content/faqs/$index")){Text("حذف",color=Color(0xFFB3261E))}
+       TextButton(onClick={faqDeleteIndex=index},enabled=canWrite("api/admin/content/faqs/$index")){Text("حذف",color=Color(0xFFB3261E))}
       }
      }
     }
@@ -1146,6 +1147,16 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
    }},
    confirmButton={TextButton(onClick={previewOpen=false}){Text("إغلاق")}}
   )
+  faqDeleteIndex?.let{index->
+   val questionText=faqs?.get(index)?.takeIf{it.isJsonObject}?.asJsonObject?.get("question")?.takeIf{!it.isJsonNull}?.asString.orEmpty()
+   AlertDialog(
+    onDismissRequest={faqDeleteIndex=null},
+    title={Text("تأكيد حذف السؤال")},
+    text={Text("هل تريد حذف السؤال: "+questionText+"؟")},
+    confirmButton={TextButton(onClick={onSave("DELETE","api/admin/content/faqs/$index",JsonObject());faqDeleteIndex=null}){Text("تأكيد الحذف")}},
+    dismissButton={TextButton(onClick={faqDeleteIndex=null}){Text("إلغاء")}}
+   )
+  }
  }
 }
 
