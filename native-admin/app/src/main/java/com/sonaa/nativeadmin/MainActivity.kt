@@ -1730,9 +1730,12 @@ private data class RowAction(val label:String,val method:String,val path:String,
                             val registered=client.get("registered")?.asBoolean?:clientId.isNotBlank()
                             if(registered&&clientId.isNotBlank()){
                                 val balance=client.get("walletBalance")?.takeIf{!it.isJsonNull}?.toString()?.trim('"')?: "0"
+                                val accountStatus=client.get("status")?.takeIf{!it.isJsonNull}?.asString?: "غير محدد"
+                                val walletFrozen=client.get("walletFrozen")?.asBoolean==true
                                 Card(Modifier.fillMaxWidth().padding(top=8.dp),colors=CardDefaults.cardColors(containerColor=Color(0xFFEAF7F0))){
                                     Column(Modifier.padding(10.dp),verticalArrangement=Arrangement.spacedBy(6.dp)){
                                         Text("محفظة العميل: $balance ج",fontWeight=FontWeight.Bold,color=Color(0xFF176B45))
+                                        Text("حالة الحساب: $accountStatus • المحفظة: "+if(walletFrozen)"مجمدة" else "نشطة",style=MaterialTheme.typography.labelSmall,color=Color.Gray)
                                         if(onCanReadApi("api/admin/client-wallet/transactions/$clientId"))
                                             OutlinedButton(onClick={onOpenClientWallet(clientId)},modifier=Modifier.fillMaxWidth()){Text("كشف حركات محفظة العميل")}
                                         Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(6.dp)){
@@ -2042,13 +2045,18 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
     var createOpen by remember{mutableStateOf(false)}
     var editingDetails by remember{mutableStateOf<JsonElement?>(null)}
     var statusFilter by remember{mutableStateOf("all")}
+    var subscriptionSearch by remember{mutableStateOf("")}
     val filteredItems=items.filter{item->
-        val status=item.takeIf{it.isJsonObject}?.asJsonObject?.get("status")?.takeIf{!it.isJsonNull}?.asString.orEmpty()
-        statusFilter=="all"||status==statusFilter
+        val o=item.takeIf{it.isJsonObject}?.asJsonObject
+        val status=o?.get("status")?.takeIf{!it.isJsonNull}?.asString.orEmpty()
+        val client=o?.get("client")?.takeIf{it.isJsonObject}?.asJsonObject
+        val searchText=listOf(client?.get("name")?.asString.orEmpty(),client?.get("phone")?.asString.orEmpty(),o?.get("itemName")?.asString.orEmpty(),o?.get("_id")?.asString.orEmpty()).joinToString(" ").lowercase()
+        (statusFilter=="all"||status==statusFilter)&&(subscriptionSearch.isBlank()||searchText.contains(subscriptionSearch.trim().lowercase()))
     }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(14.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){
         Text("اشتراكات العملاء",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold,color=DarkAccent)
         Text("متابعة الاشتراكات النشطة والمعلقة والمنتهية وتجديدها",style=MaterialTheme.typography.bodySmall,color=Color.Gray)
+        OutlinedTextField(subscriptionSearch,{subscriptionSearch=it},label={Text("بحث باسم العميل أو الهاتف أو الباقة")},singleLine=true,modifier=Modifier.fillMaxWidth())
         if(canWrite("api/admin/commerce/subscriptions"))Button(onClick={createOpen=true},enabled=!busy,modifier=Modifier.fillMaxWidth()){Text("إضافة اشتراك لعميل")}
         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(6.dp)){
             listOf("all" to "الكل","active" to "نشط","pending" to "بانتظار التفعيل","paused" to "موقوف","cancelled" to "ملغي","expired" to "منتهي").forEach{(key,label)->
