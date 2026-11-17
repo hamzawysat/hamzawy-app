@@ -17,5 +17,5 @@ test('native push registration cleanup keeps device token; logout explicitly unr
   assert.match(cleanup, /responseSubscription\.remove\(\)/);
   assert.match(cleanup, /tokenRefreshSubscription\.remove\(\)/);
   assert.doesNotMatch(cleanup, /push-token/);
-  assert.match(screens, /performLogout[\s\S]*?\/notifications\/['"]?\s*\+\s*activeSession\.role\s*\+\s*['"]\/push-token/);
+  assert.match(screens, /api\('\/notifications\/'\s*\+\s*activeSession\.role\s*\+\s*'\/push-token'/);
 });
