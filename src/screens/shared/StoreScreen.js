@@ -110,6 +110,7 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
   const [paymentMethod, setPaymentMethod] = useState('wallet');
   const [submitting, setSubmitting] = useState(false);
   const [previousOrdersOpen, setPreviousOrdersOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('');
 
   const load = useCallback(async (silent = false) => {
     if (!session?.token) return;
@@ -209,6 +210,7 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
     });
     return Array.from(groups.entries()).map(([category, items]) => ({ category, items }));
   }, [products]);
+  const selectedGroup = groupedProducts.find(group => group.category === selectedCategory);
 
   return (
     <View style={{ width: '100%' }}>
@@ -239,13 +241,19 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
           ) : null}
         </View>
         {loading ? <ActivityIndicator color={COLORS.teal} size="large" /> : error ? <View style={styles.dataCard}><Text style={styles.errorText}>{error}</Text><Button title="إعادة المحاولة" onPress={() => load()} /></View> :
-          groupedProducts.length ? groupedProducts.map(group => (
-            <View key={group.category} style={{ marginBottom: 12 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                <Text style={styles.sectionTitle}>{group.category}</Text>
-                <Text style={{ color: COLORS.muted, fontSize: 11, fontWeight: '700' }}>{group.items.length} منتج</Text>
+          selectedGroup ? (
+            <View style={{ marginBottom: 12 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                <TouchableOpacity accessibilityRole="button" onPress={() => setSelectedCategory('')}
+                  style={{ paddingHorizontal: 12, paddingVertical: 9, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.white }}>
+                  <Text style={{ color: COLORS.teal, fontSize: 12, fontWeight: '900' }}>← كل الأقسام</Text>
+                </TouchableOpacity>
+                <View style={{ alignItems: 'flex-end' }}>
+                  <Text style={styles.sectionTitle}>{selectedGroup.category}</Text>
+                  <Text style={{ color: COLORS.muted, fontSize: 11, fontWeight: '700' }}>{selectedGroup.items.length} منتج</Text>
+                </View>
               </View>
-              {group.items.map(({ item, index }) => (
+              {selectedGroup.items.map(({ item, index }) => (
                 <View key={String(item._id || index)} style={[styles.dataCard, { marginBottom: 10, flexDirection: 'row', alignItems: 'flex-start', gap: 12 }]}>
                   <StoreImage value={item.imageUrl} style={{ width: 96, height: 96, borderRadius: 12 }} />
                   <View style={{ flex: 1 }}>
@@ -261,7 +269,26 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
                 </View>
               ))}
             </View>
-          )) : <View style={styles.dataCard}><Text style={styles.emptyText}>لا توجد منتجات متاحة حاليًا.</Text></View>}
+          ) : groupedProducts.length ? (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 10 }}>
+              {groupedProducts.map(group => {
+                const coverProduct = group.items.find(({ item }) => String(item?.imageUrl || '').trim())?.item || group.items[0]?.item;
+                return (
+                  <TouchableOpacity key={group.category} accessibilityRole="button"
+                    accessibilityLabel={'فتح قسم ' + group.category}
+                    onPress={() => setSelectedCategory(group.category)}
+                    style={{ width: '48%', marginBottom: 2, borderRadius: 16, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.white, overflow: 'hidden' }}>
+                    <StoreImage value={coverProduct?.imageUrl} style={{ width: '100%', height: 112 }} />
+                    <View style={{ padding: 12 }}>
+                      <Text numberOfLines={1} style={{ color: COLORS.navy, fontSize: 13, fontWeight: '900', textAlign: 'right' }}>{group.category}</Text>
+                      <Text style={{ color: COLORS.muted, fontSize: 10, fontWeight: '700', textAlign: 'right', marginTop: 4 }}>{group.items.length} منتج</Text>
+                      <Text style={{ color: COLORS.teal, fontSize: 10, fontWeight: '900', textAlign: 'right', marginTop: 8 }}>عرض المنتجات ←</Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          ) : <View style={styles.dataCard}><Text style={styles.emptyText}>لا توجد منتجات متاحة حاليًا.</Text></View>}
       </View>
       <Modal transparent visible={Boolean(selected)} animationType="slide" onRequestClose={() => setSelected(null)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
