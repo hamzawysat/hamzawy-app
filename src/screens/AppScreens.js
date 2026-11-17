@@ -163,8 +163,8 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         clientWallet: 'clients',
         wallet: 'clients',
         commerceSubscriptions: 'clients',
-        recovery: 'clients',
-        password_reset: 'clients',
+        recovery: 'support',
+        password_reset: 'support',
         topups: 'topups',
         complaints: 'complaints',
         support: 'support'
