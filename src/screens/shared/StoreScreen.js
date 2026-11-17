@@ -100,6 +100,7 @@ export function StoreAdBanner({ role, session, visible = true, onOpenStore }) {
 
 export default function StoreScreen({ role, session, walletBalance, onWalletBalanceChange }) {
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -124,6 +125,7 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
       if (results[0].status === 'rejected') throw results[0].reason;
       const catalog = results[0].value;
       setProducts(Array.isArray(catalog.products) ? catalog.products : []);
+      setCategories(Array.isArray(catalog.categories) ? catalog.categories : []);
       setOrders(results[1].status === 'fulfilled' && Array.isArray(results[1].value.orders) ? results[1].value.orders : []);
     } catch (e) {
       setError(e.message || 'تعذر تحميل المتجر حاليًا.');
@@ -208,8 +210,12 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
       if (!groups.has(category)) groups.set(category, []);
       groups.get(category).push({ item, index });
     });
-    return Array.from(groups.entries()).map(([category, items]) => ({ category, items }));
-  }, [products]);
+    return Array.from(groups.entries()).map(([category, items]) => {
+      const categoryInfo = (Array.isArray(categories) ? categories : []).find(entry => String(entry?.name || '') === category);
+      const fallbackProduct = items.find(({ item }) => String(item?.imageUrl || '').trim())?.item || items[0]?.item;
+      return { category, items, imageUrl: String(categoryInfo?.imageUrl || fallbackProduct?.imageUrl || '').trim() };
+    });
+  }, [products, categories]);
   const selectedGroup = groupedProducts.find(group => group.category === selectedCategory);
 
   return (
@@ -278,7 +284,7 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
                     accessibilityLabel={'فتح قسم ' + group.category}
                     onPress={() => setSelectedCategory(group.category)}
                     style={{ width: '48%', marginBottom: 2, borderRadius: 16, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.white, overflow: 'hidden' }}>
-                    <StoreImage value={coverProduct?.imageUrl} style={{ width: '100%', height: 112 }} />
+                    <StoreImage value={group.imageUrl || coverProduct?.imageUrl} style={{ width: '100%', height: 112 }} />
                     <View style={{ padding: 12 }}>
                       <Text numberOfLines={1} style={{ color: COLORS.navy, fontSize: 13, fontWeight: '900', textAlign: 'right' }}>{group.category}</Text>
                       <Text style={{ color: COLORS.muted, fontSize: 10, fontWeight: '700', textAlign: 'right', marginTop: 4 }}>{group.items.length} منتج</Text>
