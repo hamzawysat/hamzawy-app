@@ -1062,9 +1062,11 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
   var question by remember(payload){mutableStateOf("")}
   var answer by remember(payload){mutableStateOf("")}
   var faqIndex by remember(payload){mutableStateOf(-1)}
+  var previewOpen by remember(payload){mutableStateOf(false)}
   val faqs=p?.get("faqs")?.takeIf{it.isJsonArray}?.asJsonArray
   Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){
    Text("الإعلانات والأسئلة الشائعة",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold,color=DarkAccent)
+   OutlinedButton(onClick={previewOpen=true},modifier=Modifier.fillMaxWidth()){Text("معاينة الإعلان والأسئلة الشائعة")}
    OutlinedTextField(announcement,{announcement=it},label={Text("إعلان واجهة العميل")},modifier=Modifier.fillMaxWidth(),minLines=3)
    Button(onClick={onSave("PATCH","api/admin/content/announcement",JsonObject().apply{addProperty("announcement",announcement.trim())})},enabled=canWrite("api/admin/content/announcement"),modifier=Modifier.fillMaxWidth()){Text("حفظ الإعلان")}
    Text("الأسئلة الشائعة",fontWeight=FontWeight.Bold,color=DarkAccent)
@@ -1102,6 +1104,26 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
    },enabled=question.trim().length>=2&&answer.trim().length>=2&&canWrite("api/admin/content"),modifier=Modifier.fillMaxWidth()){Text(if(faqIndex>=0)"حفظ تعديل السؤال" else "إضافة السؤال")}
    if(faqIndex>=0)TextButton(onClick={faqIndex=-1;question="";answer=""},modifier=Modifier.fillMaxWidth()){Text("إلغاء التعديل")}
   }
+  if(previewOpen)AlertDialog(
+   onDismissRequest={previewOpen=false},
+   title={Text("معاينة محتوى واجهة العميل")},
+   text={Column(Modifier.heightIn(max=440.dp).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(10.dp)){
+    Text("الإعلان",fontWeight=FontWeight.Bold,color=DarkAccent)
+    Text(announcement.ifBlank{"لا يوجد إعلان حاليًا."},style=MaterialTheme.typography.bodyMedium)
+    Divider()
+    Text("الأسئلة الشائعة",fontWeight=FontWeight.Bold,color=DarkAccent)
+    if(faqs.isNullOrEmpty())Text("لا توجد أسئلة شائعة.")
+    faqs?.forEachIndexed{index,entry->
+     val item=entry.takeIf{it.isJsonObject}?.asJsonObject?:return@forEachIndexed
+     Column(verticalArrangement=Arrangement.spacedBy(3.dp)){
+      Text((index+1).toString()+". "+(item.get("question")?.takeIf{!it.isJsonNull}?.asString.orEmpty()),fontWeight=FontWeight.SemiBold)
+      Text(item.get("answer")?.takeIf{!it.isJsonNull}?.asString.orEmpty(),style=MaterialTheme.typography.bodySmall)
+      Text(if(item.get("active")?.asBoolean!=false)"مفعل" else "متوقف",style=MaterialTheme.typography.labelSmall,color=if(item.get("active")?.asBoolean!=false)Color(0xFF16834B) else Color.Gray)
+     }
+    }
+   }},
+   confirmButton={TextButton(onClick={previewOpen=false}){Text("إغلاق")}}
+  )
  }
 }
 
