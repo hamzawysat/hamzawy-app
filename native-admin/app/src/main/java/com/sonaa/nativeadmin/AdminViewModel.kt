@@ -67,6 +67,7 @@ class AdminViewModel(app:Application):AndroidViewModel(app){
  }
  fun clearStoreUpload(){_state.value=_state.value.copy(storeUploadedImageUrl=null,storeUploadedImageFileId=null)}
  fun refresh()=load(AdminSection.DASHBOARD)
+ private fun refreshDashboardSnapshot()=viewModelScope.launch{runCatching{enrichDashboard(repo.get(AdminSection.DASHBOARD))}.onSuccess{snapshot->_state.value=_state.value.copy(stats=snapshot)}}
  fun open(section:AdminSection){_state.value=_state.value.copy(sectionSearch="");if(section==AdminSection.UI_LAYOUT)loadUiLayout("admin")else load(section)}
  fun loadUiLayout(page:String)=viewModelScope.launch{
   val safePage=page.takeIf{it in listOf("admin","client","fanni","password","support")}?: "admin"
@@ -131,6 +132,7 @@ class AdminViewModel(app:Application):AndroidViewModel(app){
     }
     summary+if(details.isEmpty())"" else "\n"+details.joinToString("\n")
    }else serverMessage?:result.toString()
+   refreshDashboardSnapshot()
    if(_state.value.section==AdminSection.REPORTS)_state.value=_state.value.copy(busy=false,payload=result,actionMessage=actionMessage)
    else if(_state.value.section==AdminSection.UI_LAYOUT){_state.value=_state.value.copy(busy=false,actionMessage=actionMessage);loadUiLayout(_state.value.uiLayoutPage)}
    else{_state.value=_state.value.copy(busy=false,actionMessage=actionMessage);load(_state.value.section,true)}
@@ -371,7 +373,7 @@ class AdminViewModel(app:Application):AndroidViewModel(app){
   load(_state.value.section,true)
  }
  fun loadVoice(sn:String)=viewModelScope.launch{_state.value=_state.value.copy(busy=true,error=null);try{val file=repo.downloadVoice(sn);_state.value=_state.value.copy(busy=false,voicePath=file.absolutePath)}catch(e:Exception){_state.value=_state.value.copy(busy=false,error=e.message?: "تعذر تحميل التسجيل الصوتي")}}
- fun retry(){if(_state.value.section==AdminSection.UI_LAYOUT)loadUiLayout(_state.value.uiLayoutPage)else load(_state.value.section)}
+ fun retry(){refreshDashboardSnapshot();if(_state.value.section==AdminSection.UI_LAYOUT)loadUiLayout(_state.value.uiLayoutPage)else load(_state.value.section)}
  fun logout()=viewModelScope.launch{repo.logout();_state.value=AdminUiState(checking=false)}
  fun registerFcm(token:String)=viewModelScope.launch{runCatching{repo.registerFcm(token)}}
 }
