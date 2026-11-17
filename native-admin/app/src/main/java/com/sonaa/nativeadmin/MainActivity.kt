@@ -1441,13 +1441,13 @@ private data class RowAction(val label:String,val method:String,val path:String,
             (dateFilter.isBlank() || date.contains(dateFilter.trim(), true))
         }
     }
-    val statusOptions=items.mapNotNull{item->item.takeIf{it.isJsonObject}?.asJsonObject?.let{o->listOf("status","actualStatus").firstNotNullOfOrNull{k->o.get(k)?.takeIf{it.isJsonPrimitive&&!it.isJsonNull}?.asString}}}.filter{it.isNotBlank()}.distinct().sorted()
-    val regionOptions=items.flatMap{item->
+    val statusOptions=remember(items){items.mapNotNull{item->item.takeIf{it.isJsonObject}?.asJsonObject?.let{o->listOf("status","actualStatus").firstNotNullOfOrNull{k->o.get(k)?.takeIf{it.isJsonPrimitive&&!it.isJsonNull}?.asString}}}.filter{it.isNotBlank()}.distinct().sorted()}
+    val regionOptions=remember(items){items.flatMap{item->
         val o=item.takeIf{it.isJsonObject}?.asJsonObject
         val simple=listOf("area","region","regionName","city").mapNotNull{k->o?.get(k)?.takeIf{it.isJsonPrimitive&&!it.isJsonNull}?.asString}
         val multiple=o?.get("areas")?.takeIf{it.isJsonArray}?.asJsonArray?.mapNotNull{it.takeIf{v->v.isJsonPrimitive&&!v.isJsonNull}?.asString}.orEmpty()
         simple+multiple
-    }.filter{it.isNotBlank()}.distinct().sorted()
+    }.filter{it.isNotBlank()}.distinct().sorted()}
     editingPermissions?.let{admin->AdminPermissionsDialog(admin,{editingPermissions=null}){body->
         val id=admin.asJsonObject.get("_id")?.asString?:admin.asJsonObject.get("id")?.asString.orEmpty()
         editingPermissions=null
