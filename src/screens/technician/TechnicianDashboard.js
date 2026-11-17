@@ -93,7 +93,7 @@ export function TechnicianDashboard({ context }) {
   return <SafeAreaView style={styles.technicianSafe}>
       <View style={styles.clientHeader}>
         <View style={styles.clientHeaderLeft}>
-          <Button title={availabilitySaving ? 'جاري الحفظ...' : acceptingOrders ? '🟢 استقبال الطلبات' : '⚪ عدم الاستقبال'} secondary onPress={toggleOrderAvailability} disabled={!isApproved || availabilitySaving} />
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel={acceptingOrders ? 'إيقاف استقبال الطلبات الجديدة' : 'تفعيل استقبال الطلبات الجديدة'} onPress={toggleOrderAvailability} disabled={!isApproved || availabilitySaving} style={{ paddingHorizontal: 9, paddingVertical: 7, borderRadius: 10, backgroundColor: acceptingOrders ? '#DCFCE7' : '#FEF3C7', opacity: !isApproved || availabilitySaving ? 0.55 : 1 }}><Text style={{ fontSize: 10, fontWeight: '900', color: acceptingOrders ? '#166534' : '#92400E' }}>{availabilitySaving ? 'جاري الحفظ...' : acceptingOrders ? 'استقبال ON' : 'استقبال OFF'}</Text></TouchableOpacity>
           <TouchableOpacity onPress={() => { setNotificationsOpen(v => !v); setReloadKey(v => v + 1); }} style={styles.bellButtonSmall}><Text style={styles.bellText}>🔔</Text>{notifications.unread > 0 ? <View style={styles.bellBadgeDot}><Text style={styles.bellBadgeText}>{notifications.unread}</Text></View> : null}</TouchableOpacity>
           <Button title="خروج" logout onPress={() => setLogoutConfirmOpen(true)} />
         </View>
