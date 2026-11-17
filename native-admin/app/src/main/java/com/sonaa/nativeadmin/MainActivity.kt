@@ -1519,7 +1519,7 @@ private data class RowAction(val label:String,val method:String,val path:String,
                             val clientId=client.get("_id")?.asString?:client.get("id")?.asString.orEmpty()
                             val registered=client.get("registered")?.asBoolean?:clientId.isNotBlank()
                             if(registered&&clientId.isNotBlank()){
-                                val balance=client.get("walletBalance")?.takeIf{!it.isJsonNull}?.asString?: "0"
+                                val balance=client.get("walletBalance")?.takeIf{!it.isJsonNull}?.toString()?.trim('"')?: "0"
                                 Card(Modifier.fillMaxWidth().padding(top=8.dp),colors=CardDefaults.cardColors(containerColor=Color(0xFFEAF7F0))){
                                     Column(Modifier.padding(10.dp),verticalArrangement=Arrangement.spacedBy(6.dp)){
                                         Text("محفظة العميل: $balance ج",fontWeight=FontWeight.Bold,color=Color(0xFF176B45))
