@@ -1441,6 +1441,13 @@ private data class RowAction(val label:String,val method:String,val path:String,
             (dateFilter.isBlank() || date.contains(dateFilter.trim(), true))
         }
     }
+    val statusOptions=items.mapNotNull{item->item.takeIf{it.isJsonObject}?.asJsonObject?.let{o->listOf("status","actualStatus").firstNotNullOfOrNull{k->o.get(k)?.takeIf{it.isJsonPrimitive&&!it.isJsonNull}?.asString}}}.filter{it.isNotBlank()}.distinct().sorted()
+    val regionOptions=items.flatMap{item->
+        val o=item.takeIf{it.isJsonObject}?.asJsonObject
+        val simple=listOf("area","region","regionName","city").mapNotNull{k->o?.get(k)?.takeIf{it.isJsonPrimitive&&!it.isJsonNull}?.asString}
+        val multiple=o?.get("areas")?.takeIf{it.isJsonArray}?.asJsonArray?.mapNotNull{it.takeIf{v->v.isJsonPrimitive&&!v.isJsonNull}?.asString}.orEmpty()
+        simple+multiple
+    }.filter{it.isNotBlank()}.distinct().sorted()
     editingPermissions?.let{admin->AdminPermissionsDialog(admin,{editingPermissions=null}){body->
         val id=admin.asJsonObject.get("_id")?.asString?:admin.asJsonObject.get("id")?.asString.orEmpty()
         editingPermissions=null
@@ -1630,10 +1637,25 @@ private data class RowAction(val label:String,val method:String,val path:String,
                 OutlinedButton(onClick={selectedOrders=emptySet()},modifier=Modifier.weight(1f)){Text("إلغاء")}
             }
         }
-        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(bottom=8.dp),horizontalArrangement=Arrangement.spacedBy(8.dp)){
-            OutlinedTextField(statusFilter,{statusFilter=it},modifier=Modifier.width(145.dp),label={Text("فلتر الحالة")},singleLine=true)
-            OutlinedTextField(regionFilter,{regionFilter=it},modifier=Modifier.width(145.dp),label={Text("المنطقة")},singleLine=true)
-            OutlinedTextField(dateFilter,{dateFilter=it},modifier=Modifier.width(145.dp),label={Text("التاريخ YYYY-MM-DD")},singleLine=true)
+        Column(Modifier.fillMaxWidth(),verticalArrangement=Arrangement.spacedBy(6.dp)){
+            if(statusOptions.isNotEmpty()){
+                Text("الحالة",style=MaterialTheme.typography.labelSmall,color=Color.Gray)
+                Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(6.dp)){
+                    FilterChip(selected=statusFilter.isBlank(),onClick={statusFilter=""},label={Text("كل الحالات")})
+                    statusOptions.forEach{value->FilterChip(selected=statusFilter==value,onClick={statusFilter=if(statusFilter==value)"" else value},label={Text(value)})}
+                }
+            }
+            if(regionOptions.isNotEmpty()){
+                Text("المنطقة",style=MaterialTheme.typography.labelSmall,color=Color.Gray)
+                Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(6.dp)){
+                    FilterChip(selected=regionFilter.isBlank(),onClick={regionFilter=""},label={Text("كل المناطق")})
+                    regionOptions.forEach{value->FilterChip(selected=regionFilter==value,onClick={regionFilter=if(regionFilter==value)"" else value},label={Text(value)})}
+                }
+            }
+            Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)){
+                OutlinedTextField(dateFilter,{dateFilter=it},modifier=Modifier.weight(1f),label={Text("التاريخ YYYY-MM-DD")},singleLine=true)
+                TextButton(onClick={statusFilter="";regionFilter="";dateFilter=""}){Text("مسح الفلاتر")}
+            }
         }
         if(section==AdminSection.SECURITY) Button(onClick={onAuditFilter(dateFilter)},modifier=Modifier.fillMaxWidth()){Text(if(dateFilter.isBlank())"تحديث سجل التدقيق" else "تصفية سجل التدقيق بالتاريخ")}
         if (filtered.isEmpty()) {
