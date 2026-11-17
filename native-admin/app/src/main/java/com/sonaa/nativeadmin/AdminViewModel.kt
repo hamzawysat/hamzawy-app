@@ -116,7 +116,20 @@ class AdminViewModel(app:Application):AndroidViewModel(app){
    val response=result.takeIf{it.isJsonObject}?.asJsonObject
    val serverMessage=response?.get("message")?.takeIf{!it.isJsonNull}?.asString
    val actionMessage=if(path=="api/admin/store/products/import"){
-    "تم الاستيراد: "+(response?.get("importedCount")?.toString()?: "0")+" منتج • المكرر والمتخطى: "+(response?.get("duplicateCount")?.toString()?: "0")+" • الصفوف المرفوضة: "+(response?.get("errorCount")?.toString()?: "0")
+    val summary="تم الاستيراد: "+(response?.get("importedCount")?.toString()?: "0")+" منتج • المكرر والمتخطى: "+(response?.get("duplicateCount")?.toString()?: "0")+" • الصفوف المرفوضة: "+(response?.get("errorCount")?.toString()?: "0")
+    val details=mutableListOf<String>()
+    listOf("duplicates" to "مكرر","errors" to "خطأ").forEach{(key,label)->
+     response?.get(key)?.takeIf{it.isJsonArray}?.asJsonArray?.forEach{entry->
+      if(details.size<8&&entry.isJsonObject){
+       val item=entry.asJsonObject
+       val row=item.get("rowNumber")?.takeIf{!it.isJsonNull}?.toString()?.trim('"')?: "?"
+       val name=item.get("name")?.takeIf{!it.isJsonNull}?.asString.orEmpty()
+       val message=item.get("message")?.takeIf{!it.isJsonNull}?.asString?:label
+       details.add("الصف $row • $name: $message")
+      }
+     }
+    }
+    summary+if(details.isEmpty())"" else "\\n"+details.joinToString("\\n")
    }else serverMessage?:result.toString()
    if(_state.value.section==AdminSection.REPORTS)_state.value=_state.value.copy(busy=false,payload=result,actionMessage=actionMessage)
    else if(_state.value.section==AdminSection.UI_LAYOUT){_state.value=_state.value.copy(busy=false,actionMessage=actionMessage);loadUiLayout(_state.value.uiLayoutPage)}
