@@ -1014,12 +1014,15 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
  val root=payload?.takeIf{it.isJsonObject}?.asJsonObject
  val summary=root?.get("summary")?.takeIf{it.isJsonObject}?.asJsonObject
  val topServices=root?.get("topServices")?.takeIf{it.isJsonArray}?.asJsonArray
+ fun metricLabel(key:String)=when(key){
+  "totalOrders"->"إجمالي الطلبات";"completedOrders"->"الطلبات المكتملة";"cancelledOrders"->"الطلبات الملغاة";"pendingOrders"->"الطلبات قيد المراجعة";"publishedOrders"->"الطلبات المنشورة";"approvedTechnicians"->"الفنيون المعتمدون";"activeClients"->"العملاء النشطون";else->key
+ }
  fun csvCell(value:String)="\""+value.replace("\"","\"\"")+"\""
  val csv=remember(payload){
   buildString{
    append('\uFEFF')
    append(csvCell("المؤشر")).append(',').append(csvCell("القيمة")).append('\n')
-   summary?.entrySet()?.forEach{entry->append(csvCell(entry.key)).append(',').append(csvCell(entry.value.toString())).append('\n')}
+   summary?.entrySet()?.forEach{entry->append(csvCell(metricLabel(entry.key))).append(',').append(csvCell(entry.value.toString())).append('\n')}
    append(csvCell("الخدمة")).append(',').append(csvCell("عدد الطلبات")).append('\n')
    topServices?.forEach{entry->
     val obj=entry.takeIf{it.isJsonObject}?.asJsonObject
@@ -1043,7 +1046,7 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
   OutlinedTextField(area,{area=it},label={Text("المنطقة")},modifier=Modifier.fillMaxWidth())
   Button(onClick={onGenerate("POST","api/admin/reports",JsonObject().apply{addProperty("startDate",startDate);addProperty("endDate",endDate);addProperty("service",service);addProperty("area",area)})},modifier=Modifier.fillMaxWidth()){Text("إنشاء التقرير")}
   if(summary!=null){
-   summary.entrySet().forEach{Text(it.key+" : "+it.value.toString())}
+   summary.entrySet().forEach{Text(metricLabel(it.key)+" : "+it.value.toString())}
    OutlinedButton(onClick={csvSaver.launch("hamzawy-sat-report.csv")},modifier=Modifier.fillMaxWidth()){Text("حفظ التقرير كملف CSV على الجهاز")}
    exportMessage?.let{Text(it,color=if(it.startsWith("تم"))Color(0xFF087F55) else MaterialTheme.colorScheme.error)}
    OutlinedButton(onClick={
@@ -1055,7 +1058,18 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
     context.startActivity(Intent.createChooser(intent,"تصدير التقرير"))
    },modifier=Modifier.fillMaxWidth()){Text("تصدير التقرير ومشاركته بصيغة CSV")}
   }
-  topServices?.forEach{Text(it.toString())}
+  if(!topServices.isNullOrEmpty()){
+   Text("أكثر الخدمات طلبًا",fontWeight=FontWeight.Bold,color=DarkAccent)
+   topServices.forEach{entry->
+    val obj=entry.takeIf{it.isJsonObject}?.asJsonObject
+    Card(Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=Color.White)){
+     Row(Modifier.fillMaxWidth().padding(11.dp),verticalAlignment=Alignment.CenterVertically){
+      Text(obj?.get("service")?.takeIf{!it.isJsonNull}?.asString?: "خدمة غير محددة",modifier=Modifier.weight(1f),fontWeight=FontWeight.SemiBold)
+      Text((obj?.get("count")?.takeIf{!it.isJsonNull}?.toString()?: "0")+" طلب",color=Accent,fontWeight=FontWeight.Bold)
+     }
+    }
+   }
+  }
  }
 }
 
