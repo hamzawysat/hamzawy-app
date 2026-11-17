@@ -2116,6 +2116,7 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
             Column(Modifier.padding(12.dp),verticalArrangement=Arrangement.spacedBy(7.dp)){
                 Row(verticalAlignment=Alignment.CenterVertically){
                     Text("أقسام المتجر",modifier=Modifier.weight(1f),fontWeight=FontWeight.Bold,color=DarkAccent)
+                    if(canWrite("api/admin/store/categories"))TextButton(onClick={categoryEditing=null;categoryCreate=true},enabled=!busy){Text("إضافة قسم")}
                 }
                 if(categories.isEmpty())Text("لا توجد أقسام معرفة بعد.",style=MaterialTheme.typography.bodySmall,color=Color.Gray)
                 categories.forEach{cat->
