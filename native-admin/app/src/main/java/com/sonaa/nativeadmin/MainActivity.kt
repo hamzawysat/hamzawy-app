@@ -261,7 +261,7 @@ class MainActivity : ComponentActivity() {
         val dashboardRecoveryRequests=dashboardRoot?.get("dashboardRecoveryRequests")?.takeIf{it.isJsonArray}?.asJsonArray
         fun sectionBadgeCount(section:AdminSection):Int?=when(section){
             AdminSection.NOTIFICATIONS->state.adminUnreadCount
-            AdminSection.PENDING->dashboardTechnicians?.count{it.isJsonObject&&!it.asJsonObject.get("isApproved")?.asBoolean.orFalse()&&!it.asJsonObject.get("isDisabled")?.asBoolean.orFalse()&&it.asJsonObject.get("status")?.asString !in listOf("rejected","مرفوض")}
+            AdminSection.PENDING->dashboardTechnicians?.count{it.isJsonObject&&it.asJsonObject.get("isApproved")?.asBoolean!=true&&it.asJsonObject.get("isDisabled")?.asBoolean!=true&&it.asJsonObject.get("status")?.asString !in listOf("rejected","مرفوض")}
             AdminSection.PROFILE_EDITS->dashboardProfileEdits?.size()
             AdminSection.ORDERS->dashboardOrders?.count{it.isJsonObject&&it.asJsonObject.get("status")?.asString in listOf("قيد المراجعة","pending","مراجعة","بانتظار المراجعة")}
             AdminSection.TOPUPS->dashboardTopups?.count{it.isJsonObject&&it.asJsonObject.get("status")?.asString in listOf("pending","قيد المراجعة","جديد","جديدة")}
