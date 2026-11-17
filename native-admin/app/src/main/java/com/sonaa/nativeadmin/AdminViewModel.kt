@@ -77,7 +77,7 @@ class AdminViewModel(app:Application):AndroidViewModel(app){
  }
  fun filterPageVisits(pageKey:String)=viewModelScope.launch{
   val clean=pageKey.trim()
-  _state.value=_state.value.copy(section=AdminSection.PAGE_VISITS,busy=true,error=null,actionMessage=null)
+  _state.value=_state.value.copy(section=AdminSection.PAGE_VISITS,busy=false,error=null,actionMessage="جاري تحميل سجل الزيارات للصفحة المحددة...")
   try{
    val path="api/admin/page-visits"+if(clean.isBlank())"" else "?pageKey="+Uri.encode(clean)
    val data=repo.get(path)
