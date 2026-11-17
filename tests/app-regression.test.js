@@ -817,15 +817,18 @@ test('client dashboard tab order and labels match the approved two-row RTL layou
   assert.ok(client.includes("setClientTab(t.key)"), 'tab navigation keys remain connected');
 });
 
-test('native customer and technician stores show image-backed category cards and drill into only that category', () => {
+test('native customer and technician stores use managed category artwork with product-image fallback', () => {
   const store = fs.readFileSync(path.join(root, 'src/screens/shared/StoreScreen.js'), 'utf8');
+  assert.ok(store.includes('const [categories, setCategories] = useState([])'));
+  assert.ok(store.includes('setCategories(Array.isArray(catalog.categories) ? catalog.categories : [])'));
   assert.ok(store.includes('const groupedProducts = useMemo(() => {'));
   assert.ok(store.includes("String(item?.category || 'عام').trim() || 'عام'"));
   assert.ok(store.includes("const [selectedCategory, setSelectedCategory] = useState('')"));
   assert.ok(store.includes('const selectedGroup = groupedProducts.find(group => group.category === selectedCategory)'));
   assert.ok(store.includes('groupedProducts.map(group => {'));
-  assert.ok(store.includes('const coverProduct = group.items.find(({ item }) => String(item?.imageUrl || \'\').trim())?.item || group.items[0]?.item'));
-  assert.ok(store.includes('<StoreImage value={coverProduct?.imageUrl}'));
+  assert.ok(store.includes('const categoryInfo = (Array.isArray(categories) ? categories : []).find(entry => String(entry?.name || \'\') === category)'));
+  assert.ok(store.includes('imageUrl: String(categoryInfo?.imageUrl || fallbackProduct?.imageUrl || \'\').trim()'));
+  assert.ok(store.includes('<StoreImage value={group.imageUrl || coverProduct?.imageUrl}'));
   assert.ok(store.includes('onPress={() => setSelectedCategory(group.category)}'));
   assert.ok(store.includes('selectedGroup.items.map(({ item, index }) => ('));
   assert.ok(store.includes("onPress={() => setSelectedCategory('')}"));
