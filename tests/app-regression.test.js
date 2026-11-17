@@ -92,12 +92,14 @@ test('foreground notifications are configured to show alerts and play sound', ()
   assert.match(app, /shouldPlaySound: true/);
 });
 
-test('push token registration posts the Expo token for the active session and cleans up', () => {
+test('push token registration remains active across session refreshes and logout removes it explicitly', () => {
   assert.ok(app.includes('Notifications.getExpoPushTokenAsync({ projectId })'));
   assert.ok(app.includes('pushTokenRef.current = result.data'));
   assert.ok(app.includes('body: { token: result.data, platform: Platform.OS }'));
   assert.ok(app.includes('tokenRefreshSubscription.remove()'));
-  assert.ok(app.includes("method: 'DELETE', token: session.token, body: { token: registeredToken }"));
+  assert.ok(!app.includes("method: 'DELETE', token: session.token, body: { token: registeredToken }"));
+  const screens = fs.readFileSync(path.join(root, 'src/screens/AppScreens.js'), 'utf8');
+  assert.ok(screens.includes("method: 'DELETE', token: activeSession.token, body: { token: pushToken }"));
   assert.ok(app.includes('Notifications.addPushTokenListener'));
 });
 
