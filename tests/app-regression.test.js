@@ -766,7 +766,7 @@ test('native client and technician tabs render as compact RTL grids without hori
   assert.ok(tech.includes('pointerEvents="none"'), 'the reserved tenth slot must not respond to presses');
   assert.ok(tech.includes('tabs.map(item => item.empty ?'), 'the reserved slot renders as a non-interactive blank');
   const tabList = tech.slice(tech.indexOf('const tabs ='), tech.indexOf('];', tech.indexOf('const tabs =')) + 2);
-  const expectedTechnicianTabs = ["key: 'home', label: 'الرئيسية'", "key: 'profile', label: 'حسابي'", "key: 'wallet', label: 'المحفظة'", "key: 'store', label: 'المتجر'", "key: 'support', label: 'الدعم'", "key: 'available', label: 'الطلبات المتاحة'", "key: 'offers', label: 'طلبات مقدمة'", "key: 'currentJobs', label: 'طلبات جارية'", "key: 'completed', label: 'طلبات مكتملة'", "key: '__empty', empty: true"];
+  const expectedTechnicianTabs = ["key: 'home', label: 'الرئيسية'", "key: 'profile', label: 'حسابي'", "key: 'wallet', label: 'المحفظة'", "key: 'store', label: 'المتجر'", "key: 'support', label: 'الدعم'", "key: 'available', label: 'طلبات متاحة'", "key: 'offers', label: 'طلبات مقدمة'", "key: 'currentJobs', label: 'طلبات جارية'", "key: 'completed', label: 'طلبات مكتملة'", "key: '__empty', empty: true"];
   let tabCursor = -1;
   for (const expected of expectedTechnicianTabs) { const next = tabList.indexOf(expected); assert.ok(next > tabCursor, 'technician tab missing or out of approved order: ' + expected); tabCursor = next; }
   assert.ok(!tech.includes('<ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 8, gap: 6 }}><View style={styles.tabRowPremium}>'));
