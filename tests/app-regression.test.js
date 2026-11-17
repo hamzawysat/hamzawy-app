@@ -134,6 +134,8 @@ test('native admin push service handles order and wallet notification types and 
   assert.ok(apiSource.includes('unregisterFcmToken'));
   assert.ok(repositorySource.includes('remove("registered_fcm_token")'));
   assert.ok(repositorySource.includes('api.unregisterFcmToken'));
+  assert.ok(repositorySource.includes('baseUrl("https://www.hamzawy-sat.dynv6.net/")'));
+  assert.ok(!repositorySource.includes('sonaa-backend-v2.vercel.app'));
 
 });
 
