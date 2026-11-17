@@ -795,4 +795,14 @@ test('client and technician always start on their home tab after login and sessi
   assert.ok(screens.includes("setTechData({ profile: null, orders: [], offers: [], wallet: [], loading: false, error: '', tab: 'home' });"));
   assert.ok(!screens.includes("if (role === 'fanni') setTechData(current => ({ ...current, tab: 'offers' }))"));
 });
-\ntest('client dashboard tab order and labels match the approved two-row RTL layout', () => {\n  const client = fs.readFileSync(path.join(root, 'src/screens/client/ClientDashboard.js'), 'utf8');\n  const start = client.indexOf('<View style={styles.tabRowPremium}>');\n  const end = client.indexOf('</View>', start);\n  const tabs = client.slice(start, end);\n  const expected = [\"key:'home',label:'الرئيسية'\", \"key:'profile',label:'حسابي'\", \"key:'wallet',label:'المحفظة'\", \"key:'store',label:'المتجر'\", \"key:'complaint',label:'الدعم'\", \"key:'new',label:'طلب جديد'\", \"key:'current',label:'الطلبات الجارية'\", \"key:'previous',label:'الطلبات السابقة'\", \"key:'track',label:'تتبع طلب'\", \"key:'subscriptions',label:'الاشتراكات'\"];\n  let cursor = -1;\n  for (const item of expected) { const next = tabs.indexOf(item); assert.ok(next > cursor, 'tab missing or out of order: ' + item); cursor = next; }\n  assert.ok(client.includes(\"setClientTab(t.key)\"), 'tab navigation keys remain connected');\n});\n\n
+
+test('client dashboard tab order and labels match the approved two-row RTL layout', () => {
+  const client = fs.readFileSync(path.join(root, 'src/screens/client/ClientDashboard.js'), 'utf8');
+  const start = client.indexOf('<View style={styles.tabRowPremium}>');
+  const end = client.indexOf('</View>', start);
+  const tabs = client.slice(start, end);
+  const expected = ["key:'home',label:'الرئيسية'", "key:'profile',label:'حسابي'", "key:'wallet',label:'المحفظة'", "key:'store',label:'المتجر'", "key:'complaint',label:'الدعم'", "key:'new',label:'طلب جديد'", "key:'current',label:'الطلبات الجارية'", "key:'previous',label:'الطلبات السابقة'", "key:'track',label:'تتبع طلب'", "key:'subscriptions',label:'الاشتراكات'"];
+  let cursor = -1;
+  for (const item of expected) { const next = tabs.indexOf(item); assert.ok(next > cursor, 'tab missing or out of order: ' + item); cursor = next; }
+  assert.ok(client.includes("setClientTab(t.key)"), 'tab navigation keys remain connected');
+});
