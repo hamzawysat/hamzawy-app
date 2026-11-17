@@ -55,6 +55,7 @@ class AdminViewModel(app:Application):AndroidViewModel(app){
   attach("api/admin/orders","dashboardOrders","الطلبات","orders","data","items")
   attach("api/admin/topup-requests","dashboardTopups","طلبات الشحن","requests","topups","data","items")
   attach("api/admin/complaints","dashboardComplaints","الشكاوى","complaints","data","items")
+  attachOptional("api/admin/fannis","dashboardTechnicians","fannis","technicians","items","data")
   attachOptional("api/admin/fanni-profile-edits","dashboardProfileEdits","requests","edits","items")
   attachOptional("api/admin/client-wallet/topup-requests","dashboardClientTopups","requests","items","data")
   attachOptional("api/password-recovery/admin/requests","dashboardRecoveryRequests","recoveries","items","data")
