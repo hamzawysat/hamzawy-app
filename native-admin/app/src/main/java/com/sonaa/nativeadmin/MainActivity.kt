@@ -304,11 +304,11 @@ class MainActivity : ComponentActivity() {
             state.editingProfile!=null -> ProfileEditor(state.editingProfile,state.editingProfileId.orEmpty(),{vm.closeProfile()}) { method:String,path:String,body:JsonObject -> vm.saveEditedProfile(method,path,body) }
             state.recoveryDetail!=null -> RecoveryConversationScreen(state.recoveryDetail,state.busy,state.error,state.actionMessage,vm::closeRecovery,{path->canWriteApi(state.adminInfo,path)}) { method,path,body -> vm.recoveryAction(method,path,body) }
             state.section == AdminSection.SUPPORT -> SupportAdminScreen(state.supportCases,state.supportSelectedCase,state.actionMessage,{vm.retry()},{id->vm.openSupportCase(id)},{method,path,body->vm.supportAction(method,path,body)},{path->canWriteApi(state.adminInfo,path)})
-            state.section == AdminSection.COMMERCE_PLANS -> CommercePlansScreen(state.items,state.busy,{path->canWriteApi(state.adminInfo,path)}) { method,path,body -> vm.mutate(method,path,body) }
+            state.section == AdminSection.COMMERCE_PLANS -> CommercePlansScreen(state.items,state.busy,state.storeUploadedImageUrl,state.storeUploadedImageFileId,{uri,purpose->vm.uploadStoreImage(uri,purpose)},vm::clearStoreUpload,{path->canWriteApi(state.adminInfo,path)}) { method,path,body -> vm.mutate(method,path,body) }
             state.section == AdminSection.CLIENT_SUBSCRIPTIONS -> ClientSubscriptionsScreen(state.items,state.busy,{path->canWriteApi(state.adminInfo,path)}) { method,path,body -> vm.mutate(method,path,body) }
             state.section == AdminSection.STORE_PRODUCTS -> StoreProductsScreen(state.payload,state.items,state.busy,state.storeUploadedImageUrl,state.storeUploadedImageFileId,{uri,purpose->vm.uploadStoreImage(uri,purpose)},vm::clearStoreUpload,{path->canWriteApi(state.adminInfo,path)}) { method,path,body -> vm.mutate(method,path,body) }
             state.section == AdminSection.STORE_ORDERS -> StoreOrdersScreen(state.payload,state.items,state.busy,{path->canWriteApi(state.adminInfo,path)}) { method,path,body -> vm.mutate(method,path,body) }
-            else -> ListScreen(state.section, state.items, state.sectionSearch, vm::retry, vm::loadVoice, vm::openFanniProfile, vm::openWalletTransactions, vm::openClientWalletTransactions, vm::openClientOrders, vm::openClientProfile, vm::searchSupport, vm::filterAuditLogs, vm::bulkPublish, vm::openRecovery, { section, ids, action -> vm.bulkAction(section, ids, action) }, vm::bulkRenameRegions, { path -> canWriteApi(state.adminInfo,path) }, { path -> canReadApi(state.adminInfo,path) }) { method, path, body -> vm.mutate(method, path, body) }
+            else -> ListScreen(state.section, state.items, state.sectionSearch, vm::retry, vm::loadVoice, vm::openFanniProfile, vm::openFanniIdentity, vm::issueSupportPassword, vm::revealSupportPassword, vm::issueClientSupportPassword, vm::revealClientSupportPassword, vm::openWalletTransactions, vm::openClientWalletTransactions, vm::openClientOrders, vm::openClientProfile, vm::searchSupport, vm::filterAuditLogs, vm::bulkPublish, vm::openRecovery, { section, ids, action -> vm.bulkAction(section, ids, action) }, vm::bulkRenameRegions, { path -> canWriteApi(state.adminInfo,path) }, { path -> canReadApi(state.adminInfo,path) }) { method, path, body -> vm.mutate(method, path, body) }
         }
     }
 }
@@ -1117,7 +1117,7 @@ private fun monthlyOrderStats(orders:List<JsonElement>):List<MonthlyOrderStat>{
 }
 
 private data class RowAction(val label:String,val method:String,val path:String,val body:JsonObject=JsonObject(),val inputKey:String?=null,val inputHint:String="",val secondInputKey:String?=null,val secondInputHint:String="")
-@Composable private fun ListScreen(section: AdminSection, items: List<JsonElement>, initialQuery:String, retry: () -> Unit, onVoice:(String)->Unit, onEditProfile:(String)->Unit, onOpenWallet:(String)->Unit, onOpenClientWallet:(String)->Unit, onOpenClientOrders:(String)->Unit, onEditClient:(String)->Unit, onSupportSearch:(String)->Unit, onAuditFilter:(String)->Unit, onBulkPublish:(List<String>)->Unit, onOpenRecovery:(String)->Unit, onBulkAction:(AdminSection,List<String>,String)->Unit, onBulkRenameRegions:(Map<String,String>)->Unit, onCanWriteApi:(String)->Boolean, onCanReadApi:(String)->Boolean, onAction:(String,String,JsonObject)->Unit) {
+@Composable private fun ListScreen(section: AdminSection, items: List<JsonElement>, initialQuery:String, retry: () -> Unit, onVoice:(String)->Unit, onEditProfile:(String)->Unit, onOpenIdentity:(String)->Unit, onIssueSupportPassword:(String,String)->Unit, onRevealSupportPassword:(String,String)->Unit, onIssueClientSupportPassword:(String)->Unit, onRevealClientSupportPassword:(String)->Unit, onOpenWallet:(String)->Unit, onOpenClientWallet:(String)->Unit, onOpenClientOrders:(String)->Unit, onEditClient:(String)->Unit, onSupportSearch:(String)->Unit, onAuditFilter:(String)->Unit, onBulkPublish:(List<String>)->Unit, onOpenRecovery:(String)->Unit, onBulkAction:(AdminSection,List<String>,String)->Unit, onBulkRenameRegions:(Map<String,String>)->Unit, onCanWriteApi:(String)->Boolean, onCanReadApi:(String)->Boolean, onAction:(String,String,JsonObject)->Unit) {
     var query by remember(section,initialQuery) { mutableStateOf(initialQuery) }
     var deleteClientOrdersPhone by remember(section){mutableStateOf("")}
     var statusFilter by remember(section) { mutableStateOf("") }
@@ -1498,11 +1498,11 @@ private data class RowAction(val label:String,val method:String,val path:String,
                         }
                         if(section in listOf(AdminSection.TECHNICIANS,AdminSection.PENDING,AdminSection.DISABLED)&&item.isJsonObject){
                             val fanniId=item.asJsonObject.get("_id")?.asString?:item.asJsonObject.get("id")?.asString.orEmpty()
-                            if(fanniId.isNotBlank())OutlinedButton(onClick={vm.openFanniIdentity(fanniId)},modifier=Modifier.fillMaxWidth().padding(top=6.dp)){Text("عرض صور بطاقة الرقم القومي")}
+                            if(fanniId.isNotBlank())OutlinedButton(onClick={onOpenIdentity(fanniId)},modifier=Modifier.fillMaxWidth().padding(top=6.dp)){Text("عرض صور بطاقة الرقم القومي")}
                             if(fanniId.isNotBlank()&&(onCanWriteApi("api/password-recovery/admin/support-passwords")||onCanReadApi("api/password-recovery/admin/support-passwords"))){
                                 Row(Modifier.fillMaxWidth().padding(top=6.dp),horizontalArrangement=Arrangement.spacedBy(6.dp)){
-                                    if(onCanWriteApi("api/password-recovery/admin/support-passwords"))OutlinedButton(onClick={vm.issueSupportPassword("fanni",fanniId)},modifier=Modifier.weight(1f)){Text("إصدار كلمة دعم")}
-                                    if(onCanReadApi("api/password-recovery/admin/support-passwords"))OutlinedButton(onClick={vm.revealSupportPassword("fanni",fanniId)},modifier=Modifier.weight(1f)){Text("عرض كلمة الدعم")}
+                                    if(onCanWriteApi("api/password-recovery/admin/support-passwords"))OutlinedButton(onClick={onIssueSupportPassword("fanni",fanniId)},modifier=Modifier.weight(1f)){Text("إصدار كلمة دعم")}
+                                    if(onCanReadApi("api/password-recovery/admin/support-passwords"))OutlinedButton(onClick={onRevealSupportPassword("fanni",fanniId)},modifier=Modifier.weight(1f)){Text("عرض كلمة الدعم")}
                                 }
                             }
                         }
@@ -1543,8 +1543,8 @@ private data class RowAction(val label:String,val method:String,val path:String,
                             val registered=client.get("registered")?.asBoolean?:clientId.isNotBlank()
                             if(registered&&clientId.isNotBlank()&&(onCanWriteApi("api/password-recovery/admin/support-passwords")||onCanReadApi("api/password-recovery/admin/support-passwords"))){
                                 Row(Modifier.fillMaxWidth().padding(top=6.dp),horizontalArrangement=Arrangement.spacedBy(6.dp)){
-                                    if(onCanWriteApi("api/password-recovery/admin/support-passwords"))OutlinedButton(onClick={vm.issueClientSupportPassword(clientId)},modifier=Modifier.weight(1f)){Text("إصدار كلمة دعم")}
-                                    if(onCanReadApi("api/password-recovery/admin/support-passwords"))OutlinedButton(onClick={vm.revealClientSupportPassword(clientId)},modifier=Modifier.weight(1f)){Text("عرض كلمة الدعم")}
+                                    if(onCanWriteApi("api/password-recovery/admin/support-passwords"))OutlinedButton(onClick={onIssueClientSupportPassword(clientId)},modifier=Modifier.weight(1f)){Text("إصدار كلمة دعم")}
+                                    if(onCanReadApi("api/password-recovery/admin/support-passwords"))OutlinedButton(onClick={onRevealClientSupportPassword(clientId)},modifier=Modifier.weight(1f)){Text("عرض كلمة الدعم")}
                                 }
                             }
                         }
@@ -1916,6 +1916,10 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
     payload:JsonElement?,
     products:List<JsonElement>,
     busy:Boolean,
+    uploadedImageUrl:String?,
+    uploadedImageFileId:String?,
+    onUploadImage:(android.net.Uri,String)->Unit,
+    onClearUpload:()->Unit,
     canWrite:(String)->Boolean,
     onAction:(String,String,JsonObject)->Unit
 ){
