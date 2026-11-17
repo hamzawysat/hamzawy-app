@@ -122,6 +122,7 @@ enum class AdminSection(
  SECURITY("سجل التدقيق والأمان","api/admin/audit-logs",listOf("logs","items","data")),
  SETTINGS("إعدادات المنصة","api/admin/settings",listOf("settings","data")),
  ROLES("صلاحيات المشرفين","api/admin/admin-users",listOf("users","admins","data","items")),
+ UI_LAYOUT("محرر تخطيط الواجهات","api/admin/ui-layout/admin",listOf("layout","data")),
  CLIENTS("كل العملاء","api/admin/clients",listOf("clients","items","data")),
  CLIENT_WALLETS("محافظ العملاء","api/admin/client-wallet/accounts",listOf("accounts","data","items")),
  CLIENT_TOPUPS("طلبات شحن محافظ العملاء","api/admin/client-wallet/topup-requests",listOf("requests","data","items")),
