@@ -2081,6 +2081,7 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
     var csvPreview by remember{mutableStateOf<StoreCsvPreview?>(null)}
     var csvFileName by remember{mutableStateOf("")}
     var csvError by remember{mutableStateOf("")}
+    var confirmCsvImport by remember{mutableStateOf(false)}
     var csvSource by remember{mutableStateOf("")}
     var csvMapping by remember{mutableStateOf<Map<String,Int>>(emptyMap())}
     var openCsvMapping by remember{mutableStateOf<String?>(null)}
@@ -2155,14 +2156,25 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
                         }
                     }
                     Text("المعاينة تعرض أول 8 صفوف فقط. سيتم فحص جميع الصفوف قبل الاستيراد.",style=MaterialTheme.typography.labelSmall,color=Color.Gray)
-                    Button(onClick={
-                        val body=JsonObject().apply{add("products",com.google.gson.JsonArray().apply{preview.products.forEach{add(it)}})}
-                        onAction("POST","api/admin/store/products/import",body);csvPreview=null;csvFileName="";csvSource="";csvMapping=emptyMap()
-                    },enabled=!busy&&preview.products.isNotEmpty(),modifier=Modifier.fillMaxWidth()){Text("استيراد "+preview.products.size+" منتج")}
+                    Button(onClick={confirmCsvImport=true},enabled=!busy&&preview.products.isNotEmpty(),modifier=Modifier.fillMaxWidth()){Text("استيراد "+preview.products.size+" منتج")}
                     TextButton(onClick={csvPreview=null;csvFileName="";csvSource="";csvMapping=emptyMap()}){Text("إلغاء المعاينة")}
                 }
             }
         }
+        if(confirmCsvImport)AlertDialog(
+            onDismissRequest={confirmCsvImport=false},
+            title={Text("تأكيد استيراد المنتجات")},
+            text={Text("سيتم إضافة "+(csvPreview?.products?.size?:0)+" منتج إلى المتجر. المنتجات الموجودة أو المكررة بنفس الاسم والقسم سيتم تخطيها دون تعديلها. هل تريد المتابعة؟")},
+            confirmButton={TextButton(enabled=!busy,onClick={
+                val preview=csvPreview
+                if(preview!=null){
+                    val body=JsonObject().apply{add("products",com.google.gson.JsonArray().apply{preview.products.forEach{add(it)}})}
+                    onAction("POST","api/admin/store/products/import",body)
+                }
+                confirmCsvImport=false;csvPreview=null;csvFileName="";csvSource="";csvMapping=emptyMap()
+            }){Text("تأكيد الاستيراد")}},
+            dismissButton={TextButton(onClick={confirmCsvImport=false}){Text("إلغاء")}}
+        )
         Card(Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=Color.White)){
             Column(Modifier.padding(12.dp),verticalArrangement=Arrangement.spacedBy(6.dp)){
                 Text("مدة عرض الإعلان",fontWeight=FontWeight.Bold,color=DarkAccent)
