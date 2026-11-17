@@ -70,7 +70,7 @@ class AdminViewModel(app:Application):AndroidViewModel(app){
  fun open(section:AdminSection){_state.value=_state.value.copy(sectionSearch="");if(section==AdminSection.UI_LAYOUT)loadUiLayout("admin")else load(section)}
  fun loadUiLayout(page:String)=viewModelScope.launch{
   val safePage=page.takeIf{it in listOf("admin","client","fanni","password","support")}?: "admin"
-  _state.value=_state.value.copy(section=AdminSection.UI_LAYOUT,uiLayoutPage=safePage,busy=true,error=null)
+  _state.value=_state.value.copy(section=AdminSection.UI_LAYOUT,uiLayoutPage=safePage,busy=true,error=null,payload=null)
   try{val data=repo.get("api/admin/ui-layout/$safePage");_state.value=_state.value.copy(busy=false,payload=data)}
   catch(e:Exception){_state.value=_state.value.copy(busy=false,error=e.message?: "تعذر تحميل تخطيط الصفحة")}
  }
