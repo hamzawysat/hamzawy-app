@@ -128,7 +128,8 @@ class MainActivity : ComponentActivity() {
     private fun navigate(destination: String?, adminInfo: JsonElement?, vm: AdminViewModel?) {
         val section = when (destination) {
             "orders", "storeOrders" -> AdminSection.ORDERS
-            "commerceSubscriptions" -> AdminSection.CLIENTS
+            "commerceSubscriptions" -> AdminSection.CLIENT_SUBSCRIPTIONS
+            "commercePlans" -> AdminSection.COMMERCE_PLANS
             "clientWallet" -> AdminSection.CLIENT_WALLETS
             "wallet" -> AdminSection.WALLETS
             "technicians" -> AdminSection.TECHNICIANS
@@ -308,7 +309,7 @@ private fun sectionGlyph(section:AdminSection):String=when(section){
  AdminSection.RECOVERY->"↻";AdminSection.NOTIFICATIONS->"♢";AdminSection.CONTENT->"▣"
  AdminSection.PRICING->"$";AdminSection.REPORTS->"▤";AdminSection.PAGE_VISITS->"◉"
  AdminSection.SECURITY->"⌑";AdminSection.SETTINGS->"⚙";AdminSection.ROLES->"♙"
- AdminSection.CLIENTS->"♧";AdminSection.CLIENT_WALLETS->"◉";AdminSection.CLIENT_TOPUPS->"+"
+ AdminSection.CLIENTS->"♧";AdminSection.CLIENT_WALLETS->"◉";AdminSection.CLIENT_TOPUPS->"+";AdminSection.COMMERCE_PLANS->"▣";AdminSection.CLIENT_SUBSCRIPTIONS->"★"
 }
 @Composable private fun VoicePlayer(path:String,onClose:()->Unit){
  var prepared by remember(path){mutableStateOf(false)}
@@ -337,7 +338,7 @@ private val permissionSections=listOf(
  "clients" to "العملاء","topups" to "طلبات شحن المحافظ","wallet" to "المحافظ والأرصدة",
  "pricing" to "الأسعار والعمولات","settings" to "إعدادات المنصة","content" to "الإعلانات والمحتوى",
  "support" to "الدعم","regions" to "المناطق","offers" to "العروض",
- "notifications" to "الإشعارات","clientsData" to "بيانات العملاء"
+ "notifications" to "الإشعارات","clientsData" to "بيانات العملاء","commerce" to "الاشتراكات والباقات"
 )
 private fun permissionDefaults(item:JsonElement?):Map<String,Pair<Boolean,Boolean>>{
  if(item==null||!item.isJsonObject)return emptyMap()
@@ -392,6 +393,7 @@ private fun permissionKeyForNativePath(path:String):String?{
   "clients"->"clients"
   "client-accounts"->"clientsData"
   "client-wallet"->"wallet"
+  "commerce"->"commerce"
   "pricing"->"pricing"
   "settings"->"settings"
   "content"->"content"
@@ -422,6 +424,7 @@ private fun canReadSection(info:JsonElement?,section:AdminSection):Boolean{
   AdminSection.SETTINGS->"settings"
   AdminSection.CLIENTS->"clients"
   AdminSection.CLIENT_WALLETS,AdminSection.CLIENT_TOPUPS->"wallet"
+  AdminSection.COMMERCE_PLANS,AdminSection.CLIENT_SUBSCRIPTIONS->"commerce"
   AdminSection.SECURITY,AdminSection.PAGE_VISITS,AdminSection.ROLES->return false
  }
  return permissionDefaults(info).get(key)?.first==true
