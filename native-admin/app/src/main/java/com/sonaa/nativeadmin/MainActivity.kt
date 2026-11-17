@@ -947,6 +947,7 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
 @Composable private fun PageVisitsScreen(payload:JsonElement?,onFilter:(String)->Unit){
  val root=payload?.takeIf{it.isJsonObject}?.asJsonObject
  val summary=root?.get("summary")?.takeIf{it.isJsonArray}?.asJsonArray?.toList().orEmpty()
+ val pageOptions=remember{summary}
  val recent=root?.get("recent")?.takeIf{it.isJsonArray}?.asJsonArray?.toList().orEmpty()
  var filter by remember{mutableStateOf("")}
  var selectedPage by remember{mutableStateOf("")}
@@ -965,7 +966,7 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
   Text("فلترة حسب الصفحة",fontWeight=FontWeight.Bold,color=DarkAccent)
   Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(6.dp)){
    FilterChip(selected=selectedPage.isBlank(),onClick={selectedPage="";onFilter("")},label={Text("كل الصفحات")})
-   summary.forEach{entry->
+   pageOptions.forEach{entry->
     val obj=entry.takeIf{it.isJsonObject}?.asJsonObject?:return@forEach
     val key=obj.get("pageKey")?.takeIf{!it.isJsonNull}?.asString.orEmpty()
     if(key.isNotBlank())FilterChip(selected=selectedPage==key,onClick={selectedPage=key;onFilter(key)},label={Text(obj.get("pageName")?.takeIf{!it.isJsonNull}?.asString?:key)})
