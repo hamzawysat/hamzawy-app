@@ -108,6 +108,10 @@ test('push notification taps open the relevant wallet, orders, or admin section'
   assert.ok(app.includes("type === 'new_opportunity'"));
   assert.ok(app.includes("'order_created'"));
   assert.ok(app.includes("const destination = String(data.destination || '')"));
+  assert.ok(app.includes("storeOrders: 'orders'"));
+  assert.ok(app.includes("commerceSubscriptions: 'clients'"));
+  assert.ok(app.includes("clientWallet: 'clients'"));
+  assert.ok(app.includes("wallets: 'fannis'"));
 });
 
 test('native admin push service handles order and wallet notification types and respects server destination', () => {
