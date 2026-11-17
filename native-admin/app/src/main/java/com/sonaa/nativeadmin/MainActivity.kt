@@ -1117,6 +1117,7 @@ private fun monthlyOrderStats(orders:List<JsonElement>):List<MonthlyOrderStat>{
 private data class RowAction(val label:String,val method:String,val path:String,val body:JsonObject=JsonObject(),val inputKey:String?=null,val inputHint:String="",val secondInputKey:String?=null,val secondInputHint:String="")
 @Composable private fun ListScreen(section: AdminSection, items: List<JsonElement>, initialQuery:String, retry: () -> Unit, onVoice:(String)->Unit, onEditProfile:(String)->Unit, onOpenWallet:(String)->Unit, onOpenClientWallet:(String)->Unit, onOpenClientOrders:(String)->Unit, onEditClient:(String)->Unit, onSupportSearch:(String)->Unit, onAuditFilter:(String)->Unit, onBulkPublish:(List<String>)->Unit, onOpenRecovery:(String)->Unit, onBulkAction:(AdminSection,List<String>,String)->Unit, onBulkRenameRegions:(Map<String,String>)->Unit, onCanWriteApi:(String)->Boolean, onCanReadApi:(String)->Boolean, onAction:(String,String,JsonObject)->Unit) {
     var query by remember(section,initialQuery) { mutableStateOf(initialQuery) }
+    var deleteClientOrdersPhone by remember(section){mutableStateOf("")}
     var statusFilter by remember(section) { mutableStateOf("") }
     var regionFilter by remember(section) { mutableStateOf("") }
     var dateFilter by remember(section) { mutableStateOf("") }
@@ -1307,6 +1308,12 @@ private data class RowAction(val label:String,val method:String,val path:String,
     )
     Column(Modifier.fillMaxSize().padding(horizontal = 14.dp)) {
         OutlinedTextField(query, { query = it }, modifier = Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 6.dp), label = { Text("بحث في " + section.title) }, singleLine = true)
+        if(section==AdminSection.ORDERS){
+            Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(7.dp),verticalAlignment=Alignment.CenterVertically){
+                OutlinedTextField(deleteClientOrdersPhone,{deleteClientOrdersPhone=it.filter{ch->ch.isDigit()}.take(11)},modifier=Modifier.weight(1f),label={Text("حذف طلبات رقم العميل")},placeholder={Text("01xxxxxxxxx")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Phone),singleLine=true)
+                Button(onClick={pending=RowAction("حذف طلبات العميل","DELETE","api/admin/clients/"+Uri.encode(deleteClientOrdersPhone))},enabled=onCanWriteApi("api/admin/clients/01000000000")&&Regex("^01[0-9]{9}$").matches(deleteClientOrdersPhone)){Text("حذف الطلبات")}
+            }
+        }
         if((section==AdminSection.SERVICES&&onCanWriteApi("api/admin/services"))||(section==AdminSection.REGIONS&&onCanWriteApi("api/admin/regions"))) Button(onClick={createOpen=true},modifier=Modifier.fillMaxWidth()){Text(if(section==AdminSection.SERVICES)"إضافة خدمة جديدة" else "إضافة منطقة جديدة")}
         if(section==AdminSection.SERVICES&&onCanWriteApi("api/admin/services/categories/order")) Button(onClick={categoryOrderOpen=true},modifier=Modifier.fillMaxWidth()){Text("ترتيب أقسام الخدمات")}
         if(section==AdminSection.SERVICES&&onCanWriteApi("api/admin/services/order")) OutlinedButton(onClick={serviceOrderOpen=true},modifier=Modifier.fillMaxWidth()){Text("ترتيب الخدمات داخل القسم")}
@@ -1584,7 +1591,8 @@ private fun rowActions(section:AdminSection,item:JsonElement):List<RowAction>{
   AdminSection.ORDERS->if(sn!=null){
    val actions=mutableListOf(RowAction("نشر الطلب","POST","api/orders/admin/$sn/publish"))
    if(o.get("hasVoiceRecording")?.asBoolean==true)actions.add(RowAction("تأكيد مراجعة الصوت","POST","api/orders/admin/$sn/voice-reviewed"))
-   actions.add(RowAction("إلغاء الطلب","POST","api/admin/orders/$sn/cancel",JsonObject().apply{addProperty("reason","إلغاء من تطبيق الإدارة")}))
+   if(o.get("clientPaymentStatus")?.asString=="held")actions.add(RowAction("استرداد قيمة الخدمة للعميل","POST","api/admin/client-wallet/orders/$sn/refund",JsonObject(),"reason","سبب الاسترداد (مطلوب)"))
+   actions.add(RowAction("إلغاء الطلب","POST","api/admin/orders/$sn/cancel",JsonObject(),"reason","سبب الإلغاء (مطلوب)"))
    actions.add(RowAction("أرشفة","POST","api/admin/orders/$sn/archive"))
    actions.add(RowAction("حذف","DELETE","api/admin/orders/$sn"))
    actions
