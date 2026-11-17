@@ -379,7 +379,7 @@ private fun permissionKeyForNativePath(path:String):String?{
  if(clean.startsWith("api/password-recovery/admin/requests")||clean.startsWith("api/password-recovery/admin/support-passwords"))return "passwordRecovery"
  if(clean.startsWith("api/support/admin"))return "support"
  if(clean.startsWith("api/admin/admin-users")||clean.startsWith("api/admin/audit-logs")||clean.startsWith("api/admin/page-visits"))return null
- if(clean.startsWith("api/admin/wallet/")||clean.endsWith("/set-balance")||clean.endsWith("/add-balance"))return "wallet"
+ if(clean.startsWith("api/admin/wallet/")||clean.startsWith("api/admin/client-wallet/")||(clean.startsWith("api/admin/clients/")&&Regex("/wallet/(add-balance|deduct-balance|set-balance)$").containsMatchIn(clean))||clean.endsWith("/set-balance")||clean.endsWith("/add-balance"))return "wallet"
  val prefix="api/admin/"
  if(!clean.startsWith(prefix))return null
  return when(clean.removePrefix(prefix).substringBefore("/")){
@@ -420,7 +420,8 @@ private fun canReadSection(info:JsonElement?,section:AdminSection):Boolean{
   AdminSection.CONTENT->"content"
   AdminSection.PRICING->"pricing"
   AdminSection.SETTINGS->"settings"
-  AdminSection.CLIENTS,AdminSection.CLIENT_WALLETS,AdminSection.CLIENT_TOPUPS->"clients"
+  AdminSection.CLIENTS->"clients"
+  AdminSection.CLIENT_WALLETS,AdminSection.CLIENT_TOPUPS->"wallet"
   AdminSection.SECURITY,AdminSection.PAGE_VISITS,AdminSection.ROLES->return false
  }
  return permissionDefaults(info).get(key)?.first==true
