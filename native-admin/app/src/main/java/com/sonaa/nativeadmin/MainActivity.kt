@@ -1161,6 +1161,9 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
     var editorError by remember(page){mutableStateOf<String?>(null)}
     var confirmReset by remember(page){mutableStateOf(false)}
     val layout=payload?.takeIf{it.isJsonObject}?.asJsonObject?.get("layout")?.takeIf{it.isJsonObject}?.asJsonObject
+    val sectionLabels=mapOf("dashboard" to "الرئيسية والإحصائيات","clients" to "العملاء","technicians" to "الفنيون","finance" to "المحافظ والشحن","commerce" to "التجارة والمتجر","service-management" to "الخدمات والمناطق","customer-operations" to "عمليات العملاء","platform-admin" to "إدارة المنصة")
+    val sectionOrder=layout?.get("sectionOrder")?.takeIf{it.isJsonArray}?.asJsonArray?.mapNotNull{it.takeIf{v->v.isJsonPrimitive}?.asString}.orEmpty()
+    val tabOrder=layout?.get("tabOrder")?.takeIf{it.isJsonObject}?.asJsonObject
     val sectionCount=layout?.get("sectionOrder")?.takeIf{it.isJsonArray}?.asJsonArray?.size()?:0
     val elementCount=layout?.get("elements")?.takeIf{it.isJsonObject}?.asJsonObject?.size()?:0
     val tabCount=layout?.get("tabOrder")?.takeIf{it.isJsonObject}?.asJsonObject?.entrySet()?.sumOf{entry->entry.value.takeIf{it.isJsonArray}?.asJsonArray?.size()?:0}?:0
@@ -1178,6 +1181,18 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
                 Text("ملخص التخطيط المحفوظ",fontWeight=FontWeight.Bold,color=DarkAccent)
                 Text("الأقسام: $sectionCount • التبويبات: $tabCount • العناصر المخصصة: $elementCount",style=MaterialTheme.typography.bodySmall)
                 Text("يشمل JSON ترتيب الأقسام والتبويبات ومجموعاتها وأحجامها ومواقع العناصر وألوانها وخطوطها وخلفياتها وإعدادات الهاتف.",style=MaterialTheme.typography.bodySmall,color=Color.Gray)
+            }
+        }
+        if(sectionOrder.isNotEmpty()){
+            Text("معاينة ترتيب الأقسام والتبويبات",fontWeight=FontWeight.Bold,color=DarkAccent)
+            sectionOrder.forEach{sectionId->
+                val tabs=tabOrder?.get(sectionId)?.takeIf{it.isJsonArray}?.asJsonArray?.mapNotNull{it.takeIf{v->v.isJsonPrimitive}?.asString}.orEmpty()
+                Card(Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=Color.White)){
+                    Column(Modifier.padding(10.dp),verticalArrangement=Arrangement.spacedBy(3.dp)){
+                        Text(sectionLabels[sectionId]?:sectionId,fontWeight=FontWeight.SemiBold)
+                        Text(tabs.joinToString(" • ").ifBlank{"لا توجد تبويبات في هذه المجموعة"},style=MaterialTheme.typography.bodySmall,color=Color.Gray)
+                    }
+                }
             }
         }
         OutlinedTextField(
