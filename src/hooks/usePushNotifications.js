@@ -27,6 +27,7 @@ export function usePushNotifications(session, onNotificationResponse) {
       void Notifications.clearLastNotificationResponseAsync?.().catch(() => {});
     };
     const responseSubscription = Notifications.addNotificationResponseReceivedListener(handleResponse);
+    let projectIdForRefresh = '';
     void Notifications.getLastNotificationResponseAsync?.().then(handleResponse).catch(() => {});
     async function registerPushToken() {
       if (!session || !['client', 'fanni', 'admin'].includes(session.role) || !Device.isDevice) return;
@@ -39,6 +40,7 @@ export function usePushNotifications(session, onNotificationResponse) {
         }
         if (status !== 'granted') return;
         const projectId = Constants.easConfig?.projectId || Constants.expoConfig?.extra?.eas?.projectId;
+        projectIdForRefresh = projectId || '';
         if (!projectId) {
           console.warn('Expo push registration skipped: missing projectId');
           return;
@@ -53,6 +55,10 @@ export function usePushNotifications(session, onNotificationResponse) {
         }
         const result = await Notifications.getExpoPushTokenAsync({ projectId });
         if (cancelled || !result?.data) return;
+        const previousToken = pushTokenRef.current;
+        if (previousToken && previousToken !== result.data) {
+          await api('/notifications/' + session.role + '/push-token', { method: 'DELETE', token: session.token, body: { token: previousToken } }).catch(() => {});
+        }
         pushTokenRef.current = result.data;
         await api('/notifications/' + session.role + '/push-token', {
           method: 'POST',
@@ -64,7 +70,21 @@ export function usePushNotifications(session, onNotificationResponse) {
       }
     }
     void registerPushToken();
-    return () => { cancelled = true; responseSubscription.remove(); };
+    const tokenRefreshSubscription = Notifications.addPushTokenListener(() => {
+      if (!cancelled && projectIdForRefresh) void registerPushToken();
+    });
+    return () => {
+      cancelled = true;
+      responseSubscription.remove();
+      tokenRefreshSubscription.remove();
+      const registeredToken = pushTokenRef.current;
+      pushTokenRef.current = null;
+      if (registeredToken) {
+        void api('/notifications/' + session.role + '/push-token', {
+          method: 'DELETE', token: session.token, body: { token: registeredToken }
+        }).catch(() => {});
+      }
+    };
   }, [session]);
   return pushTokenRef;
 }
