@@ -1450,6 +1450,7 @@ private data class RowAction(val label:String,val method:String,val path:String,
     var notifyAudience by remember(section){mutableStateOf("all")}
     var selectedOrders by remember(section){mutableStateOf(setOf<String>())}
     var selectedBulk by remember(section){mutableStateOf(setOf<String>())}
+    var offerStatusFilter by remember(section){mutableStateOf("all")}
     var bulkRegionEditOpen by remember(section){mutableStateOf(false)}
     var bulkRegionNames by remember(section){mutableStateOf<Map<String,String>>(emptyMap())}
     var pendingBulk by remember{mutableStateOf<Pair<String,List<String>>?>(null)}
@@ -1466,17 +1467,31 @@ private data class RowAction(val label:String,val method:String,val path:String,
     var advancedFanni by remember{mutableStateOf<JsonElement?>(null)}
     var limitFanni by remember{mutableStateOf<JsonElement?>(null)}
     var editingPermissions by remember{mutableStateOf<JsonElement?>(null)}
-    val filtered = remember(items, query, statusFilter, regionFilter, dateFilter) {
+    fun offerCategory(order:JsonObject,offer:JsonElement):String{
+        val offerObject=offer.takeIf{it.isJsonObject}?.asJsonObject
+        val offerId=offerObject?.get("_id")?.takeIf{!it.isJsonNull}?.asString.orEmpty()
+        val acceptedId=order.get("acceptedOfferId")?.takeIf{!it.isJsonNull}?.asString.orEmpty()
+        if(acceptedId.isNotBlank()&&acceptedId==offerId)return "accepted"
+        val expiry=order.get("expiresAt")?.takeIf{!it.isJsonNull}?.asString.orEmpty()
+        val expiryTime=runCatching{SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX",Locale.US).parse(expiry)?.time}.getOrNull()
+            ?:runCatching{SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX",Locale.US).parse(expiry)?.time}.getOrNull()
+        return if(expiryTime!=null&&expiryTime<=System.currentTimeMillis())"expired" else "pending"
+    }
+    val filtered = remember(items, query, statusFilter, regionFilter, dateFilter, offerStatusFilter) {
         items.filter { item ->
             val raw = item.toString()
             val obj = item.takeIf { it.isJsonObject }?.asJsonObject
             val status = listOf("status","actualStatus").mapNotNull { obj?.get(it)?.takeIf { v -> !v.isJsonNull }?.asString }.joinToString(" ")
             val region = listOf("area","region","regionName","areas","city").mapNotNull { obj?.get(it)?.takeIf { v -> !v.isJsonNull }?.toString() }.joinToString(" ")
             val date = listOf("createdAt","requestedAt","reviewedAt","visitedAt").mapNotNull { obj?.get(it)?.takeIf { v -> !v.isJsonNull }?.asString }.joinToString(" ")
+            val offerMatches=if(section!=AdminSection.OFFERS||offerStatusFilter=="all")true else {
+                val offers=obj?.get("offers")?.takeIf{it.isJsonArray}?.asJsonArray
+                offers?.any{offerCategory(obj, it)==offerStatusFilter}==true
+            }
             (query.isBlank() || raw.contains(query.trim(), true)) &&
             (statusFilter.isBlank() || status.contains(statusFilter.trim(), true)) &&
             (regionFilter.isBlank() || region.contains(regionFilter.trim(), true)) &&
-            (dateFilter.isBlank() || date.contains(dateFilter.trim(), true))
+            (dateFilter.isBlank() || date.contains(dateFilter.trim(), true)) && offerMatches
         }
     }
     val statusOptions=remember(items){items.mapNotNull{item->item.takeIf{it.isJsonObject}?.asJsonObject?.let{o->listOf("status","actualStatus").firstNotNullOfOrNull{k->o.get(k)?.takeIf{it.isJsonPrimitive&&!it.isJsonNull}?.asString}}}.filter{it.isNotBlank()}.distinct().sorted()}
@@ -1676,7 +1691,15 @@ private data class RowAction(val label:String,val method:String,val path:String,
             }
         }
         Column(Modifier.fillMaxWidth(),verticalArrangement=Arrangement.spacedBy(6.dp)){
-            if(statusOptions.isNotEmpty()){
+            if(section==AdminSection.OFFERS){
+                Text("حالة العرض",style=MaterialTheme.typography.labelSmall,color=Color.Gray)
+                Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(6.dp)){
+                    listOf("all" to "كل العروض","accepted" to "مقبولة","pending" to "بانتظار القرار","expired" to "منتهية").forEach{(key,label)->
+                        FilterChip(selected=offerStatusFilter==key,onClick={offerStatusFilter=key},label={Text(label)})
+                    }
+                }
+            }
+            if(section!=AdminSection.OFFERS&&statusOptions.isNotEmpty()){
                 Text("الحالة",style=MaterialTheme.typography.labelSmall,color=Color.Gray)
                 Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(6.dp)){
                     FilterChip(selected=statusFilter.isBlank(),onClick={statusFilter=""},label={Text("كل الحالات")})
@@ -1792,18 +1815,26 @@ private data class RowAction(val label:String,val method:String,val path:String,
                         if(section==AdminSection.OFFERS && item.isJsonObject){
                             val orderSn=item.asJsonObject.get("sn")?.asString.orEmpty()
                             item.asJsonObject.get("offers")?.takeIf{it.isJsonArray}?.asJsonArray?.forEachIndexed{index,offer->
+                                if(offerStatusFilter=="all"||offerCategory(item.asJsonObject,offer)==offerStatusFilter){
+                                val offerObject=offer.takeIf{it.isJsonObject}?.asJsonObject
+                                val offerState=offerCategory(item.asJsonObject,offer)
                                 Card(Modifier.fillMaxWidth().padding(top=6.dp),colors=CardDefaults.cardColors(containerColor=Color(0xFFF4F8FA))){
                                     Column(Modifier.padding(10.dp)){
-                                        Text("العرض "+(index+1),fontWeight=FontWeight.Bold)
+                                        Text("العرض "+(index+1)+" • "+when(offerState){"accepted"->"مقبول";"expired"->"منتهي";else->"بانتظار القرار"},fontWeight=FontWeight.Bold)
                                         Row(verticalAlignment=Alignment.CenterVertically){
                                             val offerKey="$orderSn|$index"
                                             Checkbox(checked=selectedBulk.contains(offerKey),onCheckedChange={checked->selectedBulk=if(checked)selectedBulk+offerKey else selectedBulk-offerKey})
                                             Text("تحديد العرض",style=MaterialTheme.typography.labelSmall,color=Color.Gray)
                                         }
-                                        Text(offer.toString(),style=MaterialTheme.typography.bodySmall)
-                                        OutlinedButton(onClick={pending=RowAction("حذف العرض","DELETE","api/admin/offers/$orderSn/$index")},modifier=Modifier.fillMaxWidth()){Text("حذف العرض")}
-                                        OutlinedButton(onClick={pending=RowAction("رفض العرض","POST","api/admin/offers/$orderSn/$index/reject")},modifier=Modifier.fillMaxWidth()){Text("رفض العرض")}
+                                        Text("الفني: "+(offerObject?.get("fanniName")?.takeIf{!it.isJsonNull}?.asString?: "غير محدد"),style=MaterialTheme.typography.bodySmall)
+                                        Text("قيمة العرض: "+(offerObject?.get("price")?.takeIf{!it.isJsonNull}?.toString()?: "—")+" جنيه",style=MaterialTheme.typography.bodySmall)
+                                        offerObject?.get("note")?.takeIf{!it.isJsonNull}?.asString?.takeIf{it.isNotBlank()}?.let{Text("ملاحظات: "+it,style=MaterialTheme.typography.bodySmall,color=Color.Gray)}
+                                        if(offerState!="accepted"){
+                                            OutlinedButton(onClick={pending=RowAction("حذف العرض","DELETE","api/admin/offers/$orderSn/$index")},modifier=Modifier.fillMaxWidth()){Text("حذف العرض")}
+                                            OutlinedButton(onClick={pending=RowAction("رفض العرض","POST","api/admin/offers/$orderSn/$index/reject")},modifier=Modifier.fillMaxWidth()){Text("رفض العرض")}
+                                        }
                                     }
+                                }
                                 }
                             }
                         }
