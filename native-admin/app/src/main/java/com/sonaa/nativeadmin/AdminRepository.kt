@@ -100,7 +100,9 @@ enum class AdminSection(
  ROLES("صلاحيات المشرفين","api/admin/admin-users",listOf("users","admins","data","items")),
  CLIENTS("كل العملاء","api/admin/clients",listOf("clients","items","data")),
  CLIENT_WALLETS("محافظ العملاء","api/admin/client-wallet/accounts",listOf("accounts","data","items")),
- CLIENT_TOPUPS("طلبات شحن محافظ العملاء","api/admin/client-wallet/topup-requests",listOf("requests","data","items"));
+ CLIENT_TOPUPS("طلبات شحن محافظ العملاء","api/admin/client-wallet/topup-requests",listOf("requests","data","items")),
+ COMMERCE_PLANS("باقات الاشتراك","api/admin/commerce/catalog",listOf("items","data")),
+ CLIENT_SUBSCRIPTIONS("اشتراكات العملاء","api/admin/commerce/subscriptions",listOf("subscriptions","data","items"));
  fun defaultBody()=JsonObject()
  fun extract(p:JsonElement):List<JsonElement>{
   if(p.isJsonArray)return p.asJsonArray.map{it}
