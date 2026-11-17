@@ -816,3 +816,12 @@ test('client dashboard tab order and labels match the approved two-row RTL layou
   for (const item of expected) { const next = tabs.indexOf(item); assert.ok(next > cursor, 'tab missing or out of order: ' + item); cursor = next; }
   assert.ok(client.includes("setClientTab(t.key)"), 'tab navigation keys remain connected');
 });
+
+test('native store catalog groups products by their server-provided category and keeps a default section', () => {
+  const store = fs.readFileSync(path.join(root, 'src/screens/shared/StoreScreen.js'), 'utf8');
+  assert.ok(store.includes('const groupedProducts = useMemo(() => {'));
+  assert.ok(store.includes("String(item?.category || 'عام').trim() || 'عام'"));
+  assert.ok(store.includes('groupedProducts.map(group => ('));
+  assert.ok(store.includes('<Text style={styles.sectionTitle}>{group.category}</Text>'));
+  assert.ok(store.includes('group.items.map(({ item, index }) => ('));
+});

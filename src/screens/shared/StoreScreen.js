@@ -200,6 +200,15 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
   };
 
   const userBalance = Number(walletBalance ?? session?.user?.walletBalance ?? session?.user?.balance ?? 0);
+  const groupedProducts = useMemo(() => {
+    const groups = new Map();
+    (Array.isArray(products) ? products : []).forEach((item, index) => {
+      const category = String(item?.category || 'عام').trim() || 'عام';
+      if (!groups.has(category)) groups.set(category, []);
+      groups.get(category).push({ item, index });
+    });
+    return Array.from(groups.entries()).map(([category, items]) => ({ category, items }));
+  }, [products]);
 
   return (
     <View style={{ width: '100%' }}>
@@ -230,19 +239,27 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
           ) : null}
         </View>
         {loading ? <ActivityIndicator color={COLORS.teal} size="large" /> : error ? <View style={styles.dataCard}><Text style={styles.errorText}>{error}</Text><Button title="إعادة المحاولة" onPress={() => load()} /></View> :
-          products.length ? products.map((item, index) => (
-            <View key={String(item._id || index)} style={[styles.dataCard, { marginBottom: 10, flexDirection: 'row', alignItems: 'flex-start', gap: 12 }]}>
-              <StoreImage value={item.imageUrl} style={{ width: 96, height: 96, borderRadius: 12 }} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.cardTitleSmall}>{item.name || 'منتج'}</Text>
-                <Text style={[styles.detail, { color: COLORS.teal, fontWeight: '900' }]}>{item.type === 'subscription' ? 'اشتراك / تجديد اشتراك' : 'منتج وبضاعة'}{item.subscriptionDuration ? ' • ' + item.subscriptionDuration : ''}</Text>
-                {item.description ? <Text style={styles.detail}>{item.description}</Text> : null}
-                {item.details ? <Text style={styles.detail}>{item.details}</Text> : null}
-                <Text style={[styles.detail, { fontWeight: '900', color: COLORS.navy }]}>{money(item.price)}</Text>
-                {item.originalPrice != null && Number(item.originalPrice) > Number(item.price) ? <Text style={[styles.detail, { textDecorationLine: 'line-through' }]}>بدلًا من {money(item.originalPrice)}</Text> : null}
-                {item.offerText ? <Text style={[styles.detail, { color: COLORS.greenDark }]}>{item.offerText}</Text> : null}
-                <Button title="اطلب المنتج" onPress={() => openPurchase(item)} />
+          groupedProducts.length ? groupedProducts.map(group => (
+            <View key={group.category} style={{ marginBottom: 12 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <Text style={styles.sectionTitle}>{group.category}</Text>
+                <Text style={{ color: COLORS.muted, fontSize: 11, fontWeight: '700' }}>{group.items.length} منتج</Text>
               </View>
+              {group.items.map(({ item, index }) => (
+                <View key={String(item._id || index)} style={[styles.dataCard, { marginBottom: 10, flexDirection: 'row', alignItems: 'flex-start', gap: 12 }]}>
+                  <StoreImage value={item.imageUrl} style={{ width: 96, height: 96, borderRadius: 12 }} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.cardTitleSmall}>{item.name || 'منتج'}</Text>
+                    <Text style={[styles.detail, { color: COLORS.teal, fontWeight: '900' }]}>{item.type === 'subscription' ? 'اشتراك / تجديد اشتراك' : 'منتج وبضاعة'}{item.subscriptionDuration ? ' • ' + item.subscriptionDuration : ''}</Text>
+                    {item.description ? <Text style={styles.detail}>{item.description}</Text> : null}
+                    {item.details ? <Text style={styles.detail}>{item.details}</Text> : null}
+                    <Text style={[styles.detail, { fontWeight: '900', color: COLORS.navy }]}>{money(item.price)}</Text>
+                    {item.originalPrice != null && Number(item.originalPrice) > Number(item.price) ? <Text style={[styles.detail, { textDecorationLine: 'line-through' }]}>بدلًا من {money(item.originalPrice)}</Text> : null}
+                    {item.offerText ? <Text style={[styles.detail, { color: COLORS.greenDark }]}>{item.offerText}</Text> : null}
+                    <Button title="اطلب المنتج" onPress={() => openPurchase(item)} />
+                  </View>
+                </View>
+              ))}
             </View>
           )) : <View style={styles.dataCard}><Text style={styles.emptyText}>لا توجد منتجات متاحة حاليًا.</Text></View>}
       </View>
