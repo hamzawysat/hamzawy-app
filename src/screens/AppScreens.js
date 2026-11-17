@@ -529,12 +529,22 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
 
   async function markNotificationRead(item) {
     const id = item?._id || item?.id;
-    if (!id || item.read || item.readAt) return;
+    const type = String(item?.type || '');
     const role = session?.role === 'client' ? 'client' : 'fanni';
-    try {
-      await api(`/notifications/${role}/${encodeURIComponent(id)}/read`, { method: 'PATCH', token: session.token });
-      setNotifications(current => ({ ...current, items: current.items.map(n => (n._id || n.id) === id ? { ...n, read: true, readAt: new Date().toISOString() } : n), unread: Math.max(0, current.unread - 1) }));
-    } catch (err) { Alert.alert('الإشعارات', err.message || 'تعذر تحديث الإشعار.'); }
+    if (id && !item.read && !item.readAt) {
+      try {
+        await api(`/notifications/${role}/${encodeURIComponent(id)}/read`, { method: 'PATCH', token: session.token });
+        setNotifications(current => ({ ...current, items: current.items.map(n => (n._id || n.id) === id ? { ...n, read: true, readAt: new Date().toISOString() } : n), unread: Math.max(0, current.unread - 1) }));
+      } catch (err) { Alert.alert('الإشعارات', err.message || 'تعذر تحديث الإشعار.'); }
+    }
+    setNotificationsOpen(false);
+    if (session?.role === 'fanni' && ['topup_approved', 'topup_rejected', 'fanni_wallet_credit', 'fanni_wallet_settlement'].includes(type)) {
+      setTechData(current => ({ ...current, tab: 'wallet' }));
+      setScreen('technician');
+    } else if (session?.role === 'client' && (type.startsWith('client_wallet_') || type === 'client_service_refunded')) {
+      setClientTab('wallet');
+      setScreen('client');
+    }
   }
 
   async function markAllNotificationsRead() {
