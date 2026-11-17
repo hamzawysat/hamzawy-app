@@ -129,6 +129,14 @@ class AdminViewModel(app:Application):AndroidViewModel(app){
  }
  fun closeClientProfile(){_state.value=_state.value.copy(editingClient=null,editingClientId=null)}
  fun openWalletTransactions(id:String)=viewModelScope.launch{_state.value=_state.value.copy(busy=true,error=null,walletFanniId=id);try{val data=repo.get("api/admin/wallet/transactions/$id");val rows=if(data.isJsonObject)data.asJsonObject.get("transactions")?.takeIf{it.isJsonArray}?.asJsonArray?.map{it}?:emptyList() else emptyList();_state.value=_state.value.copy(busy=false,walletTransactions=rows)}catch(e:Exception){_state.value=_state.value.copy(busy=false,error=e.message?: "تعذر تحميل حركات المحفظة")}}
+ fun openClientWalletTransactions(id:String)=viewModelScope.launch{
+  _state.value=_state.value.copy(busy=true,error=null,walletFanniId=id,walletTransactions=emptyList())
+  try{
+   val data=repo.get("api/admin/client-wallet/transactions/$id")
+   val rows=if(data.isJsonObject)data.asJsonObject.get("transactions")?.takeIf{it.isJsonArray}?.asJsonArray?.map{it}?:emptyList() else emptyList()
+   _state.value=_state.value.copy(busy=false,walletTransactions=rows)
+  }catch(e:Exception){_state.value=_state.value.copy(busy=false,error=e.message?: "تعذر تحميل حركات محفظة العميل")}
+ }
  fun closeWalletTransactions(){_state.value=_state.value.copy(walletFanniId=null,walletTransactions=emptyList())}
  fun openSupportCase(id:String)=viewModelScope.launch{
   _state.value=_state.value.copy(busy=true,error=null)
