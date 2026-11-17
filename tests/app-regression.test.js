@@ -115,6 +115,12 @@ test('native admin push service handles order and wallet notification types and 
   assert.ok(service.includes('"fanni_wallet_settlement"'));
   assert.ok(service.includes('"admin_order_offer_accepted"'));
   assert.ok(service.includes('"wallet_charge" -> "topups"'));
+  const apiSource = fs.readFileSync(path.join(root, 'native-admin/app/src/main/java/com/sonaa/nativeadmin/AdminApi.kt'), 'utf8');
+  const repositorySource = fs.readFileSync(path.join(root, 'native-admin/app/src/main/java/com/sonaa/nativeadmin/AdminRepository.kt'), 'utf8');
+  assert.ok(apiSource.includes('unregisterFcmToken'));
+  assert.ok(repositorySource.includes('remove("registered_fcm_token")'));
+  assert.ok(repositorySource.includes('api.unregisterFcmToken'));
+
 });
 
 test('required runtime packages are declared', () => {
