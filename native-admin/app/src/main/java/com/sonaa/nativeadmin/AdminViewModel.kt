@@ -23,6 +23,16 @@ class AdminViewModel(app:Application):AndroidViewModel(app){
   try{repo.login(phone,password);val me=repo.getMe();_state.value=_state.value.copy(busy=false,authenticated=true,adminInfo=me);refresh()}
   catch(e:Exception){_state.value=_state.value.copy(busy=false,error=e.message?: "تعذر تسجيل الدخول")}
  }
+ private suspend fun enrichStoreProducts(source:JsonElement):JsonElement{
+  val root=source.takeIf{it.isJsonObject}?.asJsonObject?.deepCopy()?:return source
+  runCatching{repo.get("api/admin/store/ad-settings")}.onSuccess{root.add("storeAdSettings",it)}.onFailure{root.addProperty("storeAdSettingsError",it.message?: "تعذر تحميل إعدادات الإعلانات")}
+  return root
+ }
+ private suspend fun enrichStoreOrders(source:JsonElement):JsonElement{
+  val root=source.takeIf{it.isJsonObject}?.asJsonObject?.deepCopy()?:return source
+  runCatching{repo.get("api/admin/store/orders/count")}.onSuccess{root.add("storeOrderCount",it)}
+  return root
+ }
  private suspend fun enrichDashboard(source:JsonElement):JsonElement{
   val root=source.takeIf{it.isJsonObject}?.asJsonObject?.deepCopy()?:return source
   val warnings=com.google.gson.JsonArray()
@@ -51,7 +61,12 @@ class AdminViewModel(app:Application):AndroidViewModel(app){
   _state.value=_state.value.copy(section=section,busy=true,error=null,items=emptyList(),actionMessage=if(preserveMessage)_state.value.actionMessage else null)
   try{
    val response=repo.get(section)
-   val data=if(section==AdminSection.DASHBOARD||section==AdminSection.STATS)enrichDashboard(response) else response
+   val data=when(section){
+    AdminSection.DASHBOARD,AdminSection.STATS->enrichDashboard(response)
+    AdminSection.STORE_PRODUCTS->enrichStoreProducts(response)
+    AdminSection.STORE_ORDERS->enrichStoreOrders(response)
+    else->response
+   }
    val loaded=section.extract(data)
    val supportCases=if(section==AdminSection.SUPPORT)runCatching{repo.get("api/support/admin").asJsonObject.get("supportCases")?.takeIf{it.isJsonArray}?.asJsonArray?.map{it}?:emptyList()}.getOrDefault(emptyList()) else _state.value.supportCases
    val visible=when(section){AdminSection.PENDING->loaded.filter{it.isJsonObject&&it.asJsonObject.get("isApproved")?.asBoolean!=true&&it.asJsonObject.get("isDisabled")?.asBoolean!=true&&it.asJsonObject.get("status")?.asString!="rejected"};AdminSection.DISABLED->loaded.filter{it.isJsonObject&&(it.asJsonObject.get("isDisabled")?.asBoolean==true||it.asJsonObject.get("status")?.asString=="disabled")};AdminSection.OFFERS->loaded.filter{it.isJsonObject&&it.asJsonObject.get("offers")?.let{v->v.isJsonArray&&v.asJsonArray.size()>0}==true};else->loaded}
