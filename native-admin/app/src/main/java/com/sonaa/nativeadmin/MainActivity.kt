@@ -128,7 +128,8 @@ class MainActivity : ComponentActivity() {
     private fun navigate(destination: String?, adminInfo: JsonElement?, vm: AdminViewModel?) {
         val section = when (destination) {
             "orders", "storeOrders" -> AdminSection.ORDERS
-            "commerceSubscriptions", "clientWallet" -> AdminSection.CLIENTS
+            "commerceSubscriptions" -> AdminSection.CLIENTS
+            "clientWallet" -> AdminSection.CLIENT_WALLETS
             "wallet" -> AdminSection.WALLETS
             "technicians" -> AdminSection.TECHNICIANS
             "clients" -> AdminSection.CLIENTS
@@ -307,7 +308,7 @@ private fun sectionGlyph(section:AdminSection):String=when(section){
  AdminSection.RECOVERY->"↻";AdminSection.NOTIFICATIONS->"♢";AdminSection.CONTENT->"▣"
  AdminSection.PRICING->"$";AdminSection.REPORTS->"▤";AdminSection.PAGE_VISITS->"◉"
  AdminSection.SECURITY->"⌑";AdminSection.SETTINGS->"⚙";AdminSection.ROLES->"♙"
- AdminSection.CLIENTS->"♧"
+ AdminSection.CLIENTS->"♧";AdminSection.CLIENT_WALLETS->"◉"
 }
 @Composable private fun VoicePlayer(path:String,onClose:()->Unit){
  var prepared by remember(path){mutableStateOf(false)}
@@ -390,6 +391,7 @@ private fun permissionKeyForNativePath(path:String):String?{
   "topup-requests"->"topups"
   "clients"->"clients"
   "client-accounts"->"clientsData"
+  "client-wallet"->"clients"
   "pricing"->"pricing"
   "settings"->"settings"
   "content"->"content"
@@ -418,7 +420,7 @@ private fun canReadSection(info:JsonElement?,section:AdminSection):Boolean{
   AdminSection.CONTENT->"content"
   AdminSection.PRICING->"pricing"
   AdminSection.SETTINGS->"settings"
-  AdminSection.CLIENTS->"clients"
+  AdminSection.CLIENTS,AdminSection.CLIENT_WALLETS->"clients"
   AdminSection.SECURITY,AdminSection.PAGE_VISITS,AdminSection.ROLES->return false
  }
  return permissionDefaults(info).get(key)?.first==true
@@ -1431,7 +1433,7 @@ private data class RowAction(val label:String,val method:String,val path:String,
                             val clientPhone=item.asJsonObject.get("phone")?.takeIf{!it.isJsonNull}?.asString.orEmpty()
                             if(clientPhone.isNotBlank())OutlinedButton(onClick={onOpenClientOrders(clientPhone)},modifier=Modifier.fillMaxWidth().padding(top=5.dp)){Text("عرض طلبات العميل")}
                         }
-                        if(section==AdminSection.CLIENTS&&item.isJsonObject){
+                        if((section==AdminSection.CLIENTS||section==AdminSection.CLIENT_WALLETS)&&item.isJsonObject){
                             val client=item.asJsonObject
                             val clientId=client.get("_id")?.asString?:client.get("id")?.asString.orEmpty()
                             val registered=client.get("registered")?.asBoolean?:clientId.isNotBlank()
