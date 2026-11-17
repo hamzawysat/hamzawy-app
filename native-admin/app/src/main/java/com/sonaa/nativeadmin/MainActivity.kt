@@ -977,6 +977,7 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
     val orders = root?.get("dashboardOrders")?.takeIf { it.isJsonArray }?.asJsonArray?.toList().orEmpty()
     val topups = root?.get("dashboardTopups")?.takeIf { it.isJsonArray }?.asJsonArray?.toList().orEmpty()
     val complaints = root?.get("dashboardComplaints")?.takeIf { it.isJsonArray }?.asJsonArray?.toList().orEmpty()
+    val warnings = root?.get("dashboardWarnings")?.takeIf { it.isJsonArray }?.asJsonArray?.mapNotNull { it.takeIf { value -> value.isJsonPrimitive }?.asString }.orEmpty()
     fun field(item: JsonElement, key: String): String = item.takeIf { it.isJsonObject }?.asJsonObject?.get(key)?.takeIf { !it.isJsonNull }?.asString.orEmpty()
     val approvedTopups = topups.filter { field(it, "status") == "approved" }.sumOf { field(it, "amount").toDoubleOrNull() ?: 0.0 }
     val cards = listOf(
@@ -995,6 +996,12 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
         cards.forEach { (label, value) -> Card(Modifier.fillMaxWidth().padding(bottom = 10.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
             Column(Modifier.padding(18.dp)) { Text(label, color = Color.Gray); Text(value, style = MaterialTheme.typography.headlineMedium, color = Accent, fontWeight = FontWeight.Bold) }
         } }
+        if(warnings.isNotEmpty()) Card(Modifier.fillMaxWidth().padding(bottom = 10.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF4E5))) {
+            Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text("تنبيه: بعض بيانات لوحة التحكم لم تُحمّل", color = Color(0xFF8A4B08), fontWeight = FontWeight.Bold)
+                warnings.forEach { warning -> Text(warning, color = Color(0xFF8A4B08), style = MaterialTheme.typography.bodySmall) }
+            }
+        }
         if(showMonthly) MonthlyOrdersChart(monthlyOrderStats(orders))
         Text("أحدث الطلبات", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = DarkAccent, modifier = Modifier.padding(top = 8.dp, bottom = 8.dp))
         if (orders.isEmpty()) Text("لا توجد طلبات متاحة أو لا تملك صلاحية عرضها", color = Color.Gray)
