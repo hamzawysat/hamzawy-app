@@ -2039,6 +2039,15 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
     var csvPreview by remember{mutableStateOf<StoreCsvPreview?>(null)}
     var csvFileName by remember{mutableStateOf("")}
     var csvError by remember{mutableStateOf("")}
+    var csvSource by remember{mutableStateOf("")}
+    var csvMapping by remember{mutableStateOf<Map<String,Int>>(emptyMap())}
+    var openCsvMapping by remember{mutableStateOf<String?>(null)}
+    val csvMappingFields=listOf(
+        "name" to "اسم المنتج *","price" to "السعر *","category" to "القسم",
+        "description" to "الوصف","details" to "التفاصيل والمواصفات","originalPrice" to "السعر قبل العرض",
+        "offerText" to "تفاصيل العرض","type" to "نوع المنتج","subscriptionDuration" to "مدة الاشتراك",
+        "stock" to "الكمية / المخزون"
+    )
     val context=LocalContext.current
     val csvPicker=rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()){uri->
         if(uri!=null){
@@ -2048,9 +2057,9 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
                 val decoded=runCatching{
                     java.nio.charset.StandardCharsets.UTF_8.newDecoder().onMalformedInput(java.nio.charset.CodingErrorAction.REPORT).decode(java.nio.ByteBuffer.wrap(bytes)).toString()
                 }.getOrElse{String(bytes,java.nio.charset.Charset.forName("windows-1256"))}
-                parseStoreCsvProducts(decoded)
-            }.onSuccess{preview->csvPreview=preview;csvFileName=uri.lastPathSegment.orEmpty();csvError=""}
-             .onFailure{csvPreview=null;csvError=it.message?: "تعذرت قراءة ملف CSV"}
+                decoded to parseStoreCsvProducts(decoded)
+            }.onSuccess{(decoded,preview)->csvSource=decoded;csvPreview=preview;csvMapping=preview.mapping;csvFileName=uri.lastPathSegment.orEmpty();csvError=""}
+             .onFailure{csvPreview=null;csvSource="";csvMapping=emptyMap();csvError=it.message?: "تعذرت قراءة ملف CSV"}
         }
     }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(14.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){
@@ -2064,12 +2073,34 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
                 Column(Modifier.padding(12.dp),verticalArrangement=Arrangement.spacedBy(6.dp)){
                     Text("معاينة ملف: "+csvFileName,fontWeight=FontWeight.Bold,color=DarkAccent)
                     Text("جاهز للاستيراد: "+preview.products.size+" • صفوف بها أخطاء: "+preview.errors.size,style=MaterialTheme.typography.bodySmall)
+                    Text("اربط كل عمود من ملفك بالحقل الصحيح. الربط التلقائي قابل للتعديل قبل الاستيراد.",style=MaterialTheme.typography.bodySmall,color=Color.Gray)
+                    csvMappingFields.forEach{(key,label)->
+                        val selectedIndex=csvMapping[key]?:-1
+                        val selectedLabel=if(selectedIndex in preview.headers.indices)preview.headers[selectedIndex] else "بدون ربط"
+                        Box(Modifier.fillMaxWidth()){
+                            OutlinedButton(onClick={openCsvMapping=key},modifier=Modifier.fillMaxWidth()){
+                                Text(label+" : "+selectedLabel,maxLines=1,overflow=TextOverflow.Ellipsis)
+                            }
+                            DropdownMenu(expanded=openCsvMapping==key,onDismissRequest={openCsvMapping=null},modifier=Modifier.heightIn(max=280.dp)){
+                                DropdownMenuItem(text={Text("بدون ربط")},onClick={
+                                    val next=csvMapping.toMutableMap().apply{remove(key)}
+                                    csvMapping=next;csvPreview=parseStoreCsvProducts(csvSource,next);openCsvMapping=null
+                                })
+                                preview.headers.forEachIndexed{index,header->
+                                    DropdownMenuItem(text={Text(header.ifBlank{"عمود "+(index+1)},maxLines=1,overflow=TextOverflow.Ellipsis)},onClick={
+                                        val next=csvMapping.toMutableMap().apply{put(key,index)}
+                                        csvMapping=next;csvPreview=parseStoreCsvProducts(csvSource,next);openCsvMapping=null
+                                    })
+                                }
+                            }
+                        }
+                    }
                     preview.errors.take(8).forEach{Text(it,color=Color(0xFFB3261E),style=MaterialTheme.typography.labelSmall)}
                     Button(onClick={
                         val body=JsonObject().apply{add("products",com.google.gson.JsonArray().apply{preview.products.forEach{add(it)}})}
-                        onAction("POST","api/admin/store/products/import",body);csvPreview=null;csvFileName=""
+                        onAction("POST","api/admin/store/products/import",body);csvPreview=null;csvFileName="";csvSource="";csvMapping=emptyMap()
                     },enabled=!busy&&preview.products.isNotEmpty(),modifier=Modifier.fillMaxWidth()){Text("استيراد "+preview.products.size+" منتج")}
-                    TextButton(onClick={csvPreview=null;csvFileName=""}){Text("إلغاء المعاينة")}
+                    TextButton(onClick={csvPreview=null;csvFileName="";csvSource="";csvMapping=emptyMap()}){Text("إلغاء المعاينة")}
                 }
             }
         }
@@ -2308,8 +2339,13 @@ private fun storeProductCopy(source:com.google.gson.JsonObject):com.google.gson.
 }
 
 
-private data class StoreCsvPreview(val products:List<JsonObject>,val errors:List<String>)
-private fun parseStoreCsvProducts(source:String):StoreCsvPreview{
+private data class StoreCsvPreview(
+    val products:List<JsonObject>,
+    val errors:List<String>,
+    val headers:List<String> = emptyList(),
+    val mapping:Map<String,Int> = emptyMap()
+)
+private fun parseStoreCsvProducts(source:String,columnMapping:Map<String,Int>?=null):StoreCsvPreview{
     val firstLine=source.lineSequence().firstOrNull().orEmpty()
     val delimiter=listOf(',', ';', '\t').maxByOrNull{firstLine.count{ch->ch==it}}?:','
     val rows=mutableListOf<List<String>>()
@@ -2350,8 +2386,8 @@ private fun parseStoreCsvProducts(source:String):StoreCsvPreview{
         "stock" to listOf("stock","quantity","qty","المخزون","الكمية")
     )
     val headers=rows.first().mapIndexed{index,value->if(index==0)value.removePrefix(String(charArrayOf(0xFEFF.toChar()))) else value}
-    val mapping=aliases.mapValues{(_,names)->headers.indexOfFirst{header->names.any{norm(header)==norm(it)}}}
-    if((mapping["name"]?:-1)<0||(mapping["price"]?:-1)<0)error("لازم ملف CSV يحتوي على عمود اسم المنتج وعمود السعر")
+    val mapping=aliases.mapValues{(_,names)->headers.indexOfFirst{header->names.any{norm(header)==norm(it)}}}.toMutableMap()
+    columnMapping?.forEach{(key,index)->if(key in aliases)mapping[key]=index.takeIf{it in headers.indices}?:-1}
     fun cellAt(cells:List<String>,key:String):String{
         val col=mapping[key]?:-1
         return if(col>=0)cells.getOrNull(col).orEmpty().trim() else ""
@@ -2390,7 +2426,7 @@ private fun parseStoreCsvProducts(source:String):StoreCsvPreview{
         })
     }
     if(valid.size>500)error("الحد الأقصى للاستيراد 500 منتج في الدفعة الواحدة. قسّم الملف إلى دفعات.")
-    return StoreCsvPreview(valid,errors)
+    return StoreCsvPreview(valid,errors,headers,mapping.filterValues{it>=0})
 }
 
 
