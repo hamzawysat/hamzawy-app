@@ -505,20 +505,18 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
 }
 @Composable private fun FanniLimitsDialog(item:JsonElement,onDismiss:()->Unit,onSave:(JsonObject)->Unit){
  val limits=item.asJsonObject.get("limits")?.takeIf{it.isJsonObject}?.asJsonObject
- var maxOrders by remember(item){mutableStateOf(limits?.get("maxOrders")?.toString().orEmpty())}
- var maxOffers by remember(item){mutableStateOf(limits?.get("maxOffers")?.toString().orEmpty())}
- var dailyLimit by remember(item){mutableStateOf(limits?.get("dailyLimit")?.toString().orEmpty())}
+ var maxOffers by remember(item){mutableStateOf(limits?.get("maxOffers")?.toString()?: "50")}
+ var dailyLimit by remember(item){mutableStateOf(limits?.get("dailyLimit")?.toString()?: "10")}
  var limited by remember(item){mutableStateOf(limits?.get("isLimited")?.asBoolean?:false)}
  var reason by remember(item){mutableStateOf(limits?.get("reason")?.asString.orEmpty())}
  AlertDialog(onDismissRequest=onDismiss,title={Text("حدود استقبال الفني")},
   text={Column(verticalArrangement=Arrangement.spacedBy(6.dp)){
-   OutlinedTextField(maxOrders,{maxOrders=it},label={Text("أقصى عدد طلبات 0 - 1000")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Number))
-   OutlinedTextField(maxOffers,{maxOffers=it},label={Text("أقصى عدد عروض 0 - 1000")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Number))
+   OutlinedTextField(maxOffers,{maxOffers=it},label={Text("أقصى عدد عروض نشطة 0 - 1000")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Number))
    OutlinedTextField(dailyLimit,{dailyLimit=it},label={Text("الحد اليومي 0 - 100")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Number))
    Row(verticalAlignment=Alignment.CenterVertically){Text("تقييد الفني",modifier=Modifier.weight(1f));Switch(limited,{limited=it})}
    OutlinedTextField(reason,{reason=it},label={Text("سبب التقييد")},minLines=2)
   }},
-  confirmButton={TextButton(onClick={onSave(JsonObject().apply{addProperty("maxOrders",maxOrders.toIntOrNull()?:0);addProperty("maxOffers",maxOffers.toIntOrNull()?:0);addProperty("dailyLimit",dailyLimit.toIntOrNull()?:0);addProperty("isLimited",limited);addProperty("reason",reason.trim())})}){Text("حفظ")}},
+  confirmButton={TextButton(enabled=maxOffers.toIntOrNull()?.let{it in 0..1000}==true&&dailyLimit.toIntOrNull()?.let{it in 0..100}==true&&reason.trim().length>=2,onClick={onSave(JsonObject().apply{addProperty("maxOffers",maxOffers.toInt());addProperty("dailyLimit",dailyLimit.toInt());addProperty("isLimited",limited);addProperty("reason",reason.trim())})}){Text("حفظ")}},
   dismissButton={TextButton(onClick=onDismiss){Text("إلغاء")}}
  )
 }
