@@ -1054,7 +1054,25 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
    OutlinedTextField(maximum,{maximum=it},label={Text("أعلى عرض")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Number),modifier=Modifier.fillMaxWidth())
    Button(onClick={onSave("PUT","api/admin/pricing",JsonObject().apply{addProperty("check",check.toDoubleOrNull()?:0.0);addProperty("commission",commission.toDoubleOrNull()?:0.0);addProperty("minOffer",minimum.toIntOrNull()?:0);addProperty("maxOffer",maximum.toIntOrNull()?:0)})},enabled=check.toDoubleOrNull()?.let{it>=0}==true&&commission.toDoubleOrNull()?.let{it in 0.0..100.0}==true&&minimum.toIntOrNull()?.let{it in 1..1000000}==true&&maximum.toIntOrNull()?.let{it in 1..1000000}==true&&(minimum.toIntOrNull()?:Int.MAX_VALUE)<=(maximum.toIntOrNull()?:Int.MIN_VALUE)&&canWrite("api/admin/pricing"),modifier=Modifier.fillMaxWidth()){Text("حفظ الأسعار")}
    Text("سجل تغييرات الأسعار",fontWeight=FontWeight.Bold,color=DarkAccent)
-   root?.get("history")?.takeIf{it.isJsonArray}?.asJsonArray?.take(20)?.forEach{Text(it.toString(),style=MaterialTheme.typography.bodySmall,color=Color.Gray)}
+   val pricingHistory=root?.get("history")?.takeIf{it.isJsonArray}?.asJsonArray
+   if(pricingHistory==null||pricingHistory.size()==0)Text("لا توجد تغييرات مسجلة للأسعار حتى الآن.",style=MaterialTheme.typography.bodySmall,color=Color.Gray)
+   pricingHistory?.take(100)?.forEach{entry->
+    val log=entry.takeIf{it.isJsonObject}?.asJsonObject?:return@forEach
+    val before=log.get("before")?.takeIf{it.isJsonObject}?.asJsonObject
+    val after=log.get("after")?.takeIf{it.isJsonObject}?.asJsonObject
+    fun priceSnapshot(value:com.google.gson.JsonObject?):String{
+     if(value==null)return "غير متاح"
+     return "رسوم الفرصة: "+(value.get("check")?.toString()?: "—")+" جنيه • العمولة: "+(value.get("commission")?.toString()?: "—")+"% • أقل عرض: "+(value.get("minOffer")?.toString()?: "—")+" • أعلى عرض: "+(value.get("maxOffer")?.toString()?: "—")
+    }
+    Card(Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=Color.White)){
+     Column(Modifier.padding(11.dp),verticalArrangement=Arrangement.spacedBy(4.dp)){
+      Text(log.get("reason")?.takeIf{!it.isJsonNull}?.asString?: "تعديل الأسعار",fontWeight=FontWeight.Bold,color=DarkAccent)
+      Text("بواسطة: "+(log.get("by")?.takeIf{!it.isJsonNull}?.asString?: "—")+" • "+(log.get("createdAt")?.takeIf{!it.isJsonNull}?.asString?: "—"),style=MaterialTheme.typography.labelSmall,color=Color.Gray)
+      Text("قبل التعديل: "+priceSnapshot(before),style=MaterialTheme.typography.bodySmall)
+      Text("بعد التعديل: "+priceSnapshot(after),style=MaterialTheme.typography.bodySmall,color=Color(0xFF087F55))
+     }
+    }
+   }
   }
  }else{
   val p=root?.get("content")?.takeIf{it.isJsonObject}?.asJsonObject
