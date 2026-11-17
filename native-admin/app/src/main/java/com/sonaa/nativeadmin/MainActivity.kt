@@ -2485,14 +2485,15 @@ private fun parseStoreCsvProducts(source:String,columnMapping:Map<String,Int>?=n
         }
         val activeRaw=cellAt(cells,"isActive").trim().lowercase()
         val isActive=activeRaw.isBlank()||activeRaw !in listOf("0","false","no","inactive","غير مفعل","مخفي","لا")
-        valid.add(JsonObject().apply{
+        val product=JsonObject().apply{
             addProperty("name",name);addProperty("category",cellAt(cells,"category").ifBlank{"عام"});addProperty("price",price)
             if(original==null)add("originalPrice",com.google.gson.JsonNull.INSTANCE)else addProperty("originalPrice",original)
             addProperty("offerText",cellAt(cells,"offerText"));addProperty("description",cellAt(cells,"description"));addProperty("details",cellAt(cells,"details"))
             addProperty("type",type);addProperty("subscriptionDuration",cellAt(cells,"subscriptionDuration"));addProperty("imageUrl",imageUrl);add("imageFileId",com.google.gson.JsonNull.INSTANCE)
             addProperty("isActive",isActive);addProperty("isAdvertised",false);addProperty("adAudience","both");addProperty("adPriority",0);add("adExpiresAt",com.google.gson.JsonNull.INSTANCE)
             if(stock==null)add("stock",com.google.gson.JsonNull.INSTANCE)else addProperty("stock",stock)
-        })
+        }
+        valid.add(JsonObject().apply{addProperty("rowNumber",rowNumber);add("product",product)})
     }
     if(valid.size>500)error("الحد الأقصى للاستيراد 500 منتج في الدفعة الواحدة. قسّم الملف إلى دفعات.")
     return StoreCsvPreview(valid,errors,headers,mapping)
