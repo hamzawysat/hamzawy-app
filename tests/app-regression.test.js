@@ -305,7 +305,8 @@ test('client and technician chats render price-change requests in the same chron
 test('client and technician dashboards keep the refresh control and remove only the floating support button', () => {
   assert.equal(app.split('onPress={openWhatsAppSupport} style={[styles.floatingButton,styles.whatsappButton]}').length - 1, 0, 'floating support buttons should be removed');
   assert.equal(app.split('accessibilityLabel={isRefreshing ? "جاري تحديث البيانات" : "تحديث البيانات"}').length - 1, 2, 'client and technician refresh buttons should remain');
-  assert.ok(app.includes("label: 'الدعم الفني'"), 'technician support tab should remain available');
+  const technicianDashboard = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianDashboard.js'), 'utf8');
+  assert.ok(technicianDashboard.includes("label: 'الدعم'"), 'technician support tab should remain available');
   assert.ok(app.includes("title=\"🎧 الدعم الفني\""), 'client support entry point should remain available');
 });
 
@@ -753,14 +754,22 @@ test('APK workflow builds only the requested Modern ARM64 artifact and runs regr
 });
 
 
-test('native client and technician tabs render as a compact RTL two-row grid without horizontal scrolling', () => {
+test('native client and technician tabs render as compact RTL grids without horizontal scrolling', () => {
   const styles = fs.readFileSync(path.join(root, 'src/theme/styles.js'), 'utf8');
   const client = fs.readFileSync(path.join(root, 'src/screens/client/ClientDashboard.js'), 'utf8');
   const tech = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianDashboard.js'), 'utf8');
   assert.match(styles, /tabRowPremium: \{[^}]*direction: 'rtl'[^}]*flexWrap: 'wrap'/);
   assert.match(styles, /pillPremium: \{[^}]*flexBasis: '17\.5%'[^}]*minHeight: 42/);
   assert.ok(client.includes('<View style={styles.tabRowPremium}>'));
-  assert.ok(tech.includes('<View style={styles.tabRowPremium}>'));
+  assert.ok(tech.includes("{ justifyContent: 'space-between', gap: 0 }"));
+  assert.equal((tech.match(/flexBasis: '19%'/g) || []).length, 2, 'tab controls and blank slot share the same five-column width');
+  assert.ok(tech.includes("{ key: '__empty', empty: true }"), 'technician grid reserves its tenth slot');
+  assert.ok(tech.includes('pointerEvents="none"'), 'the reserved tenth slot must not respond to presses');
+  assert.ok(tech.includes('tabs.map(item => item.empty ?'), 'the reserved slot renders as a non-interactive blank');
+  const tabList = tech.slice(tech.indexOf('const tabs ='), tech.indexOf('];', tech.indexOf('const tabs =')) + 2);
+  const expectedTechnicianTabs = ["key: 'home', label: 'الرئيسية'", "key: 'profile', label: 'حسابي'", "key: 'wallet', label: 'المحفظة'", "key: 'store', label: 'المتجر'", "key: 'support', label: 'الدعم'", "key: 'available', label: 'طلبات متاحة'", "key: 'offers', label: 'طلبات مقدمة'", "key: 'currentJobs', label: 'طلبات جارية'", "key: 'completed', label: 'طلبات مكتملة'", "key: '__empty', empty: true"];
+  let tabCursor = -1;
+  for (const expected of expectedTechnicianTabs) { const next = tabList.indexOf(expected); assert.ok(next > tabCursor, 'technician tab missing or out of approved order: ' + expected); tabCursor = next; }
   assert.ok(!tech.includes('<ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 8, gap: 6 }}><View style={styles.tabRowPremium}>'));
 });
 
