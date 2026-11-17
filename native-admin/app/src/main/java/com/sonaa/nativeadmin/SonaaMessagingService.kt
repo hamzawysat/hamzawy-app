@@ -36,7 +36,8 @@ class SonaaMessagingService : FirebaseMessagingService() {
             .setSmallIcon(R.drawable.sonaa_logo).setContentTitle(title).setContentText(body)
             .setStyle(NotificationCompat.BigTextStyle().bigText(body)).setAutoCancel(true).setContentIntent(pending)
             .setPriority(NotificationCompat.PRIORITY_HIGH).build()
-        getSystemService(NotificationManager::class.java).notify(type.hashCode(), notification)
+        val notificationId = message.data["notificationId"]?.takeIf { it.isNotBlank() }?.hashCode() ?: type.hashCode()
+        getSystemService(NotificationManager::class.java).notify(notificationId, notification)
     }
     private fun channelFor(type: String) = when (type) {
         "order_new", "new_order", "admin_new_order", "admin_order_offer_accepted",
