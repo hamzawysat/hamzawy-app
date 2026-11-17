@@ -2083,7 +2083,7 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
             val end=o.get("endsAt")?.takeIf{!it.isJsonNull}?.asString.orEmpty()
             val endTime=runCatching{SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX",Locale.US).parse(end)?.time}.getOrNull()
                 ?:runCatching{SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX",Locale.US).parse(end)?.time}.getOrNull()
-            return if(endTime==null||endTime>System.currentTimeMillis())"active" else "expired"
+            return if(endTime!=null&&endTime>System.currentTimeMillis())"active" else "expired"
         }
         return "expired"
     }
