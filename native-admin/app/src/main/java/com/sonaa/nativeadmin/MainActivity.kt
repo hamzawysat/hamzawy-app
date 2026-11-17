@@ -2172,6 +2172,7 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
     var editing by remember{mutableStateOf<JsonElement?>(null)}
     var categoryEditing by remember{mutableStateOf<JsonElement?>(null)}
     var categoryCreate by remember{mutableStateOf(false)}
+    var pendingDelete by remember{mutableStateOf<Pair<String,String>?>(null)}
     val root=payload?.takeIf{it.isJsonObject}?.asJsonObject
     val categories=root?.get("categories")?.takeIf{it.isJsonArray}?.asJsonArray?.toList().orEmpty()
     val adSettings=root?.get("storeAdSettings")?.takeIf{it.isJsonObject}?.asJsonObject
@@ -2306,7 +2307,7 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
                             Text(count+" منتج",style=MaterialTheme.typography.labelSmall,color=Color.Gray)
                         }
                         if(canWrite("api/admin/store/categories/"+name))TextButton(onClick={categoryEditing=cat;categoryCreate=false}){Text("تعديل")}
-                        if(name!="عام"&&canWrite("api/admin/store/categories/"+name))TextButton(onClick={onAction("DELETE","api/admin/store/categories/"+android.net.Uri.encode(name),JsonObject())}){Text("حذف",color=Color(0xFFB3261E))}
+                        if(name!="عام"&&canWrite("api/admin/store/categories/"+name))TextButton(onClick={pendingDelete=Pair("api/admin/store/categories/"+android.net.Uri.encode(name),"سيتم نقل منتجات هذا القسم إلى قسم عام، ولن تُحذف المنتجات نفسها. هل تريد حذف القسم؟")}){Text("حذف",color=Color(0xFFB3261E))}
                     }
                 }
             }
@@ -2337,7 +2338,7 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
                     Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(5.dp)){
                         if(canWrite("api/admin/store/products/"+id))OutlinedButton(onClick={editing=item},enabled=!busy,modifier=Modifier.weight(1f)){Text("تعديل")}
                         if(canWrite("api/admin/store/products/"+id))OutlinedButton(onClick={onAction("PUT","api/admin/store/products/"+id,storeProductCopy(o).apply{addProperty("isActive",!active)})},enabled=!busy,modifier=Modifier.weight(1f)){Text(if(active)"إخفاء" else "إظهار")}
-                        if(canWrite("api/admin/store/products/"+id))OutlinedButton(onClick={onAction("DELETE","api/admin/store/products/"+id,JsonObject())},enabled=!busy,modifier=Modifier.weight(1f)){Text("حذف")}
+                        if(canWrite("api/admin/store/products/"+id))OutlinedButton(onClick={pendingDelete=Pair("api/admin/store/products/"+id,"سيتم حذف المنتج من المتجر نهائيًا. هل تريد المتابعة؟")},enabled=!busy,modifier=Modifier.weight(1f)){Text("حذف")}
                     }
                 }
             }
@@ -2345,6 +2346,15 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
     }
     if(editing!=null)StoreProductEditor(editing?.takeIf{it.isJsonObject&&it.asJsonObject.size()>0},categories,busy,uploadedImageUrl,uploadedImageFileId,{uri->onUploadImage(uri,"product")},onClearUpload,{editing=null}){method,path,body->onAction(method,path,body);editing=null}
     if(categoryCreate||categoryEditing!=null)StoreCategoryEditor(categoryEditing,categoryCreate,busy,uploadedImageUrl,uploadedImageFileId,{uri->onUploadImage(uri,"category")},onClearUpload,{categoryCreate=false;categoryEditing=null}){method,path,body->onAction(method,path,body);categoryCreate=false;categoryEditing=null}
+    pendingDelete?.let{(path,message)->
+        AlertDialog(
+            onDismissRequest={pendingDelete=null},
+            title={Text("تأكيد الحذف")},
+            text={Text(message)},
+            confirmButton={TextButton(enabled=!busy,onClick={onAction("DELETE",path,JsonObject());pendingDelete=null}){Text("تأكيد الحذف")}},
+            dismissButton={TextButton(onClick={pendingDelete=null}){Text("إلغاء")}}
+        )
+    }
 }
 
 private fun storeProductCopy(source:com.google.gson.JsonObject):com.google.gson.JsonObject{
