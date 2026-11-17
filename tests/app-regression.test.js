@@ -839,6 +839,7 @@ test('push notification taps route technician and client wallet events to the wa
   const screens = fs.readFileSync(path.join(root, 'src/screens/AppScreens.js'), 'utf8');
   assert.match(hook, /addNotificationResponseReceivedListener/);
   assert.match(hook, /getLastNotificationResponseAsync/);
+  assert.match(hook, /if \(!session\) return;/);
   assert.match(hook, /clearLastNotificationResponseAsync/);
   assert.match(screens, /fanni_wallet_credit/);
   assert.match(screens, /fanni_wallet_settlement/);
