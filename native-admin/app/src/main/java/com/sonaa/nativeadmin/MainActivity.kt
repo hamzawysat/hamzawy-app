@@ -1621,6 +1621,17 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
         value("walletFrozen").takeIf{it=="true"}?.let{parts.add("المحفظة مجمدة")}
         return parts.joinToString("  •  ")
     }
+    if(section==AdminSection.CLIENT_TOPUPS){
+        fun value(key:String):String=obj.get(key)?.takeIf{!it.isJsonNull}?.toString()?.trim('"').orEmpty()
+        return listOf(
+            value("clientPhone").takeIf{it.isNotBlank()}?.let{"الهاتف: $it"},
+            value("amount").takeIf{it.isNotBlank()}?.let{"المبلغ: $it جنيه"},
+            value("method").takeIf{it.isNotBlank()}?.let{"الطريقة: $it"},
+            value("senderNumber").takeIf{it.isNotBlank()}?.let{"رقم التحويل: $it"},
+            value("referenceNumber").takeIf{it.isNotBlank()}?.let{"المرجع: $it"},
+            value("reviewReason").takeIf{it.isNotBlank()}?.let{"سبب المراجعة: $it"}
+        ).filterNotNull().joinToString("  •  ")
+    }
     return listOf("status", "phone", "clientPhone", "area", "region", "createdAt", "specialties", "message", "adminNote", "orderCount", "lastOrder")
         .mapNotNull { k -> item.asJsonObject.get(k)?.takeIf { !it.isJsonNull }?.let { "$k: $it" } }.take(4).joinToString("  •  ")
 }
