@@ -2157,7 +2157,6 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
             dismissButton={TextButton(onClick={editingDetails=null}){Text("إلغاء")}}
         )
     }
-}
     renewalTarget?.let{item->
         val o=item.asJsonObject
         val id=o.get("_id")?.asString?:o.get("id")?.asString.orEmpty()
