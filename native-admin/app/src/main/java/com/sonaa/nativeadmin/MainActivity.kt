@@ -341,7 +341,7 @@ class MainActivity : ComponentActivity() {
             state.section == AdminSection.STORE_PRODUCTS -> StoreProductsScreen(state.payload,state.items,state.busy,state.storeUploadedImageUrl,state.storeUploadedImageFileId,{uri,purpose->vm.uploadStoreImage(uri,purpose)},vm::clearStoreUpload,{path->canWriteApi(state.adminInfo,path)}) { method,path,body -> vm.mutate(method,path,body) }
             state.section == AdminSection.STORE_ORDERS -> StoreOrdersScreen(state.payload,state.items,state.busy,{path->canWriteApi(state.adminInfo,path)}) { method,path,body -> vm.mutate(method,path,body) }
             state.section == AdminSection.UI_LAYOUT -> UiLayoutEditorScreen(state.payload,state.uiLayoutPage,state.busy,{page->vm.loadUiLayout(page)},{method,path,body->vm.mutate(method,path,body)})
-            else -> ListScreen(state.section, state.items, state.sectionSearch, state.adminInbox, state.adminUnreadCount, state.notificationDeliveries, state.adminNotificationError, vm::retry, vm::loadVoice, vm::openFanniProfile, vm::openFanniIdentity, vm::issueSupportPassword, vm::revealSupportPassword, vm::issueClientSupportPassword, vm::revealClientSupportPassword, vm::openWalletTransactions, vm::openClientWalletTransactions, vm::openClientOrders, vm::openClientProfile, vm::searchClients, vm::searchSupport, vm::filterAuditLogs, vm::bulkPublish, vm::openRecovery, { section, ids, action -> vm.bulkAction(section, ids, action) }, vm::bulkRenameRegions, { path -> canWriteApi(state.adminInfo,path) }, { path -> canReadApi(state.adminInfo,path) }, { id -> vm.markAdminNotificationRead(id); Unit }, { vm.markAllAdminNotificationsRead(); Unit }) { method, path, body -> vm.mutate(method, path, body) }
+            else -> ListScreen(state.section, state.items, state.stats, state.sectionSearch, state.adminInbox, state.adminUnreadCount, state.notificationDeliveries, state.adminNotificationError, vm::retry, vm::loadVoice, vm::openFanniProfile, vm::openFanniIdentity, vm::issueSupportPassword, vm::revealSupportPassword, vm::issueClientSupportPassword, vm::revealClientSupportPassword, vm::openWalletTransactions, vm::openClientWalletTransactions, vm::openClientOrders, vm::openClientProfile, vm::searchClients, vm::searchSupport, vm::filterAuditLogs, vm::bulkPublish, vm::openRecovery, { section, ids, action -> vm.bulkAction(section, ids, action) }, vm::bulkRenameRegions, { path -> canWriteApi(state.adminInfo,path) }, { path -> canReadApi(state.adminInfo,path) }, { id -> vm.markAdminNotificationRead(id); Unit }, { vm.markAllAdminNotificationsRead(); Unit }) { method, path, body -> vm.mutate(method, path, body) }
         }
     }
 }
@@ -1446,7 +1446,7 @@ private fun monthlyOrderStats(orders:List<JsonElement>):List<MonthlyOrderStat>{
 
 private data class RowAction(val label:String,val method:String,val path:String,val body:JsonObject=JsonObject(),val inputKey:String?=null,val inputHint:String="",val secondInputKey:String?=null,val secondInputHint:String="")
 @OptIn(ExperimentalMaterial3Api::class)
-@Composable private fun ListScreen(section: AdminSection, items: List<JsonElement>, initialQuery:String, adminInbox:List<JsonElement>, adminUnreadCount:Int, notificationDeliveries:List<JsonElement>, notificationLoadError:String?, retry: () -> Unit, onVoice:(String)->Unit, onEditProfile:(String)->Unit, onOpenIdentity:(String)->Unit, onIssueSupportPassword:(String,String)->Unit, onRevealSupportPassword:(String,String)->Unit, onIssueClientSupportPassword:(String)->Unit, onRevealClientSupportPassword:(String)->Unit, onOpenWallet:(String)->Unit, onOpenClientWallet:(String)->Unit, onOpenClientOrders:(String)->Unit, onEditClient:(String)->Unit, onClientSearch:(String)->Unit, onSupportSearch:(String)->Unit, onAuditFilter:(String)->Unit, onBulkPublish:(List<String>)->Unit, onOpenRecovery:(String)->Unit, onBulkAction:(AdminSection,List<String>,String)->Unit, onBulkRenameRegions:(Map<String,String>)->Unit, onCanWriteApi:(String)->Boolean, onCanReadApi:(String)->Boolean, onMarkNotificationRead:(String)->Unit, onMarkAllNotificationsRead:()->Unit, onAction:(String,String,JsonObject)->Unit) {
+@Composable private fun ListScreen(section: AdminSection, items: List<JsonElement>, dashboardStats:JsonElement?, initialQuery:String, adminInbox:List<JsonElement>, adminUnreadCount:Int, notificationDeliveries:List<JsonElement>, notificationLoadError:String?, retry: () -> Unit, onVoice:(String)->Unit, onEditProfile:(String)->Unit, onOpenIdentity:(String)->Unit, onIssueSupportPassword:(String,String)->Unit, onRevealSupportPassword:(String,String)->Unit, onIssueClientSupportPassword:(String)->Unit, onRevealClientSupportPassword:(String)->Unit, onOpenWallet:(String)->Unit, onOpenClientWallet:(String)->Unit, onOpenClientOrders:(String)->Unit, onEditClient:(String)->Unit, onClientSearch:(String)->Unit, onSupportSearch:(String)->Unit, onAuditFilter:(String)->Unit, onBulkPublish:(List<String>)->Unit, onOpenRecovery:(String)->Unit, onBulkAction:(AdminSection,List<String>,String)->Unit, onBulkRenameRegions:(Map<String,String>)->Unit, onCanWriteApi:(String)->Boolean, onCanReadApi:(String)->Boolean, onMarkNotificationRead:(String)->Unit, onMarkAllNotificationsRead:()->Unit, onAction:(String,String,JsonObject)->Unit) {
     var query by remember(section,initialQuery) { mutableStateOf(initialQuery) }
     var deleteClientOrdersPhone by remember(section){mutableStateOf("")}
     var statusFilter by remember(section) { mutableStateOf("") }
@@ -1459,6 +1459,11 @@ private data class RowAction(val label:String,val method:String,val path:String,
     var actionInput by remember { mutableStateOf("") }
     var actionInput2 by remember { mutableStateOf("") }
     var createOpen by remember(section){mutableStateOf(false)}
+    var createAdminOpen by remember(section){mutableStateOf(false)}
+    var selectedAdminFanniId by remember(section){mutableStateOf("")}
+    var selectedAdminRole by remember(section){mutableStateOf("مشرف")}
+    var adminFanniMenuExpanded by remember(section){mutableStateOf(false)}
+    var adminRoleMenuExpanded by remember(section){mutableStateOf(false)}
     var createName by remember(section){mutableStateOf("")}
     var createCategory by remember(section){mutableStateOf("خدمات أخرى")}
     var createEmoji by remember(section){mutableStateOf("🔧")}
@@ -1497,6 +1502,12 @@ private data class RowAction(val label:String,val method:String,val path:String,
         val expiryTime=runCatching{SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX",Locale.US).parse(expiry)?.time}.getOrNull()
             ?:runCatching{SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX",Locale.US).parse(expiry)?.time}.getOrNull()
         return if(expiryTime!=null&&expiryTime<=System.currentTimeMillis())"expired" else "pending"
+    }
+    val eligibleAdminTechnicians=remember(dashboardStats){
+        dashboardStats?.takeIf{it.isJsonObject}?.asJsonObject?.get("dashboardTechnicians")?.takeIf{it.isJsonArray}?.asJsonArray?.filter{entry->
+            val technician=entry.takeIf{it.isJsonObject}?.asJsonObject
+            technician?.get("role")?.takeIf{!it.isJsonNull}?.asString=="fanni"&&technician.get("status")?.takeIf{!it.isJsonNull}?.asString=="approved"&&technician.get("adminRole")?.takeIf{!it.isJsonNull}?.asString.orEmpty().isBlank()
+        }.orEmpty()
     }
     val filtered = remember(items, query, statusFilter, clientStatusFilter, regionFilter, dateFilter, offerStatusFilter) {
         items.filter { item ->
