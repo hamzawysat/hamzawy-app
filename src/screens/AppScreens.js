@@ -139,13 +139,23 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
   const handlePushNotificationResponse = response => {
     const data = response?.notification?.request?.content?.data || {};
     const type = String(data.type || '');
-    if (session?.role === 'fanni' && ['topup_approved', 'topup_rejected', 'wallet_credit', 'fanni_wallet_credit', 'fanni_wallet_settlement'].includes(type)) {
-      setTechData(current => ({ ...current, tab: 'wallet' }));
+    if (session?.role === 'fanni') {
+      if (['topup_approved', 'topup_rejected', 'wallet_credit', 'fanni_wallet_credit', 'fanni_wallet_settlement', 'technician_settlement', 'wallet_debit', 'commission_deducted'].includes(type)) {
+        setTechData(current => ({ ...current, tab: 'wallet' }));
+      } else if (type === 'new_opportunity') {
+        setTechData(current => ({ ...current, tab: 'available' }));
+      } else if (['offer_accepted', 'order_cancelled', 'order_completed', 'order_message', 'price_change_requested'].includes(type)) {
+        setTechData(current => ({ ...current, tab: 'myOrders' }));
+      }
       setScreen('technician');
-    } else if (session?.role === 'client' && (type.startsWith('client_wallet_') || type === 'client_service_refunded')) {
-      setClientTab('wallet');
+    } else if (session?.role === 'client') {
+      if (type.startsWith('client_wallet_') || type === 'client_service_refunded') setClientTab('wallet');
+      else if (['order_created', 'new_offer', 'offer_accepted', 'order_cancelled', 'order_completed', 'order_rated'].includes(type)) setClientTab('orders');
       setScreen('client');
     } else if (session?.role === 'admin') {
+      const destination = String(data.destination || '');
+      const tab = ({ orders: 'orders', technicians: 'fannis', clients: 'clients', topups: 'topups', complaints: 'complaints', support: 'support' })[destination];
+      if (tab) setAdminData(current => ({ ...current, tab }));
       setScreen('admin');
     }
   };
