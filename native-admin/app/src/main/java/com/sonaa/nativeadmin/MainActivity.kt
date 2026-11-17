@@ -2370,7 +2370,17 @@ private data class StoreCsvPreview(
 )
 private fun parseStoreCsvProducts(source:String,columnMapping:Map<String,Int>?=null):StoreCsvPreview{
     val firstLine=source.lineSequence().firstOrNull().orEmpty()
-    val delimiter=listOf(',', ';', '\t').maxByOrNull{firstLine.count{ch->ch==it}}?:','
+    val delimiter=listOf(',', ';', '\\t').maxByOrNull{candidate->
+        var count=0;var quoted=false;var cursor=0
+        while(cursor<firstLine.length){
+            val ch=firstLine[cursor]
+            if(ch=='"'&&quoted&&cursor+1<firstLine.length&&firstLine[cursor+1]=='"')cursor++
+            else if(ch=='"')quoted=!quoted
+            else if(ch==candidate&&!quoted)count++
+            cursor++
+        }
+        count
+    }?:','
     val rows=mutableListOf<List<String>>()
     val row=mutableListOf<String>()
     val cell=StringBuilder()
