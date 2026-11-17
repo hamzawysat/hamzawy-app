@@ -129,7 +129,7 @@ class AdminViewModel(app:Application):AndroidViewModel(app){
       }
      }
     }
-    summary+if(details.isEmpty())"" else "\\n"+details.joinToString("\\n")
+    summary+if(details.isEmpty())"" else "\n"+details.joinToString("\n")
    }else serverMessage?:result.toString()
    if(_state.value.section==AdminSection.REPORTS)_state.value=_state.value.copy(busy=false,payload=result,actionMessage=actionMessage)
    else if(_state.value.section==AdminSection.UI_LAYOUT){_state.value=_state.value.copy(busy=false,actionMessage=actionMessage);loadUiLayout(_state.value.uiLayoutPage)}
