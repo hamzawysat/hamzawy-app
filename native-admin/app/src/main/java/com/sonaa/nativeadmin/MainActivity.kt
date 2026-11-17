@@ -2195,6 +2195,7 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
     var editing by remember{mutableStateOf<JsonElement?>(null)}
     var categoryEditing by remember{mutableStateOf<JsonElement?>(null)}
     var categoryCreate by remember{mutableStateOf(false)}
+    var categoryManagerOpen by remember{mutableStateOf(false)}
     var pendingDelete by remember{mutableStateOf<Pair<String,String>?>(null)}
     val root=payload?.takeIf{it.isJsonObject}?.asJsonObject
     val categories=root?.get("categories")?.takeIf{it.isJsonArray}?.asJsonArray?.toList().orEmpty()
@@ -2315,10 +2316,12 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
             Column(Modifier.padding(12.dp),verticalArrangement=Arrangement.spacedBy(7.dp)){
                 Row(verticalAlignment=Alignment.CenterVertically){
                     Text("أقسام المتجر",modifier=Modifier.weight(1f),fontWeight=FontWeight.Bold,color=DarkAccent)
+                    TextButton(onClick={categoryManagerOpen=!categoryManagerOpen}){Text(if(categoryManagerOpen)"إخفاء الأقسام" else "عرض الأقسام ("+categories.size+")")}
                     if(canWrite("api/admin/store/categories"))TextButton(onClick={categoryEditing=null;categoryCreate=true},enabled=!busy){Text("إضافة قسم")}
                 }
-                if(categories.isEmpty())Text("لا توجد أقسام معرفة بعد.",style=MaterialTheme.typography.bodySmall,color=Color.Gray)
-                categories.forEach{cat->
+                if(categoryManagerOpen){
+                    if(categories.isEmpty())Text("لا توجد أقسام معرفة بعد.",style=MaterialTheme.typography.bodySmall,color=Color.Gray)
+                    categories.forEach{cat->
                     val obj=cat.takeIf{it.isJsonObject}?.asJsonObject
                     val name=obj?.get("name")?.takeIf{!it.isJsonNull}?.asString.orEmpty()
                     val count=obj?.get("productCount")?.takeIf{!it.isJsonNull}?.toString().orEmpty()
@@ -2331,6 +2334,7 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
                         }
                         if(canWrite("api/admin/store/categories/"+name))TextButton(onClick={categoryEditing=cat;categoryCreate=false}){Text("تعديل")}
                         if(name!="عام"&&canWrite("api/admin/store/categories/"+name))TextButton(onClick={pendingDelete=Pair("api/admin/store/categories/"+android.net.Uri.encode(name),"سيتم نقل منتجات هذا القسم إلى قسم عام، ولن تُحذف المنتجات نفسها. هل تريد حذف القسم؟")}){Text("حذف",color=Color(0xFFB3261E))}
+                    }
                     }
                 }
             }
