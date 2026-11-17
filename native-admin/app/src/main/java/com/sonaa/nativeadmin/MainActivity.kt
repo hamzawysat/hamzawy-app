@@ -224,6 +224,17 @@ class MainActivity : ComponentActivity() {
                 Text(message, modifier=Modifier.padding(10.dp), color=DarkAccent, maxLines=5)
             }
         }
+        state.supportPasswordText?.let { secret ->
+            AlertDialog(
+                onDismissRequest={vm.closeSupportPassword()},
+                title={Text(state.supportPasswordTitle)},
+                text={Column(verticalArrangement=Arrangement.spacedBy(8.dp)){
+                    Text("احتفظ بكلمة الدعم وأرسلها لصاحب الحساب بشكل آمن. لا تشاركها في مجموعات عامة.")
+                    SelectionContainer { Text(secret,fontWeight=FontWeight.Bold,color=DarkAccent) }
+                }},
+                confirmButton={TextButton(onClick={vm.closeSupportPassword()}){Text("إغلاق")}}
+            )
+        }
         var sectionMenuExpanded by remember { mutableStateOf(false) }
         val readableSections = AdminSection.entries.filter { canReadSection(state.adminInfo,it) }
         Box(Modifier.fillMaxWidth().background(Color.White).padding(horizontal = 14.dp, vertical = 9.dp)) {
@@ -363,7 +374,7 @@ private fun permissionKeyForNativePath(path:String):String?{
  if(clean.startsWith("api/orders/admin/")&&clean.endsWith("/publish"))return "publishOrders"
  if(clean.startsWith("api/orders/admin/")&&clean.endsWith("/voice-reviewed"))return "voiceReview"
  if(clean.startsWith("api/orders/")&&clean.endsWith("/voice"))return "voiceReview"
- if(clean.startsWith("api/password-recovery/admin/requests"))return "passwordRecovery"
+ if(clean.startsWith("api/password-recovery/admin/requests")||clean.startsWith("api/password-recovery/admin/support-passwords"))return "passwordRecovery"
  if(clean.startsWith("api/support/admin"))return "support"
  if(clean.startsWith("api/admin/admin-users")||clean.startsWith("api/admin/audit-logs")||clean.startsWith("api/admin/page-visits"))return null
  if(clean.startsWith("api/admin/wallet/")||clean.endsWith("/set-balance")||clean.endsWith("/add-balance"))return "wallet"
@@ -1435,6 +1446,17 @@ private data class RowAction(val label:String,val method:String,val path:String,
                                                 OutlinedButton(onClick={pending=RowAction("تسوية رصيد العميل","POST","api/admin/clients/$clientId/wallet/set-balance",JsonObject(),"balance","الرصيد النهائي بالجنيه","reason","سبب التسوية") ;actionInput="";actionInput2=""},modifier=Modifier.weight(1f)){Text("تسوية")}
                                         }
                                     }
+                                }
+                            }
+                        }
+                        if(section==AdminSection.CLIENTS&&item.isJsonObject){
+                            val client=item.asJsonObject
+                            val clientId=client.get("_id")?.asString?:client.get("id")?.asString.orEmpty()
+                            val registered=client.get("registered")?.asBoolean?:clientId.isNotBlank()
+                            if(registered&&clientId.isNotBlank()&&onCanWriteApi("api/password-recovery/admin/support-passwords")){
+                                Row(Modifier.fillMaxWidth().padding(top=6.dp),horizontalArrangement=Arrangement.spacedBy(6.dp)){
+                                    OutlinedButton(onClick={vm.issueClientSupportPassword(clientId)},modifier=Modifier.weight(1f)){Text("إصدار كلمة دعم")}
+                                    OutlinedButton(onClick={vm.revealClientSupportPassword(clientId)},modifier=Modifier.weight(1f)){Text("عرض كلمة الدعم")}
                                 }
                             }
                         }
