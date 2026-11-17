@@ -48,9 +48,16 @@ class AdminViewModel(app:Application):AndroidViewModel(app){
    if(rows!=null)root.add(targetKey,rows)
    else warnings.add("$label: تعذر تحميل البيانات أو لم يُرجع الخادم قائمة صالحة")
   }
+  suspend fun attachOptional(path:String,targetKey:String,vararg keys:String){
+   val response=runCatching{repo.get(path)}.getOrNull()?:return
+   findArray(response,*keys)?.let{root.add(targetKey,it)}
+  }
   attach("api/admin/orders","dashboardOrders","الطلبات","orders","data","items")
   attach("api/admin/topup-requests","dashboardTopups","طلبات الشحن","requests","topups","data","items")
   attach("api/admin/complaints","dashboardComplaints","الشكاوى","complaints","data","items")
+  attachOptional("api/admin/fanni-profile-edits","dashboardProfileEdits","requests","edits","items")
+  attachOptional("api/admin/client-wallet/topup-requests","dashboardClientTopups","requests","items","data")
+  attachOptional("api/password-recovery/admin/requests","dashboardRecoveryRequests","recoveries","items","data")
   root.add("dashboardWarnings",warnings)
   return root
  }
