@@ -64,7 +64,7 @@ class AdminRepository(context:Context){
  suspend fun downloadFanniIdentity(id:String,side:String):File{
   if(side !in listOf("front","back"))error("وجه البطاقة غير صالح")
   val response=api.getVoice("api/fanni/admin/"+id+"/identity/"+side)
-  if(!response.isSuccessful)throw HttpException(response)
+  if(!response.isSuccessful)throw apiFailure(HttpException(response))
   val bytes=response.body()?.bytes()?:error("ملف صورة البطاقة فارغ")
   if(bytes.isEmpty()||bytes.size>10*1024*1024)error("حجم صورة البطاقة غير صالح")
   val file=File(appContext.cacheDir,"fanni-identity-"+id+"-"+side+"-"+System.currentTimeMillis()+".img")
