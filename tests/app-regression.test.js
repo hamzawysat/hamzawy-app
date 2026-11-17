@@ -657,15 +657,13 @@ test('client dashboard includes browser service/store chooser, store, wallet, su
   assert.ok(subscriptions.includes("'/client/commerce/subscriptions/'"));
 });
 
-test('native store ads honor role audience, expiry, priority and configured rotation interval', () => {
+test('native store ads use one server-clock schedule shared by clients and technicians across app restarts', () => {
   const store = fs.readFileSync(path.join(root, 'src/screens/shared/StoreScreen.js'), 'utf8');
-  assert.ok(store.includes('isAdvertised === true'));
-  assert.ok(store.includes('adAudience'));
-  assert.ok(store.includes('adExpiresAt'));
-  assert.ok(store.includes('adPriority'));
-  assert.ok(store.includes('adRotationSeconds'));
-  assert.ok(store.includes('Number(item.stock) > 0'));
-  assert.ok(store.includes('9000'));
+  assert.ok(store.includes("api('/store/advertisement/current?audience=' + encodeURIComponent(role))"));
+  assert.ok(store.includes('result.nextChangeAt'));
+  assert.ok(store.includes('result.serverTime'));
+  assert.ok(!store.includes('storeAdRotationMemory'));
+  assert.ok(!store.includes('setInterval'));
   const client = fs.readFileSync(path.join(root, 'src/screens/client/ClientDashboard.js'), 'utf8');
   const tech = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianDashboard.js'), 'utf8');
   assert.ok(client.includes("visible={clientTab !== 'store'}"));
