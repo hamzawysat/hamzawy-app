@@ -1224,7 +1224,7 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
         }
         if(sectionOrder.isNotEmpty()){
             Text("معاينة ترتيب الأقسام والتبويبات",fontWeight=FontWeight.Bold,color=DarkAccent)
-            sectionOrder.forEach{sectionId->
+            sectionOrder.forEachIndexed{index,sectionId->
                 val tabs=tabOrder?.get(sectionId)?.takeIf{it.isJsonArray}?.asJsonArray?.mapNotNull{it.takeIf{v->v.isJsonPrimitive}?.asString}.orEmpty()
                 Card(Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=Color.White)){
                     Column(Modifier.padding(10.dp),verticalArrangement=Arrangement.spacedBy(5.dp)){
