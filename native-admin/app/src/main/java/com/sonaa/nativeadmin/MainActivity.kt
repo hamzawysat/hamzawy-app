@@ -1149,6 +1149,65 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
  }
 }
 
+@Composable private fun UiLayoutEditorScreen(
+    payload:JsonElement?,
+    page:String,
+    busy:Boolean,
+    onPageChange:(String)->Unit,
+    onAction:(String,String,JsonObject)->Unit
+){
+    val pages=listOf("admin" to "الإدارة","client" to "العميل","fanni" to "الفني","password" to "كلمة المرور","support" to "الدعم")
+    var raw by remember(payload,page){mutableStateOf(payload?.takeIf{it.isJsonObject}?.asJsonObject?.get("layout")?.toString()?: "{}")}
+    var editorError by remember(page){mutableStateOf<String?>(null)}
+    var confirmReset by remember(page){mutableStateOf(false)}
+    val layout=payload?.takeIf{it.isJsonObject}?.asJsonObject?.get("layout")?.takeIf{it.isJsonObject}?.asJsonObject
+    val sectionCount=layout?.get("sectionOrder")?.takeIf{it.isJsonArray}?.asJsonArray?.size()?:0
+    val elementCount=layout?.get("elements")?.takeIf{it.isJsonObject}?.asJsonObject?.size()?:0
+    val tabCount=layout?.get("tabOrder")?.takeIf{it.isJsonObject}?.asJsonObject?.entrySet()?.sumOf{entry->entry.value.takeIf{it.isJsonArray}?.asJsonArray?.size()?:0}?:0
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){
+        Text("محرر تخطيط الواجهات",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold,color=DarkAccent)
+        Text("أداة المدير الرئيسي لإدارة تخطيطات واجهات الإدارة والعميل والفني وكلمة المرور والدعم.",style=MaterialTheme.typography.bodySmall,color=Color.Gray)
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(6.dp)){
+            pages.forEach{(key,label)->
+                if(page==key)Button(onClick={},enabled=false){Text(label)}
+                else OutlinedButton(onClick={onPageChange(key)},enabled=!busy){Text(label)}
+            }
+        }
+        Card(Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=Color.White)){
+            Column(Modifier.padding(11.dp),verticalArrangement=Arrangement.spacedBy(3.dp)){
+                Text("ملخص التخطيط المحفوظ",fontWeight=FontWeight.Bold,color=DarkAccent)
+                Text("الأقسام: $sectionCount • التبويبات: $tabCount • العناصر المخصصة: $elementCount",style=MaterialTheme.typography.bodySmall)
+                Text("يشمل JSON ترتيب الأقسام والتبويبات ومجموعاتها وأحجامها ومواقع العناصر وألوانها وخطوطها وخلفياتها وإعدادات الهاتف.",style=MaterialTheme.typography.bodySmall,color=Color.Gray)
+            }
+        }
+        OutlinedTextField(
+            value=raw,
+            onValueChange={raw=it;editorError=null},
+            label={Text("بيانات التخطيط بصيغة JSON")},
+            modifier=Modifier.fillMaxWidth(),
+            minLines=14,
+            maxLines=30
+        )
+        editorError?.let{Text(it,color=MaterialTheme.colorScheme.error,style=MaterialTheme.typography.bodySmall)}
+        Button(onClick={
+            val parsed=runCatching{JsonParser.parseString(raw)}.getOrNull()
+            if(parsed?.isJsonObject!=true)editorError="صيغة JSON غير صحيحة؛ يجب أن يكون الجذر كائنًا."
+            else{
+                editorError=null
+                onAction("PUT","api/admin/ui-layout/$page",JsonObject().apply{add("layout",parsed.asJsonObject)})
+            }
+        },enabled=!busy&&raw.isNotBlank(),modifier=Modifier.fillMaxWidth()){Text(if(busy)"جاري الحفظ..." else "حفظ تخطيط الصفحة")}
+        OutlinedButton(onClick={confirmReset=true},enabled=!busy,modifier=Modifier.fillMaxWidth()){Text("إعادة التخطيط الافتراضي لهذه الصفحة")}
+    }
+    if(confirmReset)AlertDialog(
+        onDismissRequest={confirmReset=false},
+        title={Text("إعادة التخطيط الافتراضي")},
+        text={Text("سيتم حذف التخصيصات المحفوظة لواجهة "+(pages.firstOrNull{it.first==page}?.second?:page)+" وإرجاع الإعدادات الافتراضية. هل تريد المتابعة؟")},
+        confirmButton={TextButton(onClick={onAction("DELETE","api/admin/ui-layout/$page",JsonObject());confirmReset=false}){Text("إعادة الافتراضي")}},
+        dismissButton={TextButton(onClick={confirmReset=false}){Text("إلغاء")}}
+    )
+}
+
 @Composable private fun Dashboard(stats: JsonElement?, showMonthly:Boolean) {
     val root = stats?.takeIf { it.isJsonObject }?.asJsonObject
     val data = root?.get("counts")?.takeIf { it.isJsonObject }?.asJsonObject ?: root
