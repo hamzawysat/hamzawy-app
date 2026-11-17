@@ -1444,6 +1444,7 @@ private data class RowAction(val label:String,val method:String,val path:String,
     var query by remember(section,initialQuery) { mutableStateOf(initialQuery) }
     var deleteClientOrdersPhone by remember(section){mutableStateOf("")}
     var statusFilter by remember(section) { mutableStateOf("") }
+    var clientStatusFilter by remember(section) { mutableStateOf("all") }
     var regionFilter by remember(section) { mutableStateOf("") }
     var dateFilter by remember(section) { mutableStateOf("") }
     var datePickerOpen by remember(section){mutableStateOf(false)}
@@ -1491,7 +1492,7 @@ private data class RowAction(val label:String,val method:String,val path:String,
             ?:runCatching{SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX",Locale.US).parse(expiry)?.time}.getOrNull()
         return if(expiryTime!=null&&expiryTime<=System.currentTimeMillis())"expired" else "pending"
     }
-    val filtered = remember(items, query, statusFilter, regionFilter, dateFilter, offerStatusFilter) {
+    val filtered = remember(items, query, statusFilter, clientStatusFilter, regionFilter, dateFilter, offerStatusFilter) {
         items.filter { item ->
             val raw = item.toString()
             val obj = item.takeIf { it.isJsonObject }?.asJsonObject
@@ -1501,10 +1502,15 @@ private data class RowAction(val label:String,val method:String,val path:String,
             val offerMatches=if(section!=AdminSection.OFFERS||offerStatusFilter=="all")true else {
                 obj?.let{order->order.get("offers")?.takeIf{it.isJsonArray}?.asJsonArray?.any{offerCategory(order,it)==offerStatusFilter}}==true
             }
+            val clientStatusMatches=if(section!=AdminSection.CLIENTS||clientStatusFilter=="all")true else {
+                val registered=obj?.get("registered")?.takeIf{!it.isJsonNull}?.asBoolean==true
+                val suspended=obj?.get("status")?.takeIf{!it.isJsonNull}?.asString=="معلق"
+                if(clientStatusFilter=="suspended")registered&&suspended else registered&&!suspended
+            }
             (query.isBlank() || raw.contains(query.trim(), true)) &&
             (statusFilter.isBlank() || status.contains(statusFilter.trim(), true)) &&
             (regionFilter.isBlank() || region.contains(regionFilter.trim(), true)) &&
-            (dateFilter.isBlank() || date.contains(dateFilter.trim(), true)) && offerMatches
+            (dateFilter.isBlank() || date.contains(dateFilter.trim(), true)) && offerMatches && clientStatusMatches
         }
     }
     val statusOptions=remember(items){items.mapNotNull{item->item.takeIf{it.isJsonObject}?.asJsonObject?.let{o->listOf("status","actualStatus").firstNotNullOfOrNull{k->o.get(k)?.takeIf{it.isJsonPrimitive&&!it.isJsonNull}?.asString}}}.filter{it.isNotBlank()}.distinct().sorted()}
@@ -1711,6 +1717,17 @@ private data class RowAction(val label:String,val method:String,val path:String,
             }
         }
         Column(Modifier.fillMaxWidth(),verticalArrangement=Arrangement.spacedBy(6.dp)){
+            if(section==AdminSection.CLIENTS){
+                Text("حالة حساب العميل",style=MaterialTheme.typography.labelSmall,color=Color.Gray)
+                Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(6.dp)){
+                    val registeredCount=items.count{it.isJsonObject&&it.asJsonObject.get("registered")?.asBoolean==true}
+                    val activeCount=items.count{it.isJsonObject&&it.asJsonObject.get("registered")?.asBoolean==true&&it.asJsonObject.get("status")?.asString!="معلق"}
+                    val suspendedCount=items.count{it.isJsonObject&&it.asJsonObject.get("registered")?.asBoolean==true&&it.asJsonObject.get("status")?.asString=="معلق"}
+                    FilterChip(selected=clientStatusFilter=="all",onClick={clientStatusFilter="all"},label={Text("كل العملاء")})
+                    FilterChip(selected=clientStatusFilter=="active",onClick={clientStatusFilter="active"},label={Text("النشطون ($activeCount)")})
+                    FilterChip(selected=clientStatusFilter=="suspended",onClick={clientStatusFilter="suspended"},label={Text("الموقوفون ($suspendedCount)")})
+                }
+            }
             if(section==AdminSection.OFFERS&&visibleOfferKeys.isNotEmpty())Row(verticalAlignment=Alignment.CenterVertically){
                 Checkbox(checked=visibleOfferKeys.all{it in selectedBulk},onCheckedChange={checked->selectedBulk=if(checked)selectedBulk+visibleOfferKeys else selectedBulk-visibleOfferKeys.toSet()})
                 Text("تحديد كل العروض غير المقبولة الظاهرة ("+visibleOfferKeys.size+")",style=MaterialTheme.typography.labelSmall,color=Color.Gray)
@@ -1723,7 +1740,7 @@ private data class RowAction(val label:String,val method:String,val path:String,
                     }
                 }
             }
-            if(section!=AdminSection.OFFERS&&statusOptions.isNotEmpty()){
+            if(section!=AdminSection.OFFERS&&section!=AdminSection.CLIENTS&&statusOptions.isNotEmpty()){
                 Text("الحالة",style=MaterialTheme.typography.labelSmall,color=Color.Gray)
                 Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(6.dp)){
                     FilterChip(selected=statusFilter.isBlank(),onClick={statusFilter=""},label={Text("كل الحالات")})
@@ -1740,7 +1757,7 @@ private data class RowAction(val label:String,val method:String,val path:String,
             Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(6.dp)){
                 OutlinedTextField(dateFilter,{dateFilter=it},modifier=Modifier.weight(1f),label={Text("التاريخ YYYY-MM-DD")},singleLine=true)
                 TextButton(onClick={datePickerOpen=true}){Text("التقويم")}
-                TextButton(onClick={statusFilter="";regionFilter="";dateFilter=""}){Text("مسح")}
+                TextButton(onClick={statusFilter="";clientStatusFilter="all";offerStatusFilter="all";regionFilter="";dateFilter=""}){Text("مسح")}
             }
         }
         if(datePickerOpen)DatePickerDialog(
