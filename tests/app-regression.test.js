@@ -688,7 +688,7 @@ test('embedded client account keeps the site name and removes only the account h
 test('native client dashboard displays public maintenance notices, announcements and FAQs', () => {
   const banner = fs.readFileSync(path.join(root, 'src/screens/shared/PublicContentBanner.js'), 'utf8');
   const client = fs.readFileSync(path.join(root, 'src/screens/client/ClientDashboard.js'), 'utf8');
-  assert.ok(client.includes('<PublicContentBanner showSiteName={clientTab !== \'profile\'} />'));
+  assert.ok(client.includes('<PublicContentBanner />'), 'site name remains visible on every client tab');
   assert.ok(banner.includes('{content.siteName ? <Text'), 'site name should render without a tab-specific hide flag');
   assert.ok(banner.includes('const hasVisibleContent = content.siteName || content.maintenance'), 'empty banner wrapper should not render');
   assert.ok(banner.includes("api('/content')"));
