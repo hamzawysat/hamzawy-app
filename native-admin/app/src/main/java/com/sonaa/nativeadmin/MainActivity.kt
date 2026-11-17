@@ -1485,7 +1485,7 @@ private data class RowAction(val label:String,val method:String,val path:String,
             val region = listOf("area","region","regionName","areas","city").mapNotNull { obj?.get(it)?.takeIf { v -> !v.isJsonNull }?.toString() }.joinToString(" ")
             val date = listOf("createdAt","requestedAt","reviewedAt","visitedAt").mapNotNull { obj?.get(it)?.takeIf { v -> !v.isJsonNull }?.asString }.joinToString(" ")
             val offerMatches=if(section!=AdminSection.OFFERS||offerStatusFilter=="all")true else {
-                obj?.get("offers")?.takeIf{it.isJsonArray}?.asJsonArray?.any{offerCategory(obj,it)==offerStatusFilter}==true
+                obj?.let{order->order.get("offers")?.takeIf{it.isJsonArray}?.asJsonArray?.any{offerCategory(order,it)==offerStatusFilter}}==true
             }
             (query.isBlank() || raw.contains(query.trim(), true)) &&
             (statusFilter.isBlank() || status.contains(statusFilter.trim(), true)) &&
