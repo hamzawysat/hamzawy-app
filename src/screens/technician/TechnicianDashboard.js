@@ -60,7 +60,7 @@ export function TechnicianDashboard({ context }) {
     const serviceMatch = technicianServiceFilter === 'الكل' || String(item.service || item.specialty || '') === technicianServiceFilter;
     return (!query || haystack.includes(query)) && serviceMatch;
   });
-    const tabs = [{ key: 'home', label: 'الرئيسية' }, { key: 'profile', label: 'حسابي' }, { key: 'wallet', label: 'المحفظة' }, { key: 'store', label: 'المتجر' }, { key: 'support', label: 'الدعم' }, { key: 'available', label: 'الطلبات المتاحة' }, { key: 'offers', label: 'طلبات مقدمة' }, { key: 'currentJobs', label: 'طلبات جارية' }, { key: 'completed', label: 'طلبات مكتملة' }, { key: '__empty', empty: true }];
+    const tabs = [{ key: 'home', label: 'الرئيسية' }, { key: 'profile', label: 'حسابي' }, { key: 'wallet', label: 'المحفظة' }, { key: 'store', label: 'المتجر' }, { key: 'support', label: 'الدعم' }, { key: 'available', label: 'طلبات متاحة' }, { key: 'offers', label: 'طلبات مقدمة' }, { key: 'currentJobs', label: 'طلبات جارية' }, { key: 'completed', label: 'طلبات مكتملة' }, { key: '__empty', empty: true }];
   const hasMoreAvailable = technicianOrdersPagination
     ? Number(technicianOrdersPagination.page || 1) < Number(technicianOrdersPagination.pages || 1)
     : technicianOrders.length >= 20;
