@@ -282,7 +282,7 @@ class MainActivity : ComponentActivity() {
             state.editingProfile!=null -> ProfileEditor(state.editingProfile,state.editingProfileId.orEmpty(),{vm.closeProfile()}) { method:String,path:String,body:JsonObject -> vm.saveEditedProfile(method,path,body) }
             state.recoveryDetail!=null -> RecoveryConversationScreen(state.recoveryDetail,state.busy,state.error,state.actionMessage,vm::closeRecovery,{path->canWriteApi(state.adminInfo,path)}) { method,path,body -> vm.recoveryAction(method,path,body) }
             state.section == AdminSection.SUPPORT -> SupportAdminScreen(state.supportCases,state.supportSelectedCase,state.actionMessage,{vm.retry()},{id->vm.openSupportCase(id)},{method,path,body->vm.supportAction(method,path,body)},{path->canWriteApi(state.adminInfo,path)})
-            else -> ListScreen(state.section, state.items, vm::retry, vm::loadVoice, vm::openFanniProfile, vm::openWalletTransactions, vm::openClientProfile, vm::searchSupport, vm::filterAuditLogs, vm::bulkPublish, vm::openRecovery, { section, ids, action -> vm.bulkAction(section, ids, action) }, vm::bulkRenameRegions, { path -> canWriteApi(state.adminInfo,path) }, { path -> canReadApi(state.adminInfo,path) }) { method, path, body -> vm.mutate(method, path, body) }
+            else -> ListScreen(state.section, state.items, vm::retry, vm::loadVoice, vm::openFanniProfile, vm::openWalletTransactions, vm::openClientWalletTransactions, vm::openClientProfile, vm::searchSupport, vm::filterAuditLogs, vm::bulkPublish, vm::openRecovery, { section, ids, action -> vm.bulkAction(section, ids, action) }, vm::bulkRenameRegions, { path -> canWriteApi(state.adminInfo,path) }, { path -> canReadApi(state.adminInfo,path) }) { method, path, body -> vm.mutate(method, path, body) }
         }
     }
 }
@@ -1084,7 +1084,7 @@ private fun monthlyOrderStats(orders:List<JsonElement>):List<MonthlyOrderStat>{
 }
 
 private data class RowAction(val label:String,val method:String,val path:String,val body:JsonObject=JsonObject(),val inputKey:String?=null,val inputHint:String="",val secondInputKey:String?=null,val secondInputHint:String="")
-@Composable private fun ListScreen(section: AdminSection, items: List<JsonElement>, retry: () -> Unit, onVoice:(String)->Unit, onEditProfile:(String)->Unit, onOpenWallet:(String)->Unit, onEditClient:(String)->Unit, onSupportSearch:(String)->Unit, onAuditFilter:(String)->Unit, onBulkPublish:(List<String>)->Unit, onOpenRecovery:(String)->Unit, onBulkAction:(AdminSection,List<String>,String)->Unit, onBulkRenameRegions:(Map<String,String>)->Unit, onCanWriteApi:(String)->Boolean, onCanReadApi:(String)->Boolean, onAction:(String,String,JsonObject)->Unit) {
+@Composable private fun ListScreen(section: AdminSection, items: List<JsonElement>, retry: () -> Unit, onVoice:(String)->Unit, onEditProfile:(String)->Unit, onOpenWallet:(String)->Unit, onOpenClientWallet:(String)->Unit, onEditClient:(String)->Unit, onSupportSearch:(String)->Unit, onAuditFilter:(String)->Unit, onBulkPublish:(List<String>)->Unit, onOpenRecovery:(String)->Unit, onBulkAction:(AdminSection,List<String>,String)->Unit, onBulkRenameRegions:(Map<String,String>)->Unit, onCanWriteApi:(String)->Boolean, onCanReadApi:(String)->Boolean, onAction:(String,String,JsonObject)->Unit) {
     var query by remember(section) { mutableStateOf("") }
     var statusFilter by remember(section) { mutableStateOf("") }
     var regionFilter by remember(section) { mutableStateOf("") }
@@ -1414,6 +1414,29 @@ private data class RowAction(val label:String,val method:String,val path:String,
                         if(section==AdminSection.CLIENTS&&onCanWriteApi("api/admin/client-accounts/x/profile")){
                             val clientId=item.asJsonObject.get("_id")?.asString?:item.asJsonObject.get("id")?.asString.orEmpty()
                             if(clientId.isNotBlank())OutlinedButton(onClick={onEditClient(clientId)},modifier=Modifier.fillMaxWidth().padding(top=8.dp)){Text("تعديل بيانات العميل")}
+                        }
+                        if(section==AdminSection.CLIENTS&&item.isJsonObject){
+                            val client=item.asJsonObject
+                            val clientId=client.get("_id")?.asString?:client.get("id")?.asString.orEmpty()
+                            val registered=client.get("registered")?.asBoolean?:clientId.isNotBlank()
+                            if(registered&&clientId.isNotBlank()){
+                                val balance=client.get("walletBalance")?.takeIf{!it.isJsonNull}?.asString?: "0"
+                                Card(Modifier.fillMaxWidth().padding(top=8.dp),colors=CardDefaults.cardColors(containerColor=Color(0xFFEAF7F0))){
+                                    Column(Modifier.padding(10.dp),verticalArrangement=Arrangement.spacedBy(6.dp)){
+                                        Text("محفظة العميل: $balance ج",fontWeight=FontWeight.Bold,color=Color(0xFF176B45))
+                                        if(onCanReadApi("api/admin/client-wallet/transactions/$clientId"))
+                                            OutlinedButton(onClick={onOpenClientWallet(clientId)},modifier=Modifier.fillMaxWidth()){Text("كشف حركات محفظة العميل")}
+                                        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(6.dp)){
+                                            if(onCanWriteApi("api/admin/clients/$clientId/wallet/add-balance"))
+                                                OutlinedButton(onClick={pending=RowAction("إضافة رصيد للعميل","POST","api/admin/clients/$clientId/wallet/add-balance",JsonObject(),"amount","المبلغ بالجنيه","reason","سبب الإضافة") ;actionInput="";actionInput2=""},modifier=Modifier.weight(1f)){Text("إضافة")}
+                                            if(onCanWriteApi("api/admin/clients/$clientId/wallet/deduct-balance"))
+                                                OutlinedButton(onClick={pending=RowAction("خصم رصيد من العميل","POST","api/admin/clients/$clientId/wallet/deduct-balance",JsonObject(),"amount","المبلغ بالجنيه","reason","سبب الخصم") ;actionInput="";actionInput2=""},modifier=Modifier.weight(1f)){Text("خصم")}
+                                            if(onCanWriteApi("api/admin/clients/$clientId/wallet/set-balance"))
+                                                OutlinedButton(onClick={pending=RowAction("تسوية رصيد العميل","POST","api/admin/clients/$clientId/wallet/set-balance",JsonObject(),"balance","الرصيد النهائي بالجنيه","reason","سبب التسوية") ;actionInput="";actionInput2=""},modifier=Modifier.weight(1f)){Text("تسوية")}
+                                        }
+                                    }
+                                }
+                            }
                         }
                         if(section==AdminSection.WALLETS){
                             val fanniId=item.asJsonObject.get("_id")?.asString.orEmpty()
