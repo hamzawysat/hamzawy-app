@@ -95,6 +95,8 @@ class AdminViewModel(app:Application):AndroidViewModel(app){
   }catch(e:Exception){_state.value=_state.value.copy(busy=false,error=e.message?: "تعذر تنفيذ العملية")}
  }
  fun openFanniIdentity(id:String)=viewModelScope.launch{
+  _state.value.identityFrontPath?.let{java.io.File(it).delete()}
+  _state.value.identityBackPath?.let{java.io.File(it).delete()}
   _state.value=_state.value.copy(busy=true,error=null,identityFanniId=id,identityFrontPath=null,identityBackPath=null)
   try{
    val front=repo.downloadFanniIdentity(id,"front")
@@ -102,7 +104,11 @@ class AdminViewModel(app:Application):AndroidViewModel(app){
    _state.value=_state.value.copy(busy=false,identityFrontPath=front.absolutePath,identityBackPath=back.absolutePath)
   }catch(e:Exception){_state.value=_state.value.copy(busy=false,error=e.message?: "تعذر تحميل صور بطاقة الفني")}
  }
- fun closeFanniIdentity(){_state.value=_state.value.copy(identityFanniId=null,identityFrontPath=null,identityBackPath=null)}
+ fun closeFanniIdentity(){
+  _state.value.identityFrontPath?.let{java.io.File(it).delete()}
+  _state.value.identityBackPath?.let{java.io.File(it).delete()}
+  _state.value=_state.value.copy(identityFanniId=null,identityFrontPath=null,identityBackPath=null)
+ }
  fun openFanniProfile(id:String)=viewModelScope.launch{
   _state.value=_state.value.copy(busy=true,error=null,editingProfile=null,editingProfileId=null)
   try{
