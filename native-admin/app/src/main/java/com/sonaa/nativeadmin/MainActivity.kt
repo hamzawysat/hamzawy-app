@@ -980,16 +980,19 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
     val warnings = root?.get("dashboardWarnings")?.takeIf { it.isJsonArray }?.asJsonArray?.mapNotNull { it.takeIf { value -> value.isJsonPrimitive }?.asString }.orEmpty()
     fun field(item: JsonElement, key: String): String = item.takeIf { it.isJsonObject }?.asJsonObject?.get(key)?.takeIf { !it.isJsonNull }?.asString.orEmpty()
     val approvedTopups = topups.filter { field(it, "status") == "approved" }.sumOf { field(it, "amount").toDoubleOrNull() ?: 0.0 }
-    val cards = listOf(
-        "إجمالي الفنيين" to (data?.get("technicians")?.toString() ?: "—"),
-        "الفنيون المعتمدون" to (data?.get("verifiedTechnicians")?.toString() ?: "—"),
-        "العملاء المسجلون" to (data?.get("clients")?.toString() ?: "—"),
-        "إجمالي الطلبات" to orders.size.toString(),
-        "طلبات بانتظار النشر" to orders.count { field(it, "status") == "قيد المراجعة" }.toString(),
-        "طلبات شحن معلقة" to topups.count { field(it, "status") == "pending" }.toString(),
-        "شكاوى جديدة" to complaints.count { field(it, "status") == "جديدة" }.toString(),
-        "إجمالي الشحنات المقبولة" to String.format(java.util.Locale.US, "%.2f ج", approvedTopups)
-    )
+    val cards = buildList {
+        addAll(listOf(
+            "إجمالي الفنيين" to (data?.get("technicians")?.toString() ?: "—"),
+            "الفنيون المعتمدون" to (data?.get("verifiedTechnicians")?.toString() ?: "—"),
+            "العملاء المسجلون" to (data?.get("clients")?.toString() ?: "—"),
+            "إجمالي الطلبات" to orders.size.toString(),
+            "طلبات بانتظار النشر" to orders.count { field(it, "status") == "قيد المراجعة" }.toString(),
+            "طلبات شحن معلقة" to topups.count { field(it, "status") == "pending" }.toString(),
+            "شكاوى جديدة" to complaints.count { field(it, "status") == "جديدة" }.toString(),
+            "إجمالي الشحنات المقبولة" to String.format(java.util.Locale.US, "%.2f ج", approvedTopups)
+        ))
+        if(showMonthly) add("إجمالي طلبات الشحن" to topups.size.toString())
+    }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
         Text("ملخص المنصة", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = DarkAccent)
         Spacer(Modifier.height(12.dp))
