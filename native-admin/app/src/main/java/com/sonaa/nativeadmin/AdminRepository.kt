@@ -61,6 +61,16 @@ class AdminRepository(context:Context){
   try{api.uploadStoreMedia("api/admin/store/media?purpose=$purpose",mime,bytes.toRequestBody(mime.toMediaType()))}
   catch(e:HttpException){throw apiFailure(e)}
  }
+ suspend fun downloadFanniIdentity(id:String,side:String):File{
+  if(side !in listOf("front","back"))error("وجه البطاقة غير صالح")
+  val response=api.getVoice("api/fanni/admin/"+id+"/identity/"+side)
+  if(!response.isSuccessful)throw HttpException(response)
+  val bytes=response.body()?.bytes()?:error("ملف صورة البطاقة فارغ")
+  if(bytes.isEmpty()||bytes.size>10*1024*1024)error("حجم صورة البطاقة غير صالح")
+  val file=File(appContext.cacheDir,"fanni-identity-"+id+"-"+side+"-"+System.currentTimeMillis()+".img")
+  file.writeBytes(bytes)
+  return file
+ }
  suspend fun downloadVoice(sn:String):File{
   val response=api.getVoice("api/orders/${sn}/voice")
   if(!response.isSuccessful)error("تعذر تحميل التسجيل الصوتي (HTTP ${response.code()})")
