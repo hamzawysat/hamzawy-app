@@ -2176,6 +2176,7 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
     val categories=root?.get("categories")?.takeIf{it.isJsonArray}?.asJsonArray?.toList().orEmpty()
     val adSettings=root?.get("storeAdSettings")?.takeIf{it.isJsonObject}?.asJsonObject
     var rotation by remember(adSettings){mutableStateOf(adSettings?.get("rotationSeconds")?.asInt?.toString().orEmpty())}
+    var rotationMenuExpanded by remember{mutableStateOf(false)}
     var csvPreview by remember{mutableStateOf<StoreCsvPreview?>(null)}
     var csvFileName by remember{mutableStateOf("")}
     var csvError by remember{mutableStateOf("")}
@@ -2277,7 +2278,12 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
             Column(Modifier.padding(12.dp),verticalArrangement=Arrangement.spacedBy(6.dp)){
                 Text("مدة عرض الإعلان",fontWeight=FontWeight.Bold,color=DarkAccent)
                 Text("المدة المحفوظة من الخادم: "+(adSettings?.get("rotationSeconds")?.toString()?: "غير متاحة"),style=MaterialTheme.typography.bodySmall,color=Color.Gray)
-                OutlinedTextField(rotation,{rotation=it},label={Text("مدة العرض بالثواني")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Number),singleLine=true)
+                Box(Modifier.fillMaxWidth()){
+                    OutlinedButton(onClick={rotationMenuExpanded=true},modifier=Modifier.fillMaxWidth(),enabled=!busy){Text("مدة عرض الصورة: "+rotation.ifBlank{"غير متاحة"}+" ثانية")}
+                    DropdownMenu(expanded=rotationMenuExpanded,onDismissRequest={rotationMenuExpanded=false}){
+                        listOf(5,10,15,20,30,45,60).forEach{seconds->DropdownMenuItem(text={Text(seconds.toString()+" ثانية")},onClick={rotation=seconds.toString();rotationMenuExpanded=false})}
+                    }
+                }
                 Button(onClick={onAction("PUT","api/admin/store/ad-settings",JsonObject().apply{addProperty("rotationSeconds",rotation.toIntOrNull()?:0)})},enabled=!busy&&canWrite("api/admin/store/ad-settings")&&rotation.toIntOrNull() in listOf(5,10,15,20,30,45,60),modifier=Modifier.fillMaxWidth()){Text("حفظ مدة الإعلان")}
             }
         }
