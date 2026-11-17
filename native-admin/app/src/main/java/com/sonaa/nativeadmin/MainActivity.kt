@@ -2080,8 +2080,9 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
             value("reviewReason").takeIf{it.isNotBlank()}?.let{"سبب المراجعة: $it"}
         ).filterNotNull().joinToString("  •  ")
     }
-    return listOf("status", "phone", "clientPhone", "area", "region", "createdAt", "specialties", "message", "adminNote", "orderCount", "lastOrder")
-        .mapNotNull { k -> item.asJsonObject.get(k)?.takeIf { !it.isJsonNull }?.let { "$k: $it" } }.take(4).joinToString("  •  ")
+    val labels=mapOf("status" to "الحالة","phone" to "الهاتف","clientPhone" to "هاتف العميل","area" to "المنطقة","region" to "المنطقة","createdAt" to "تاريخ الإضافة","specialties" to "الخدمات","message" to "الرسالة","adminNote" to "ملاحظة الإدارة","orderCount" to "عدد الطلبات","lastOrder" to "آخر طلب","category" to "القسم","price" to "السعر","amount" to "المبلغ","description" to "الوصف","type" to "النوع","discount" to "الخصم","durationDays" to "المدة بالأيام","active" to "التفعيل","isActive" to "التفعيل","sortOrder" to "الترتيب","commission" to "العمولة","city" to "المدينة")
+    return listOf("status","phone","clientPhone","area","region","city","createdAt","specialties","category","price","amount","description","type","discount","durationDays","active","isActive","sortOrder","commission","message","adminNote","orderCount","lastOrder")
+        .mapNotNull{k->item.asJsonObject.get(k)?.takeIf{!it.isJsonNull}?.let{(labels[k]?:k)+": "+it.toString().trim('"')}}.take(7).joinToString("  •  ")
 }
 
 
