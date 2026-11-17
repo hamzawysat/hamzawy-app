@@ -2317,7 +2317,7 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
                 Row(verticalAlignment=Alignment.CenterVertically){
                     Text("أقسام المتجر",modifier=Modifier.weight(1f),fontWeight=FontWeight.Bold,color=DarkAccent)
                     TextButton(onClick={categoryManagerOpen=!categoryManagerOpen}){Text(if(categoryManagerOpen)"إخفاء الأقسام" else "عرض الأقسام ("+categories.size+")")}
-                    if(canWrite("api/admin/store/categories"))TextButton(onClick={categoryEditing=null;categoryCreate=true},enabled=!busy){Text("إضافة قسم")}
+                    if(canWrite("api/admin/store/categories"))TextButton(onClick={categoryManagerOpen=true;categoryEditing=null;categoryCreate=true},enabled=!busy){Text("إضافة قسم")}
                 }
                 if(categoryManagerOpen){
                     if(categories.isEmpty())Text("لا توجد أقسام معرفة بعد.",style=MaterialTheme.typography.bodySmall,color=Color.Gray)
