@@ -1825,10 +1825,43 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
     val categories=root?.get("categories")?.takeIf{it.isJsonArray}?.asJsonArray?.toList().orEmpty()
     val adSettings=root?.get("storeAdSettings")?.takeIf{it.isJsonObject}?.asJsonObject
     var rotation by remember(adSettings){mutableStateOf(adSettings?.get("rotationSeconds")?.asInt?.toString().orEmpty())}
+    var csvPreview by remember{mutableStateOf<StoreCsvPreview?>(null)}
+    var csvFileName by remember{mutableStateOf("")}
+    var csvError by remember{mutableStateOf("")}
+    val context=LocalContext.current
+    val csvPicker=rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()){uri->
+        if(uri!=null){
+            runCatching{
+                val bytes=context.contentResolver.openInputStream(uri)?.use{it.readBytes()}?:error("تعذر قراءة ملف CSV")
+                if(bytes.size>900*1024)error("حجم ملف CSV يجب ألا يتجاوز 900 كيلوبايت")
+                val decoded=runCatching{
+                    java.nio.charset.StandardCharsets.UTF_8.newDecoder().onMalformedInput(java.nio.charset.CodingErrorAction.REPORT).decode(java.nio.ByteBuffer.wrap(bytes)).toString()
+                }.getOrElse{String(bytes,java.nio.charset.Charset.forName("windows-1256"))}
+                parseStoreCsvProducts(decoded)
+            }.onSuccess{preview->csvPreview=preview;csvFileName=uri.lastPathSegment.orEmpty();csvError=""}
+             .onFailure{csvPreview=null;csvError=it.message?: "تعذرت قراءة ملف CSV"}
+        }
+    }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(14.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){
         Text("إدارة متجر حمزاوي سات",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold,color=DarkAccent)
         Text("المنتجات والأقسام والإعلانات والمخزون",style=MaterialTheme.typography.bodySmall,color=Color.Gray)
         if(canWrite("api/admin/store/products"))Button(onClick={editing=null;categoryCreate=false;categoryEditing=null;editing=JsonObject()},enabled=!busy,modifier=Modifier.fillMaxWidth()){Text("إضافة منتج جديد")}
+        if(canWrite("api/admin/store/products/import"))OutlinedButton(onClick={csvPicker.launch(arrayOf("text/csv","text/plain","application/vnd.ms-excel"))},enabled=!busy,modifier=Modifier.fillMaxWidth()){Text("استيراد منتجات من CSV")}
+        if(csvError.isNotBlank())Text(csvError,color=MaterialTheme.colorScheme.error,style=MaterialTheme.typography.bodySmall)
+        csvPreview?.let{preview->
+            Card(Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=Color.White)){
+                Column(Modifier.padding(12.dp),verticalArrangement=Arrangement.spacedBy(6.dp)){
+                    Text("معاينة ملف: "+csvFileName,fontWeight=FontWeight.Bold,color=DarkAccent)
+                    Text("جاهز للاستيراد: "+preview.products.size+" • صفوف بها أخطاء: "+preview.errors.size,style=MaterialTheme.typography.bodySmall)
+                    preview.errors.take(8).forEach{Text(it,color=Color(0xFFB3261E),style=MaterialTheme.typography.labelSmall)}
+                    Button(onClick={
+                        val body=JsonObject().apply{add("products",com.google.gson.JsonArray().apply{preview.products.forEach{add(it)}})}
+                        onAction("POST","api/admin/store/products/import",body);csvPreview=null;csvFileName=""
+                    },enabled=!busy&&preview.products.isNotEmpty(),modifier=Modifier.fillMaxWidth()){Text("استيراد "+preview.products.size+" منتج")}
+                    TextButton(onClick={csvPreview=null;csvFileName=""}){Text("إلغاء المعاينة")}
+                }
+            }
+        }
         Card(Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=Color.White)){
             Column(Modifier.padding(12.dp),verticalArrangement=Arrangement.spacedBy(6.dp)){
                 Text("مدة عرض الإعلان",fontWeight=FontWeight.Bold,color=DarkAccent)
