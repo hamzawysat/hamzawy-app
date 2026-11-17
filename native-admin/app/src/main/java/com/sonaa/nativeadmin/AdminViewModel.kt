@@ -8,7 +8,7 @@ import com.google.gson.JsonObject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-data class AdminUiState(val checking:Boolean=true,val authenticated:Boolean=false,val adminInfo:JsonElement?=null,val busy:Boolean=false,val error:String?=null,val section:AdminSection=AdminSection.DASHBOARD,val stats:JsonElement?=null,val items:List<JsonElement> = emptyList(),val actionMessage:String?=null,val payload:JsonElement?=null,val voicePath:String?=null,val editingProfile:JsonElement?=null,val editingProfileId:String?=null,val walletFanniId:String?=null,val walletTransactions:List<JsonElement> = emptyList(),val editingClient:JsonElement?=null,val editingClientId:String?=null,val recoveryDetail:JsonElement?=null,val recoveryDetailId:String?=null,val supportCases:List<JsonElement> = emptyList(),val supportSelectedCase:JsonElement?=null,val supportPasswordText:String?=null,val supportPasswordTitle:String="كلمة دعم العميل")
+data class AdminUiState(val checking:Boolean=true,val authenticated:Boolean=false,val adminInfo:JsonElement?=null,val busy:Boolean=false,val error:String?=null,val section:AdminSection=AdminSection.DASHBOARD,val stats:JsonElement?=null,val items:List<JsonElement> = emptyList(),val actionMessage:String?=null,val payload:JsonElement?=null,val voicePath:String?=null,val editingProfile:JsonElement?=null,val editingProfileId:String?=null,val walletFanniId:String?=null,val walletTransactions:List<JsonElement> = emptyList(),val editingClient:JsonElement?=null,val editingClientId:String?=null,val recoveryDetail:JsonElement?=null,val recoveryDetailId:String?=null,val supportCases:List<JsonElement> = emptyList(),val supportSelectedCase:JsonElement?=null,val supportPasswordText:String?=null,val supportPasswordTitle:String="كلمة دعم العميل",val sectionSearch:String="")
 class AdminViewModel(app:Application):AndroidViewModel(app){
  private val repo=AdminRepository(app)
  private val _state=MutableStateFlow(AdminUiState())
@@ -45,7 +45,8 @@ class AdminViewModel(app:Application):AndroidViewModel(app){
   return root
  }
  fun refresh()=load(AdminSection.DASHBOARD)
- fun open(section:AdminSection)=load(section)
+ fun open(section:AdminSection){_state.value=_state.value.copy(sectionSearch="");load(section)}
+ fun openClientOrders(phone:String){_state.value=_state.value.copy(sectionSearch=phone.trim());load(AdminSection.ORDERS)}
  private fun load(section:AdminSection,preserveMessage:Boolean=false)=viewModelScope.launch{
   _state.value=_state.value.copy(section=section,busy=true,error=null,items=emptyList(),actionMessage=if(preserveMessage)_state.value.actionMessage else null)
   try{
