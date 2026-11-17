@@ -2462,7 +2462,9 @@ private fun parseStoreCsvProducts(source:String,columnMapping:Map<String,Int>?=n
     if(row.any{it.isNotBlank()})rows.add(row.toList())
     if(rows.size<2)error("ملف CSV يجب أن يحتوي على صف عناوين وصف منتج واحد على الأقل")
     if(rows.size-1>500)error("الحد الأقصى للاستيراد 500 منتج في الدفعة الواحدة. قسّم الملف إلى دفعات.")
-    fun norm(value:String)=value.trim().lowercase().replace(Regex("[\\s_\\-]+"),"")
+    fun norm(value:String)=java.text.Normalizer.normalize(value.removePrefix(String(charArrayOf(0xFEFF.toChar()))),java.text.Normalizer.Form.NFKC).lowercase(java.util.Locale.ROOT)
+        .replace(Regex("[\\u064B-\\u065F\\u0670\\u0640]"),"")
+        .replace(Regex("[\\s_\\-./]+"),"").replace("،","").replace("؛","").replace("(","").replace(")","").replace("[","").replace("]","").replace("{","").replace("}","").replace(":","")
     val aliases=mapOf(
         "name" to listOf("name","product","productname","title","اسم","اسم المنتج","المنتج"),
         "price" to listOf("price","currentprice","السعر","السعر الحالي"),
