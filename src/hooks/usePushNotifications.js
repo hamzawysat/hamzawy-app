@@ -10,10 +10,24 @@ Notifications.setNotificationHandler({
   handleNotification: async () => ({ shouldShowAlert: true, shouldPlaySound: true, shouldSetBadge: false }),
 });
 
-export function usePushNotifications(session) {
+export function usePushNotifications(session, onNotificationResponse) {
   const pushTokenRef = useRef(null);
-useEffect(() => {
+  const responseHandlerRef = useRef(onNotificationResponse);
+  useEffect(() => { responseHandlerRef.current = onNotificationResponse; }, [onNotificationResponse]);
+  useEffect(() => {
+    if (!session) return;
     let cancelled = false;
+    let lastResponseIdentifier = '';
+    const handleResponse = response => {
+      if (!response || cancelled) return;
+      const identifier = response.notification?.request?.identifier || '';
+      if (identifier && identifier === lastResponseIdentifier) return;
+      lastResponseIdentifier = identifier;
+      responseHandlerRef.current?.(response);
+      void Notifications.clearLastNotificationResponseAsync?.().catch(() => {});
+    };
+    const responseSubscription = Notifications.addNotificationResponseReceivedListener(handleResponse);
+    void Notifications.getLastNotificationResponseAsync?.().then(handleResponse).catch(() => {});
     async function registerPushToken() {
       if (!session || !['client', 'fanni', 'admin'].includes(session.role) || !Device.isDevice) return;
       try {
@@ -50,7 +64,7 @@ useEffect(() => {
       }
     }
     void registerPushToken();
-    return () => { cancelled = true; };
+    return () => { cancelled = true; responseSubscription.remove(); };
   }, [session]);
   return pushTokenRef;
 }

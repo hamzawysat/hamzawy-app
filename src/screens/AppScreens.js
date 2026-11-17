@@ -136,7 +136,20 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     }));
   }
   const { categories, setCategories, areas, setAreas, areaTechnicianCounts, setAreaTechnicianCounts, adminProfileEdit, setAdminProfileEdit, adminPendingProfileEdits, setAdminPendingProfileEdits, selected, setSelected, servicesLoading, setServicesLoading, servicesError, setServicesError, reloadKey, setReloadKey, session, setSession, authRestoring, setAuthRestoring, username, setUsername, password, setPassword, loginLoading, setLoginLoading, authMode, setAuthMode, form, setForm, clientData, setClientData, techData, setTechData, walletTransferNumbers, setWalletTransferNumbers, assignedDetails, setAssignedDetails, technicianSearch, setTechnicianSearch, technicianServiceFilter, setTechnicianServiceFilter, guidelinesChecked, setGuidelinesChecked, guidelinesReachedEnd, setGuidelinesReachedEnd, guidelinesViewportHeight, setGuidelinesViewportHeight, adminData, setAdminData, topup, setTopup, clientTab, setClientTab, clientServiceSearch, setClientServiceSearch, servicePickerOpen, setServicePickerOpen, subservicePickerOpen, setSubservicePickerOpen, ratingPrompt, setRatingPrompt, dismissedRatings, setDismissedRatings, ratingDismissalsLoaded, setRatingDismissalsLoaded, ratingDismissalsLoadedFor, setRatingDismissalsLoadedFor, clientTrackSN, setClientTrackSN, clientTrackedOrder, setClientTrackedOrder, clientTrackError, setClientTrackError, clientTrackLoading, setClientTrackLoading, clientComplaint, setClientComplaint, clientComplaintTrack, setClientComplaintTrack, expandedClientOrders, setExpandedClientOrders, expandedTechnicianOrders, setExpandedTechnicianOrders, notificationsOpen, setNotificationsOpen, offerDraft, setOfferDraft, notifications, setNotifications, orderChats, setOrderChats, chatDrafts, setChatDrafts, priceDrafts, setPriceDrafts, ratingDrafts, setRatingDrafts, ratingSubmitting, setRatingSubmitting, adminUsers, setAdminUsers, adminExtras, setAdminExtras, adminServiceDraft, setAdminServiceDraft, adminServiceEdit, setAdminServiceEdit, adminRegionDraft, setAdminRegionDraft, adminAnnouncementDraft, setAdminAnnouncementDraft, adminFaqDraft, setAdminFaqDraft, adminReportFilters, setAdminReportFilters, adminWallet, setAdminWallet, adminUsersLoading, setAdminUsersLoading, broadcast, setBroadcast, supportCases, setSupportCases, supportCase, setSupportCase, supportDraft, setSupportDraft, supportSubject, setSupportSubject, supportLoading, setSupportLoading, supportError, setSupportError, accountPasswordForm, setAccountPasswordForm, profileEditForm, setProfileEditForm, profileEditOpenCategory, setProfileEditOpenCategory, recoveryForm, setRecoveryForm, adminSupportCases, setAdminSupportCases, adminSupportSelected, setAdminSupportSelected, adminSupportDraft, setAdminSupportDraft, adminRecoveryCases, setAdminRecoveryCases, adminRecoverySelected, setAdminRecoverySelected, adminRecoveryCode, setAdminRecoveryCode, adminRecoveryDraft, setAdminRecoveryDraft, registrationNameRef, registrationPhoneRef, registrationPasswordRef, registrationConfirmPasswordRef, clientAreaInputRef, clientAddressInputRef, clientDescriptionInputRef, clientBudgetInputRef, clientServiceDetailYRef, clientFormYRef, clientScrollRef, chatScrollRef, clientChatScrollRefs, clientChatAtBottomRef, ratingSubmittingRef, orderChatsRef, acceptedChatAutoOpenedRef, dismissedRatingsRef, ratingHandledRef, ratingStatusSnapshotRef, services, updateForm } = appState;
-  const pushTokenRef = usePushNotifications(session);
+  const handlePushNotificationResponse = response => {
+    const data = response?.notification?.request?.content?.data || {};
+    const type = String(data.type || '');
+    if (session?.role === 'fanni' && ['topup_approved', 'topup_rejected', 'wallet_credit', 'fanni_wallet_credit', 'fanni_wallet_settlement'].includes(type)) {
+      setTechData(current => ({ ...current, tab: 'wallet' }));
+      setScreen('technician');
+    } else if (session?.role === 'client' && (type.startsWith('client_wallet_') || type === 'client_service_refunded')) {
+      setClientTab('wallet');
+      setScreen('client');
+    } else if (session?.role === 'admin') {
+      setScreen('admin');
+    }
+  };
+  const pushTokenRef = usePushNotifications(session, handlePushNotificationResponse);
   const headerInitial = screen === 'client'
     ? String(session?.user?.name || 'ع').trim().charAt(0)
     : screen === 'technician'
@@ -516,12 +529,22 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
 
   async function markNotificationRead(item) {
     const id = item?._id || item?.id;
-    if (!id || item.read || item.readAt) return;
+    const type = String(item?.type || '');
     const role = session?.role === 'client' ? 'client' : 'fanni';
-    try {
-      await api(`/notifications/${role}/${encodeURIComponent(id)}/read`, { method: 'PATCH', token: session.token });
-      setNotifications(current => ({ ...current, items: current.items.map(n => (n._id || n.id) === id ? { ...n, read: true, readAt: new Date().toISOString() } : n), unread: Math.max(0, current.unread - 1) }));
-    } catch (err) { Alert.alert('الإشعارات', err.message || 'تعذر تحديث الإشعار.'); }
+    if (id && !item.read && !item.readAt) {
+      try {
+        await api(`/notifications/${role}/${encodeURIComponent(id)}/read`, { method: 'PATCH', token: session.token });
+        setNotifications(current => ({ ...current, items: current.items.map(n => (n._id || n.id) === id ? { ...n, read: true, readAt: new Date().toISOString() } : n), unread: Math.max(0, current.unread - 1) }));
+      } catch (err) { Alert.alert('الإشعارات', err.message || 'تعذر تحديث الإشعار.'); }
+    }
+    setNotificationsOpen(false);
+    if (session?.role === 'fanni' && ['topup_approved', 'topup_rejected', 'fanni_wallet_credit', 'fanni_wallet_settlement'].includes(type)) {
+      setTechData(current => ({ ...current, tab: 'wallet' }));
+      setScreen('technician');
+    } else if (session?.role === 'client' && (type.startsWith('client_wallet_') || type === 'client_service_refunded')) {
+      setClientTab('wallet');
+      setScreen('client');
+    }
   }
 
   async function markAllNotificationsRead() {

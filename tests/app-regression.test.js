@@ -96,7 +96,7 @@ test('push token registration posts the Expo token for the active session and cl
   assert.ok(app.includes('Notifications.getExpoPushTokenAsync({ projectId })'));
   assert.ok(app.includes('pushTokenRef.current = result.data'));
   assert.ok(app.includes('body: { token: result.data, platform: Platform.OS }'));
-  assert.ok(app.includes('return () => { cancelled = true; };'));
+  assert.ok(app.includes('return () => { cancelled = true; responseSubscription.remove(); };'));
 });
 
 test('required runtime packages are declared', () => {
@@ -492,7 +492,7 @@ test('navigation and push registration are isolated in dedicated hooks', () => {
   const push = fs.readFileSync(path.join(root, 'src/hooks/usePushNotifications.js'), 'utf8');
   assert.match(screen, /useScreenNavigation\(\)/);
   assert.match(screen, /onScreenChange\?\.\(screen, headerInitial\)/);
-  assert.match(screen, /usePushNotifications\(session\)/);
+  assert.match(screen, /usePushNotifications\(session, handlePushNotificationResponse\)/);
   assert.match(navigation, /export function useScreenNavigation/);
   assert.match(push, /export function usePushNotifications/);
   assert.match(push, /getExpoPushTokenAsync/);
@@ -832,4 +832,22 @@ test('native customer and technician stores use managed category artwork with pr
   assert.ok(store.includes('onPress={() => setSelectedCategory(group.category)}'));
   assert.ok(store.includes('selectedGroup.items.map(({ item, index }) => ('));
   assert.ok(store.includes("onPress={() => setSelectedCategory('')}"));
+});
+
+test('push notification taps route technician and client wallet events to the wallet screen, including cold starts', () => {
+  const hook = fs.readFileSync(path.join(root, 'src/hooks/usePushNotifications.js'), 'utf8');
+  const screens = fs.readFileSync(path.join(root, 'src/screens/AppScreens.js'), 'utf8');
+  assert.match(hook, /addNotificationResponseReceivedListener/);
+  assert.match(hook, /getLastNotificationResponseAsync/);
+  assert.match(hook, /if \(!session\) return;/);
+  assert.match(hook, /clearLastNotificationResponseAsync/);
+  assert.match(screens, /fanni_wallet_credit/);
+  assert.match(screens, /wallet_credit/);
+  assert.match(screens, /fanni_wallet_settlement/);
+  assert.match(screens, /setTechData\(current => \(\{ \.\.\.current, tab: 'wallet' \}\)\)/);
+  assert.match(screens, /type\.startsWith\('client_wallet_'\)/);
+  assert.match(screens, /setClientTab\('wallet'\)/);
+  assert.match(screens, /async function markNotificationRead\(item\)/);
+  assert.match(screens, /setNotificationsOpen\(false\)/);
+  assert.match(screens, /setTechData\(current => \(\{ \.\.\.current, tab: 'wallet' \}\)\)/);
 });
