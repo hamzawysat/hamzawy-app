@@ -1,10 +1,13 @@
 package com.sonaa.nativeadmin
 import android.content.Context
+import android.net.Uri
 import java.io.File
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.Retrofit
 import retrofit2.HttpException
 import com.google.gson.JsonParser
@@ -46,6 +49,14 @@ class AdminRepository(context:Context){
   val detail=serverMessage?.takeIf{it.isNotBlank()}?:raw.replace(Regex("\\s+")," ").take(180).ifBlank{"لم يُرجع الخادم تفاصيل إضافية"}
   val requestPath=response?.raw()?.request?.url?.encodedPath.orEmpty()
   return IllegalStateException("فشل الطلب (HTTP ${e.code()}): $detail"+if(requestPath.isNotBlank())"\nالمسار: $requestPath" else "",e)
+ }
+ suspend fun uploadStoreMedia(uri:Uri,purpose:String):JsonElement{
+  if(purpose !in listOf("product","category"))error("نوع صورة المتجر غير صالح")
+  val mime=appContext.contentResolver.getType(uri)?.substringBefore(";")?.lowercase()?:error("تعذر تحديد نوع الصورة")
+  if(mime !in listOf("image/jpeg","image/png","image/webp"))error("اختار صورة JPG أو PNG أو WebP")
+  val bytes=appContext.contentResolver.openInputStream(uri)?.use{it.readBytes()}?:error("تعذر قراءة ملف الصورة")
+  if(bytes.isEmpty()||bytes.size>5*1024*1024)error("حجم الصورة يجب ألا يتجاوز 5 ميجابايت")
+  return api.uploadStoreMedia("api/admin/store/media?purpose=$purpose",mime,bytes.toRequestBody(mime.toMediaType()))
  }
  suspend fun downloadVoice(sn:String):File{
   val response=api.getVoice("api/orders/${sn}/voice")
