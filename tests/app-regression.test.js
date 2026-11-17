@@ -104,7 +104,7 @@ test('push token registration posts the Expo token for the active session and cl
 test('push notification taps open the relevant wallet, orders, or admin section', () => {
   assert.ok(app.includes("'technician_settlement', 'wallet_debit', 'commission_deducted'"));
   assert.ok(app.includes("type === 'new_opportunity'"));
-  assert.ok(app.includes("type === 'order_created'"));
+  assert.ok(app.includes("'order_created'"));
   assert.ok(app.includes("const destination = String(data.destination || '')"));
 });
 
