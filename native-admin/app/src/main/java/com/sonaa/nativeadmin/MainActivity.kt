@@ -1398,6 +1398,30 @@ private data class RowAction(val label:String,val method:String,val path:String,
                         Text(primary(item), fontWeight = FontWeight.Bold, color = DarkAccent)
                         val detail = secondary(item, section)
                         if (detail.isNotBlank()) Text(detail, color = Color.DarkGray, modifier = Modifier.padding(top = 5.dp))
+                        if(section==AdminSection.ORDERS&&item.isJsonObject){
+                            val order=item.asJsonObject
+                            fun orderValue(key:String):String=order.get(key)?.takeIf{!it.isJsonNull}?.toString()?.trim('"').orEmpty()
+                            Card(Modifier.fillMaxWidth().padding(top=7.dp),colors=CardDefaults.cardColors(containerColor=Color(0xFFF4F8FA))){
+                                Column(Modifier.padding(10.dp),verticalArrangement=Arrangement.spacedBy(3.dp)){
+                                    Text("تفاصيل التنفيذ والمالية",fontWeight=FontWeight.Bold,color=DarkAccent)
+                                    Text("الميزانية الأصلية: "+orderValue("budget").ifBlank{"غير محددة"}+" جنيه",style=MaterialTheme.typography.bodySmall)
+                                    Text("الفني المنفذ: "+orderValue("assignedFanniName").ifBlank{"لم يُعيّن بعد"},style=MaterialTheme.typography.bodySmall)
+                                    Text("قيمة العرض المقبول: "+orderValue("acceptedOfferPrice").ifBlank{"لا يوجد"}+" جنيه",style=MaterialTheme.typography.bodySmall)
+                                    Text("العمولة: "+orderValue("commissionRate").ifBlank{"—"}+"% • "+orderValue("commissionAmount").ifBlank{"—"}+" جنيه",style=MaterialTheme.typography.bodySmall)
+                                    Text("حالة الدفع: "+orderValue("clientPaymentStatus").ifBlank{"غير محددة"}+(if(order.get("commissionCharged")?.asBoolean==true)" • تم تسجيل العمولة" else ""),style=MaterialTheme.typography.bodySmall)
+                                    val offers=order.get("offers")?.takeIf{it.isJsonArray}?.asJsonArray?.toList().orEmpty()
+                                    if(offers.isNotEmpty()){
+                                        Divider()
+                                        Text("العروض المقدمة: "+offers.size,fontWeight=FontWeight.SemiBold,style=MaterialTheme.typography.bodySmall)
+                                        offers.forEachIndexed{index,offer->
+                                            val itemOffer=offer.takeIf{it.isJsonObject}?.asJsonObject
+                                            Text((index+1).toString()+". "+(itemOffer?.get("fanniName")?.takeIf{!it.isJsonNull}?.asString?: "فني")+" — "+(itemOffer?.get("price")?.toString()?: "—")+" جنيه",style=MaterialTheme.typography.bodySmall)
+                                            itemOffer?.get("note")?.takeIf{!it.isJsonNull}?.asString?.takeIf{it.isNotBlank()}?.let{Text(it,style=MaterialTheme.typography.labelSmall,color=Color.Gray)}
+                                        }
+                                    }
+                                }
+                            }
+                        }
                         if(section==AdminSection.OFFERS && item.isJsonObject){
                             val orderSn=item.asJsonObject.get("sn")?.asString.orEmpty()
                             item.asJsonObject.get("offers")?.takeIf{it.isJsonArray}?.asJsonArray?.forEachIndexed{index,offer->
