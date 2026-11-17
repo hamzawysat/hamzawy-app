@@ -25,15 +25,23 @@ class AdminViewModel(app:Application):AndroidViewModel(app){
  }
  private suspend fun enrichDashboard(source:JsonElement):JsonElement{
   val root=source.takeIf{it.isJsonObject}?.asJsonObject?.deepCopy()?:return source
+  val warnings=com.google.gson.JsonArray()
   fun findArray(response:JsonElement?,vararg keys:String):com.google.gson.JsonArray?{
    if(response==null)return null
    if(response.isJsonArray)return response.asJsonArray
    if(response.isJsonObject){for(key in keys){val value=response.asJsonObject.get(key);if(value?.isJsonArray==true)return value.asJsonArray}}
    return null
   }
-  runCatching{repo.get("api/admin/orders")}.getOrNull()?.let{findArray(it,"orders","data","items")?.let{rows->root.add("dashboardOrders",rows)}}
-  runCatching{repo.get("api/admin/topup-requests")}.getOrNull()?.let{findArray(it,"requests","topups","data","items")?.let{rows->root.add("dashboardTopups",rows)}}
-  runCatching{repo.get("api/admin/complaints")}.getOrNull()?.let{findArray(it,"complaints","data","items")?.let{rows->root.add("dashboardComplaints",rows)}}
+  suspend fun attach(path:String,targetKey:String,label:String,vararg keys:String){
+   val response=runCatching{repo.get(path)}.getOrNull()
+   val rows=findArray(response,*keys)
+   if(rows!=null)root.add(targetKey,rows)
+   else warnings.add("$label: تعذر تحميل البيانات أو لم يُرجع الخادم قائمة صالحة")
+  }
+  attach("api/admin/orders","dashboardOrders","الطلبات","orders","data","items")
+  attach("api/admin/topup-requests","dashboardTopups","طلبات الشحن","requests","topups","data","items")
+  attach("api/admin/complaints","dashboardComplaints","الشكاوى","complaints","data","items")
+  root.add("dashboardWarnings",warnings)
   return root
  }
  fun refresh()=load(AdminSection.DASHBOARD)
