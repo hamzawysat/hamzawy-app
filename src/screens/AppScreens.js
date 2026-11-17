@@ -139,7 +139,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
   const handlePushNotificationResponse = response => {
     const data = response?.notification?.request?.content?.data || {};
     const type = String(data.type || '');
-    if (session?.role === 'fanni' && ['topup_approved', 'topup_rejected', 'fanni_wallet_credit', 'fanni_wallet_settlement'].includes(type)) {
+    if (session?.role === 'fanni' && ['topup_approved', 'topup_rejected', 'wallet_credit', 'fanni_wallet_credit', 'fanni_wallet_settlement'].includes(type)) {
       setTechData(current => ({ ...current, tab: 'wallet' }));
       setScreen('technician');
     } else if (session?.role === 'client' && (type.startsWith('client_wallet_') || type === 'client_service_refunded')) {
