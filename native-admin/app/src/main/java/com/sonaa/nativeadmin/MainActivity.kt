@@ -2598,7 +2598,7 @@ private fun parseStoreCsvProducts(source:String,columnMapping:Map<String,Int>?=n
     fun number(raw:String):Double?{
         if(raw.isBlank())return null
         val english=raw.map{ch->when(ch){in '٠'..'٩'->('0'.code+(ch-'٠')).toChar();in '۰'..'۹'->('0'.code+(ch-'۰')).toChar();else->ch}}.joinToString("")
-            .replace("٫",".").replace("٬","").replace(" ","").replace(",",".").replace(Regex("[^0-9.\\-]"),"")
+            .replace("٫",".").replace("٬","").replace(",","").replace(" ","").replace(Regex("[^0-9.\\-]"),"")
         return english.toDoubleOrNull()
     }
     val valid=mutableListOf<JsonObject>()
