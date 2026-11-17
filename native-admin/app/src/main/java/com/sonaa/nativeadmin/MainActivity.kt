@@ -1500,6 +1500,13 @@ private data class RowAction(val label:String,val method:String,val path:String,
         val multiple=o?.get("areas")?.takeIf{it.isJsonArray}?.asJsonArray?.mapNotNull{it.takeIf{v->v.isJsonPrimitive&&!v.isJsonNull}?.asString}.orEmpty()
         simple+multiple
     }.filter{it.isNotBlank()}.distinct().sorted()}
+    val visibleOfferKeys=if(section==AdminSection.OFFERS)filtered.flatMap{entry->
+        val order=entry.takeIf{it.isJsonObject}?.asJsonObject?:return@flatMap emptyList()
+        val sn=order.get("sn")?.takeIf{!it.isJsonNull}?.asString.orEmpty()
+        order.get("offers")?.takeIf{it.isJsonArray}?.asJsonArray?.mapIndexedNotNull{index,offer->
+            if(sn.isNotBlank()&&offerCategory(order,offer)!="accepted"&&(offerStatusFilter=="all"||offerCategory(order,offer)==offerStatusFilter))"$sn|$index" else null
+        }.orEmpty()
+    }else emptyList()
     editingPermissions?.let{admin->AdminPermissionsDialog(admin,{editingPermissions=null}){body->
         val id=admin.asJsonObject.get("_id")?.asString?:admin.asJsonObject.get("id")?.asString.orEmpty()
         editingPermissions=null
@@ -1690,6 +1697,10 @@ private data class RowAction(val label:String,val method:String,val path:String,
             }
         }
         Column(Modifier.fillMaxWidth(),verticalArrangement=Arrangement.spacedBy(6.dp)){
+            if(section==AdminSection.OFFERS&&visibleOfferKeys.isNotEmpty())Row(verticalAlignment=Alignment.CenterVertically){
+                Checkbox(checked=visibleOfferKeys.all{it in selectedBulk},onCheckedChange={checked->selectedBulk=if(checked)selectedBulk+visibleOfferKeys else selectedBulk-visibleOfferKeys.toSet()})
+                Text("تحديد كل العروض غير المقبولة الظاهرة ("+visibleOfferKeys.size+")",style=MaterialTheme.typography.labelSmall,color=Color.Gray)
+            }
             if(section==AdminSection.OFFERS){
                 Text("حالة العرض",style=MaterialTheme.typography.labelSmall,color=Color.Gray)
                 Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(6.dp)){
