@@ -1719,12 +1719,23 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
 ){
     var createOpen by remember{mutableStateOf(false)}
     var editingDetails by remember{mutableStateOf<JsonElement?>(null)}
+    var statusFilter by remember{mutableStateOf("all")}
+    val filteredItems=items.filter{item->
+        val status=item.takeIf{it.isJsonObject}?.asJsonObject?.get("status")?.takeIf{!it.isJsonNull}?.asString.orEmpty()
+        statusFilter=="all"||status==statusFilter
+    }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(14.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){
         Text("اشتراكات العملاء",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold,color=DarkAccent)
         Text("متابعة الاشتراكات النشطة والمعلقة والمنتهية وتجديدها",style=MaterialTheme.typography.bodySmall,color=Color.Gray)
         if(canWrite("api/admin/commerce/subscriptions"))Button(onClick={createOpen=true},enabled=!busy,modifier=Modifier.fillMaxWidth()){Text("إضافة اشتراك لعميل")}
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(6.dp)){
+            listOf("all" to "الكل","active" to "نشط","pending" to "بانتظار التفعيل","paused" to "موقوف","cancelled" to "ملغي","expired" to "منتهي").forEach{(key,label)->
+                FilterChip(selected=statusFilter==key,onClick={statusFilter=key},label={Text(label+" "+if(key=="all")items.size else items.count{it.isJsonObject&&it.asJsonObject.get("status")?.asString==key})})
+            }
+        }
         if(items.isEmpty())Text(if(busy)"جاري تحميل الاشتراكات..." else "لا توجد اشتراكات",color=Color.Gray)
-        items.forEach{item->
+        if(items.isNotEmpty()&&filteredItems.isEmpty())Text("لا توجد اشتراكات في الحالة المحددة",color=Color.Gray)
+        filteredItems.forEach{item->
             val o=item.takeIf{it.isJsonObject}?.asJsonObject?:return@forEach
             val id=o.get("_id")?.asString?:o.get("id")?.asString.orEmpty()
             val client=o.get("client")?.takeIf{it.isJsonObject}?.asJsonObject
