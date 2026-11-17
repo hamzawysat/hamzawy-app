@@ -1506,7 +1506,7 @@ private data class RowAction(val label:String,val method:String,val path:String,
     val eligibleAdminTechnicians=remember(dashboardStats){
         dashboardStats?.takeIf{it.isJsonObject}?.asJsonObject?.get("dashboardTechnicians")?.takeIf{it.isJsonArray}?.asJsonArray?.filter{entry->
             val technician=entry.takeIf{it.isJsonObject}?.asJsonObject
-            technician?.get("role")?.takeIf{!it.isJsonNull}?.asString=="fanni"&&(technician?.get("status")?.takeIf{!it.isJsonNull}?.asString in listOf("approved","معتمد")||technician?.get("isApproved")?.asBoolean==true)&&technician?.get("adminRole")?.takeIf{!it.isJsonNull}?.asString.orEmpty().isBlank()
+            technician?.get("role")?.takeIf{!it.isJsonNull}?.asString=="fanni"&&(technician?.get("status")?.takeIf{!it.isJsonNull}?.asString.orEmpty() in listOf("approved","معتمد")||technician?.get("isApproved")?.asBoolean==true)&&technician?.get("adminRole")?.takeIf{!it.isJsonNull}?.asString.orEmpty().isBlank()
         }.orEmpty()
     }
     val filtered = remember(items, query, statusFilter, clientStatusFilter, regionFilter, dateFilter, offerStatusFilter) {
