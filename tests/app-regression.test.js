@@ -845,4 +845,7 @@ test('push notification taps route technician and client wallet events to the wa
   assert.match(screens, /setTechData\(current => \(\{ \.\.\.current, tab: 'wallet' \}\)\)/);
   assert.match(screens, /type\.startsWith\('client_wallet_'\)/);
   assert.match(screens, /setClientTab\('wallet'\)/);
+  assert.match(screens, /async function markNotificationRead\(item\)/);
+  assert.match(screens, /setNotificationsOpen\(false\)/);
+  assert.match(screens, /setTechData\(current => \(\{ \.\.\.current, tab: 'wallet' \}\)\)/);
 });
