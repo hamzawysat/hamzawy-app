@@ -294,7 +294,7 @@ class MainActivity : ComponentActivity() {
             state.editingProfile!=null -> ProfileEditor(state.editingProfile,state.editingProfileId.orEmpty(),{vm.closeProfile()}) { method:String,path:String,body:JsonObject -> vm.saveEditedProfile(method,path,body) }
             state.recoveryDetail!=null -> RecoveryConversationScreen(state.recoveryDetail,state.busy,state.error,state.actionMessage,vm::closeRecovery,{path->canWriteApi(state.adminInfo,path)}) { method,path,body -> vm.recoveryAction(method,path,body) }
             state.section == AdminSection.SUPPORT -> SupportAdminScreen(state.supportCases,state.supportSelectedCase,state.actionMessage,{vm.retry()},{id->vm.openSupportCase(id)},{method,path,body->vm.supportAction(method,path,body)},{path->canWriteApi(state.adminInfo,path)})
-            else -> ListScreen(state.section, state.items, vm::retry, vm::loadVoice, vm::openFanniProfile, vm::openWalletTransactions, vm::openClientWalletTransactions, vm::openClientProfile, vm::searchSupport, vm::filterAuditLogs, vm::bulkPublish, vm::openRecovery, { section, ids, action -> vm.bulkAction(section, ids, action) }, vm::bulkRenameRegions, { path -> canWriteApi(state.adminInfo,path) }, { path -> canReadApi(state.adminInfo,path) }) { method, path, body -> vm.mutate(method, path, body) }
+            else -> ListScreen(state.section, state.items, state.sectionSearch, vm::retry, vm::loadVoice, vm::openFanniProfile, vm::openWalletTransactions, vm::openClientWalletTransactions, vm::openClientOrders, vm::openClientProfile, vm::searchSupport, vm::filterAuditLogs, vm::bulkPublish, vm::openRecovery, { section, ids, action -> vm.bulkAction(section, ids, action) }, vm::bulkRenameRegions, { path -> canWriteApi(state.adminInfo,path) }, { path -> canReadApi(state.adminInfo,path) }) { method, path, body -> vm.mutate(method, path, body) }
         }
     }
 }
@@ -1096,8 +1096,8 @@ private fun monthlyOrderStats(orders:List<JsonElement>):List<MonthlyOrderStat>{
 }
 
 private data class RowAction(val label:String,val method:String,val path:String,val body:JsonObject=JsonObject(),val inputKey:String?=null,val inputHint:String="",val secondInputKey:String?=null,val secondInputHint:String="")
-@Composable private fun ListScreen(section: AdminSection, items: List<JsonElement>, retry: () -> Unit, onVoice:(String)->Unit, onEditProfile:(String)->Unit, onOpenWallet:(String)->Unit, onOpenClientWallet:(String)->Unit, onEditClient:(String)->Unit, onSupportSearch:(String)->Unit, onAuditFilter:(String)->Unit, onBulkPublish:(List<String>)->Unit, onOpenRecovery:(String)->Unit, onBulkAction:(AdminSection,List<String>,String)->Unit, onBulkRenameRegions:(Map<String,String>)->Unit, onCanWriteApi:(String)->Boolean, onCanReadApi:(String)->Boolean, onAction:(String,String,JsonObject)->Unit) {
-    var query by remember(section) { mutableStateOf("") }
+@Composable private fun ListScreen(section: AdminSection, items: List<JsonElement>, initialQuery:String, retry: () -> Unit, onVoice:(String)->Unit, onEditProfile:(String)->Unit, onOpenWallet:(String)->Unit, onOpenClientWallet:(String)->Unit, onOpenClientOrders:(String)->Unit, onEditClient:(String)->Unit, onSupportSearch:(String)->Unit, onAuditFilter:(String)->Unit, onBulkPublish:(List<String>)->Unit, onOpenRecovery:(String)->Unit, onBulkAction:(AdminSection,List<String>,String)->Unit, onBulkRenameRegions:(Map<String,String>)->Unit, onCanWriteApi:(String)->Boolean, onCanReadApi:(String)->Boolean, onAction:(String,String,JsonObject)->Unit) {
+    var query by remember(section,initialQuery) { mutableStateOf(initialQuery) }
     var statusFilter by remember(section) { mutableStateOf("") }
     var regionFilter by remember(section) { mutableStateOf("") }
     var dateFilter by remember(section) { mutableStateOf("") }
@@ -1426,6 +1426,10 @@ private data class RowAction(val label:String,val method:String,val path:String,
                         if(section==AdminSection.CLIENTS&&onCanWriteApi("api/admin/client-accounts/x/profile")){
                             val clientId=item.asJsonObject.get("_id")?.asString?:item.asJsonObject.get("id")?.asString.orEmpty()
                             if(clientId.isNotBlank())OutlinedButton(onClick={onEditClient(clientId)},modifier=Modifier.fillMaxWidth().padding(top=8.dp)){Text("تعديل بيانات العميل")}
+                        }
+                        if(section==AdminSection.CLIENTS&&item.isJsonObject){
+                            val clientPhone=item.asJsonObject.get("phone")?.takeIf{!it.isJsonNull}?.asString.orEmpty()
+                            if(clientPhone.isNotBlank())OutlinedButton(onClick={onOpenClientOrders(clientPhone)},modifier=Modifier.fillMaxWidth().padding(top=5.dp)){Text("عرض طلبات العميل")}
                         }
                         if(section==AdminSection.CLIENTS&&item.isJsonObject){
                             val client=item.asJsonObject
