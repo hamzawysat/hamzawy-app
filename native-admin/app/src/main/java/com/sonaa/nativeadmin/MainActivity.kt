@@ -2044,14 +2044,25 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
 ){
     var createOpen by remember{mutableStateOf(false)}
     var editingDetails by remember{mutableStateOf<JsonElement?>(null)}
-    var statusFilter by remember{mutableStateOf("all")}
+    var statusFilter by remember{mutableStateOf("active")}
     var subscriptionSearch by remember{mutableStateOf("")}
+    fun subscriptionGroup(item:JsonElement):String{
+        val o=item.takeIf{it.isJsonObject}?.asJsonObject?:return "expired"
+        val status=o.get("status")?.takeIf{!it.isJsonNull}?.asString.orEmpty().lowercase()
+        if(status=="pending")return "pending"
+        if(status=="active"){
+            val end=o.get("endsAt")?.takeIf{!it.isJsonNull}?.asString.orEmpty()
+            val endTime=runCatching{SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX",Locale.US).parse(end)?.time}.getOrNull()
+                ?:runCatching{SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX",Locale.US).parse(end)?.time}.getOrNull()
+            return if(endTime==null||endTime>System.currentTimeMillis())"active" else "expired"
+        }
+        return "expired"
+    }
     val filteredItems=items.filter{item->
         val o=item.takeIf{it.isJsonObject}?.asJsonObject
-        val status=o?.get("status")?.takeIf{!it.isJsonNull}?.asString.orEmpty()
         val client=o?.get("client")?.takeIf{it.isJsonObject}?.asJsonObject
         val searchText=listOf(client?.get("name")?.asString.orEmpty(),client?.get("phone")?.asString.orEmpty(),o?.get("itemName")?.asString.orEmpty(),o?.get("_id")?.asString.orEmpty()).joinToString(" ").lowercase()
-        (statusFilter=="all"||status==statusFilter)&&(subscriptionSearch.isBlank()||searchText.contains(subscriptionSearch.trim().lowercase()))
+        subscriptionGroup(item)==statusFilter&&(subscriptionSearch.isBlank()||searchText.contains(subscriptionSearch.trim().lowercase()))
     }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(14.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){
         Text("اشتراكات العملاء",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold,color=DarkAccent)
@@ -2059,12 +2070,12 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
         OutlinedTextField(subscriptionSearch,{subscriptionSearch=it},label={Text("بحث باسم العميل أو الهاتف أو الباقة")},singleLine=true,modifier=Modifier.fillMaxWidth())
         if(canWrite("api/admin/commerce/subscriptions"))Button(onClick={createOpen=true},enabled=!busy,modifier=Modifier.fillMaxWidth()){Text("إضافة اشتراك لعميل")}
         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(6.dp)){
-            listOf("all" to "الكل","active" to "نشط","pending" to "بانتظار التفعيل","paused" to "موقوف","cancelled" to "ملغي","expired" to "منتهي").forEach{(key,label)->
-                FilterChip(selected=statusFilter==key,onClick={statusFilter=key},label={Text(label+" "+if(key=="all")items.size else items.count{it.isJsonObject&&it.asJsonObject.get("status")?.asString==key})})
+            listOf("active" to "الاشتراكات السارية","expired" to "الاشتراكات المنتهية","pending" to "طلبات الاشتراك الجديدة").forEach{(key,label)->
+                FilterChip(selected=statusFilter==key,onClick={statusFilter=key},label={Text(label+" "+items.count{subscriptionGroup(it)==key})})
             }
         }
         if(items.isEmpty())Text(if(busy)"جاري تحميل الاشتراكات..." else "لا توجد اشتراكات",color=Color.Gray)
-        if(items.isNotEmpty()&&filteredItems.isEmpty())Text("لا توجد اشتراكات في الحالة المحددة",color=Color.Gray)
+        if(items.isNotEmpty()&&filteredItems.isEmpty())Text("لا توجد سجلات في هذا التبويب أو تطابق البحث",color=Color.Gray)
         filteredItems.forEach{item->
             val o=item.takeIf{it.isJsonObject}?.asJsonObject?:return@forEach
             val id=o.get("_id")?.asString?:o.get("id")?.asString.orEmpty()
