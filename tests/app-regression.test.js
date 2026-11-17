@@ -96,7 +96,7 @@ test('push token registration posts the Expo token for the active session and cl
   assert.ok(app.includes('Notifications.getExpoPushTokenAsync({ projectId })'));
   assert.ok(app.includes('pushTokenRef.current = result.data'));
   assert.ok(app.includes('body: { token: result.data, platform: Platform.OS }'));
-  assert.ok(app.includes('return () => { cancelled = true; };'));
+  assert.ok(app.includes('return () => { cancelled = true; responseSubscription.remove(); };'));
 });
 
 test('required runtime packages are declared', () => {
@@ -492,7 +492,7 @@ test('navigation and push registration are isolated in dedicated hooks', () => {
   const push = fs.readFileSync(path.join(root, 'src/hooks/usePushNotifications.js'), 'utf8');
   assert.match(screen, /useScreenNavigation\(\)/);
   assert.match(screen, /onScreenChange\?\.\(screen, headerInitial\)/);
-  assert.match(screen, /usePushNotifications\(session\)/);
+  assert.match(screen, /usePushNotifications\(session, handlePushNotificationResponse\)/);
   assert.match(navigation, /export function useScreenNavigation/);
   assert.match(push, /export function usePushNotifications/);
   assert.match(push, /getExpoPushTokenAsync/);
