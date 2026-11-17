@@ -166,29 +166,33 @@ class AdminViewModel(app:Application):AndroidViewModel(app){
   }catch(e:Exception){_state.value=_state.value.copy(busy=false,error=e.message?: "تعذر تحميل حركات محفظة العميل")}
  }
  fun closeWalletTransactions(){_state.value=_state.value.copy(walletFanniId=null,walletTransactions=emptyList())}
- fun issueClientSupportPassword(id:String)=viewModelScope.launch{
+ fun issueSupportPassword(role:String,id:String)=viewModelScope.launch{
+  if(role !in listOf("client","fanni")){_state.value=_state.value.copy(error="نوع الحساب غير صالح");return@launch}
   _state.value=_state.value.copy(busy=true,error=null,supportPasswordText=null)
   try{
-   val result=repo.mutate("POST","api/password-recovery/admin/support-passwords",JsonObject().apply{addProperty("role","client");addProperty("accountId",id)})
+   val result=repo.mutate("POST","api/password-recovery/admin/support-passwords",JsonObject().apply{addProperty("role",role);addProperty("accountId",id)})
    val secret=result.takeIf{it.isJsonObject}?.asJsonObject?.get("supportPassword")?.takeIf{!it.isJsonNull}?.asString
     ?:result.takeIf{it.isJsonObject}?.asJsonObject?.get("data")?.takeIf{it.isJsonObject}?.asJsonObject?.get("supportPassword")?.takeIf{!it.isJsonNull}?.asString
    if(secret.isNullOrBlank())error("لم يستلم التطبيق كلمة الدعم من الخادم")
-   _state.value=_state.value.copy(busy=false,supportPasswordText=secret,supportPasswordTitle="كلمة دعم جديدة للعميل")
+   _state.value=_state.value.copy(busy=false,supportPasswordText=secret,supportPasswordTitle=if(role=="client")"كلمة دعم جديدة للعميل" else "كلمة دعم جديدة للفني")
   }catch(e:Exception){_state.value=_state.value.copy(busy=false,error=e.message?: "تعذر إصدار كلمة الدعم")}
  }
- fun revealClientSupportPassword(id:String)=viewModelScope.launch{
+ fun revealSupportPassword(role:String,id:String)=viewModelScope.launch{
+  if(role !in listOf("client","fanni")){_state.value=_state.value.copy(error="نوع الحساب غير صالح");return@launch}
   _state.value=_state.value.copy(busy=true,error=null,supportPasswordText=null)
   try{
-   val active=repo.get("api/password-recovery/admin/support-passwords?role=client&accountId=$id")
+   val active=repo.get("api/password-recovery/admin/support-passwords?role=$role&accountId=$id")
    val supportId=active.takeIf{it.isJsonObject}?.asJsonObject?.get("id")?.takeIf{!it.isJsonNull}?.asString
-    ?:error("لا توجد كلمة دعم صالحة لهذا العميل")
+    ?:error("لا توجد كلمة دعم صالحة لهذا الحساب")
    val result=repo.get("api/password-recovery/admin/support-passwords/$supportId/reveal")
    val secret=result.takeIf{it.isJsonObject}?.asJsonObject?.get("supportPassword")?.takeIf{!it.isJsonNull}?.asString
     ?:result.takeIf{it.isJsonObject}?.asJsonObject?.get("data")?.takeIf{it.isJsonObject}?.asJsonObject?.get("supportPassword")?.takeIf{!it.isJsonNull}?.asString
    if(secret.isNullOrBlank())error("تعذر استرجاع كلمة الدعم")
-   _state.value=_state.value.copy(busy=false,supportPasswordText=secret,supportPasswordTitle="كلمة الدعم الحالية للعميل")
+   _state.value=_state.value.copy(busy=false,supportPasswordText=secret,supportPasswordTitle=if(role=="client")"كلمة الدعم الحالية للعميل" else "كلمة الدعم الحالية للفني")
   }catch(e:Exception){_state.value=_state.value.copy(busy=false,error=e.message?: "تعذر عرض كلمة الدعم")}
  }
+ fun issueClientSupportPassword(id:String)=issueSupportPassword("client",id)
+ fun revealClientSupportPassword(id:String)=revealSupportPassword("client",id)
  fun closeSupportPassword(){_state.value=_state.value.copy(supportPasswordText=null)}
  fun openSupportCase(id:String)=viewModelScope.launch{
   _state.value=_state.value.copy(busy=true,error=null)
