@@ -154,7 +154,21 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
       setScreen('client');
     } else if (session?.role === 'admin') {
       const destination = String(data.destination || '');
-      const tab = ({ orders: 'orders', technicians: 'fannis', clients: 'clients', topups: 'topups', complaints: 'complaints', support: 'support' })[destination];
+      const tab = ({
+        orders: 'orders',
+        storeOrders: 'orders',
+        technicians: 'fannis',
+        wallets: 'fannis',
+        clients: 'clients',
+        clientWallet: 'clients',
+        wallet: 'clients',
+        commerceSubscriptions: 'clients',
+        recovery: 'clients',
+        password_reset: 'clients',
+        topups: 'topups',
+        complaints: 'complaints',
+        support: 'support'
+      })[destination];
       if (tab) setAdminData(current => ({ ...current, tab }));
       setScreen('admin');
     }
