@@ -17,7 +17,7 @@ class AdminRepository(context:Context){
   val req=chain.request().newBuilder().apply{if(!token.isNullOrBlank())header("Authorization","Bearer $token");header("Accept","application/json")}.build()
   chain.proceed(req)
  }.build()
- private val api=Retrofit.Builder().baseUrl("https://sonaa-backend-v2.vercel.app/").client(client).addConverterFactory(GsonConverterFactory.create()).build().create(AdminApi::class.java)
+ private val api=Retrofit.Builder().baseUrl("https://www.hamzawy-sat.dynv6.net/").client(client).addConverterFactory(GsonConverterFactory.create()).build().create(AdminApi::class.java)
  suspend fun login(phone:String,password:String):JsonElement{
   val response=api.login(JsonObject().apply{addProperty("phone",phone.trim());addProperty("password",password)})
   val token=response.asJsonObject.get("token")?.asString?:error("الخادم لم يُرجع رمز الجلسة")
