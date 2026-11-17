@@ -2134,7 +2134,7 @@ private fun parseStoreCsvProducts(source:String):StoreCsvPreview{
         "subscriptionDuration" to listOf("duration","subscriptionduration","مدة الاشتراك"),
         "stock" to listOf("stock","quantity","qty","المخزون","الكمية")
     )
-    val headers=rows.first().mapIndexed{index,value->if(index==0)value.removePrefix("\\uFEFF") else value}
+    val headers=rows.first().mapIndexed{index,value->if(index==0)value.removePrefix(String(charArrayOf(0xFEFF.toChar()))) else value}
     val mapping=aliases.mapValues{(_,names)->headers.indexOfFirst{header->names.any{norm(header)==norm(it)}}}
     if((mapping["name"]?:-1)<0||(mapping["price"]?:-1)<0)error("لازم ملف CSV يحتوي على عمود اسم المنتج وعمود السعر")
     fun cellAt(cells:List<String>,key:String):String{
