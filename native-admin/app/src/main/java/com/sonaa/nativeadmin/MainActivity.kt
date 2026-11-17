@@ -169,7 +169,7 @@ class MainActivity : ComponentActivity() {
  )
  Box(Modifier.fillMaxSize().background(Color.White),contentAlignment=Alignment.Center){
   Column(horizontalAlignment=Alignment.CenterHorizontally){
-   Image(painterResource(R.drawable.hamzawy_logo),"شعار حمزاوي سات",Modifier.offset(x=horizontalOffset.dp).size(150.dp))
+   Image(painterResource(R.drawable.sonaa_logo),"شعار حمزاوي سات",Modifier.offset(x=horizontalOffset.dp).size(150.dp))
    Spacer(Modifier.height(18.dp))
    Text("حمزاوي سات",style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Black,color=DarkAccent)
    Text("كل خدمة تبدأ بخطوة",color=Accent,modifier=Modifier.padding(top=4.dp))
@@ -179,7 +179,7 @@ class MainActivity : ComponentActivity() {
 @Composable private fun LoginScreen(state: AdminUiState, login: (String, String) -> Unit) {
     var phone by remember { mutableStateOf("") }; var password by remember { mutableStateOf("") }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-        Image(painterResource(R.drawable.hamzawy_logo), "شعار حمزاوي سات", Modifier.size(112.dp))
+        Image(painterResource(R.drawable.sonaa_logo), "شعار حمزاوي سات", Modifier.size(112.dp))
         Spacer(Modifier.height(16.dp))
         Text("إدارة حمزاوي سات CON", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = DarkAccent)
         Text("سجّل الدخول للمتابعة", color = Color.Gray, modifier = Modifier.padding(bottom = 22.dp, top = 5.dp))
@@ -195,7 +195,7 @@ class MainActivity : ComponentActivity() {
 @Composable private fun HomeScreen(state: AdminUiState, vm: AdminViewModel) {
     Column(Modifier.fillMaxSize()) {
         Row(Modifier.fillMaxWidth().background(Color.White).padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Image(painterResource(R.drawable.hamzawy_logo), "شعار حمزاوي سات", Modifier.size(42.dp))
+            Image(painterResource(R.drawable.sonaa_logo), "شعار حمزاوي سات", Modifier.size(42.dp))
             Column(Modifier.weight(1f).padding(horizontal = 10.dp)) {
                 Text("إدارة حمزاوي سات CON", fontWeight = FontWeight.Bold, color = DarkAccent)
                 Text(state.section.title, style = MaterialTheme.typography.labelMedium, color = Color.Gray)
