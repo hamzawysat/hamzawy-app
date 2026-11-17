@@ -255,13 +255,19 @@ class MainActivity : ComponentActivity() {
         val dashboardOrders=dashboardRoot?.get("dashboardOrders")?.takeIf{it.isJsonArray}?.asJsonArray
         val dashboardTopups=dashboardRoot?.get("dashboardTopups")?.takeIf{it.isJsonArray}?.asJsonArray
         val dashboardComplaints=dashboardRoot?.get("dashboardComplaints")?.takeIf{it.isJsonArray}?.asJsonArray
+        val dashboardTechnicians=dashboardRoot?.get("dashboardTechnicians")?.takeIf{it.isJsonArray}?.asJsonArray
+        val dashboardProfileEdits=dashboardRoot?.get("dashboardProfileEdits")?.takeIf{it.isJsonArray}?.asJsonArray
+        val dashboardClientTopups=dashboardRoot?.get("dashboardClientTopups")?.takeIf{it.isJsonArray}?.asJsonArray
+        val dashboardRecoveryRequests=dashboardRoot?.get("dashboardRecoveryRequests")?.takeIf{it.isJsonArray}?.asJsonArray
         fun sectionBadgeCount(section:AdminSection):Int?=when(section){
             AdminSection.NOTIFICATIONS->state.adminUnreadCount
-            AdminSection.CLIENTS,AdminSection.CLIENT_WALLETS->dashboardCounts?.get("clients")?.takeIf{it.isJsonPrimitive}?.asInt
-            AdminSection.TECHNICIANS->dashboardCounts?.get("technicians")?.takeIf{it.isJsonPrimitive}?.asInt
-            AdminSection.ORDERS->dashboardOrders?.size()
-            AdminSection.TOPUPS->dashboardTopups?.count{it.isJsonObject&&it.asJsonObject.get("status")?.asString=="pending"}
-            AdminSection.COMPLAINTS->dashboardComplaints?.count{it.isJsonObject&&it.asJsonObject.get("status")?.asString=="جديدة"}
+            AdminSection.PENDING->dashboardTechnicians?.count{it.isJsonObject&&!it.asJsonObject.get("isApproved")?.asBoolean.orFalse()&&!it.asJsonObject.get("isDisabled")?.asBoolean.orFalse()&&it.asJsonObject.get("status")?.asString !in listOf("rejected","مرفوض")}
+            AdminSection.PROFILE_EDITS->dashboardProfileEdits?.size()
+            AdminSection.ORDERS->dashboardOrders?.count{it.isJsonObject&&it.asJsonObject.get("status")?.asString in listOf("قيد المراجعة","pending","مراجعة","بانتظار المراجعة")}
+            AdminSection.TOPUPS->dashboardTopups?.count{it.isJsonObject&&it.asJsonObject.get("status")?.asString in listOf("pending","قيد المراجعة","جديد","جديدة")}
+            AdminSection.CLIENT_TOPUPS->dashboardClientTopups?.count{it.isJsonObject&&it.asJsonObject.get("status")?.asString=="قيد المراجعة"}
+            AdminSection.COMPLAINTS->dashboardComplaints?.count{it.isJsonObject&&it.asJsonObject.get("status")?.asString in listOf("جديدة","pending","open","قيد المراجعة")}
+            AdminSection.RECOVERY->dashboardRecoveryRequests?.count{it.isJsonObject&&it.asJsonObject.get("status")?.asString in listOf("بانتظار الدعم","قيد التحقق","جديدة","pending")}
             else->null
         }
         Box(Modifier.fillMaxWidth().background(Color.White).padding(horizontal = 14.dp, vertical = 9.dp)) {
