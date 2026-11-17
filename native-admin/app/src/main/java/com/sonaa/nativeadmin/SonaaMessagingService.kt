@@ -50,9 +50,12 @@ class SonaaMessagingService : FirebaseMessagingService() {
         "password_reset", "admin_password_recovery", "admin_password_recovery_message" -> "password_reset"
         "support", "new_complaint", "admin_support_request", "admin_new_complaint",
         "admin_support_followup" -> "support"
-        "wallet_charge", "topup_request", "admin_new_topup", "admin_client_topup",\n        "admin_service_payment_held", "admin_subscription_request", "admin_subscription_renewed", "wallet_credit",
+        "wallet_charge", "topup_request", "admin_new_topup", "admin_client_topup",
+        "admin_service_payment_held", "admin_subscription_request", "admin_subscription_renewed", "wallet_credit",
         "fanni_wallet_settlement", "technician_settlement", "topup_approved",
-        "topup_rejected", "wallet_debit", "commission_deducted", "client_wallet_topup_approved",\n        "client_wallet_topup_rejected", "client_wallet_credit", "client_wallet_debit",\n        "client_wallet_settlement", "client_service_refunded" -> "wallet_charge"
+        "topup_rejected", "wallet_debit", "commission_deducted", "client_wallet_topup_approved",
+        "client_wallet_topup_rejected", "client_wallet_credit", "client_wallet_debit",
+        "client_wallet_settlement", "client_service_refunded" -> "wallet_charge"
         else -> "support"
     }
     companion object {
