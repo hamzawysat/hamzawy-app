@@ -1874,7 +1874,6 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
             Column(Modifier.padding(12.dp),verticalArrangement=Arrangement.spacedBy(7.dp)){
                 Row(verticalAlignment=Alignment.CenterVertically){
                     Text("أقسام المتجر",modifier=Modifier.weight(1f),fontWeight=FontWeight.Bold,color=DarkAccent)
-                    if(canWrite("api/admin/store/categories/new"))TextButton(onClick={categoryCreate=true;categoryEditing=null}){Text("إضافة قسم")}
                 }
                 if(categories.isEmpty())Text("لا توجد أقسام معرفة بعد.",style=MaterialTheme.typography.bodySmall,color=Color.Gray)
                 categories.forEach{cat->
@@ -2085,7 +2084,7 @@ private fun storeProductCopy(source:com.google.gson.JsonObject):com.google.gson.
                     }
                     Text("ملاحظة المشتري الحالية: "+(o.get("buyerNote")?.takeIf{!it.isJsonNull}?.asString.orEmpty()),style=MaterialTheme.typography.bodySmall,color=Color.Gray)
                     OutlinedTextField(note,{note=it},label={Text("ملاحظة الإدارة للمشتري")},minLines=2)
-                    Button(onClick={onAction("PATCH","api/admin/store/orders/"+id,JsonObject().apply{addProperty("status",status);addProperty("paymentMethod",payment);addProperty("adminNote",note.trim())})},enabled=!busy&&canWrite("api/admin/store/orders/"+id)&&status in statuses&&payment in listOf("غير محدد","محفظة العميل","عند الاستلام","تحويل"),modifier=Modifier.fillMaxWidth()){Text("حفظ الحالة وإشعار المشتري")}
+                    Button(onClick={onAction("PATCH","api/admin/store/orders/"+id,JsonObject().apply{addProperty("status",status);addProperty("paymentMethod",payment);addProperty("adminNote",note.trim())})},enabled=!busy&&canWrite("api/admin/store/orders/"+id)&&status in statuses&&status!="جديد"&&payment in listOf("غير محدد","محفظة العميل","عند الاستلام","تحويل"),modifier=Modifier.fillMaxWidth()){Text("حفظ الحالة وإشعار المشتري")}
                 }
             }
         }
