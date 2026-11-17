@@ -1185,6 +1185,7 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
             onValueChange={raw=it;editorError=null},
             label={Text("بيانات التخطيط بصيغة JSON")},
             modifier=Modifier.fillMaxWidth(),
+            enabled=!busy,
             minLines=14,
             maxLines=30
         )
