@@ -4,7 +4,7 @@ Audit basis: current `main` branch of `hamzawy-app` compared with the web admini
 
 ## Confirmed web administration areas
 
-The web console defines these 28 tabs:
+The web console defines these 29 tabs:
 
 1. Dashboard summary
 2. Statistics
@@ -36,7 +36,6 @@ The web console defines these 28 tabs:
 28. Platform settings
 29. Admin roles and permissions
 
-Note: the list contains 29 tabs (not 28); each is listed separately above.
 
 ## Native Kotlin baseline
 
