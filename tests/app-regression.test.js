@@ -305,7 +305,8 @@ test('client and technician chats render price-change requests in the same chron
 test('client and technician dashboards keep the refresh control and remove only the floating support button', () => {
   assert.equal(app.split('onPress={openWhatsAppSupport} style={[styles.floatingButton,styles.whatsappButton]}').length - 1, 0, 'floating support buttons should be removed');
   assert.equal(app.split('accessibilityLabel={isRefreshing ? "جاري تحديث البيانات" : "تحديث البيانات"}').length - 1, 2, 'client and technician refresh buttons should remain');
-  assert.ok(app.includes("label: 'الدعم الفني'"), 'technician support tab should remain available');
+  const technicianDashboard = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianDashboard.js'), 'utf8');
+  assert.ok(technicianDashboard.includes("label: 'الدعم'"), 'technician support tab should remain available');
   assert.ok(app.includes("title=\"🎧 الدعم الفني\""), 'client support entry point should remain available');
 });
 
