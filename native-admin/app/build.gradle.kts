@@ -13,7 +13,7 @@ android {
         versionName = "2.0.0"
         buildConfigField("String", "FIREBASE_PROJECT_ID", "\"sonaa-app-notifications\"")
         buildConfigField("String", "FIREBASE_SENDER_ID", "\"228718138416\"")
-        buildConfigField("String", "FIREBASE_APP_ID", "\"1:228718138416:android:307ecc41c39fc66ab809f5\"")
+        buildConfigField("String", "FIREBASE_APP_ID", "\"1:228718138416:android:c49c85878c948fcbb809f5\"")
         buildConfigField("String", "FIREBASE_API_KEY", "\"AIzaSyDOBGJCHuevDX1utn0M9VqDknmB15XJdj4\"")
     }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
