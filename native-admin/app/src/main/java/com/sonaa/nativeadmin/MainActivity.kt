@@ -1473,6 +1473,15 @@ private data class RowAction(val label:String,val method:String,val path:String,
                                 }
                             }
                         }
+                        if(section in listOf(AdminSection.TECHNICIANS,AdminSection.PENDING,AdminSection.DISABLED)&&item.isJsonObject){
+                            val fanniId=item.asJsonObject.get("_id")?.asString?:item.asJsonObject.get("id")?.asString.orEmpty()
+                            if(fanniId.isNotBlank()&&(onCanWriteApi("api/password-recovery/admin/support-passwords")||onCanReadApi("api/password-recovery/admin/support-passwords"))){
+                                Row(Modifier.fillMaxWidth().padding(top=6.dp),horizontalArrangement=Arrangement.spacedBy(6.dp)){
+                                    if(onCanWriteApi("api/password-recovery/admin/support-passwords"))OutlinedButton(onClick={vm.issueSupportPassword("fanni",fanniId)},modifier=Modifier.weight(1f)){Text("إصدار كلمة دعم")}
+                                    if(onCanReadApi("api/password-recovery/admin/support-passwords"))OutlinedButton(onClick={vm.revealSupportPassword("fanni",fanniId)},modifier=Modifier.weight(1f)){Text("عرض كلمة الدعم")}
+                                }
+                            }
+                        }
                         if(section==AdminSection.CLIENTS&&onCanWriteApi("api/admin/client-accounts/x/profile")){
                             val clientId=item.asJsonObject.get("_id")?.asString?:item.asJsonObject.get("id")?.asString.orEmpty()
                             if(clientId.isNotBlank())OutlinedButton(onClick={onEditClient(clientId)},modifier=Modifier.fillMaxWidth().padding(top=8.dp)){Text("تعديل بيانات العميل")}
