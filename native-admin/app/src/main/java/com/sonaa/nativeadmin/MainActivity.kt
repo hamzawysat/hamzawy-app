@@ -1058,7 +1058,7 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
     context.startActivity(Intent.createChooser(intent,"تصدير التقرير"))
    },modifier=Modifier.fillMaxWidth()){Text("تصدير التقرير ومشاركته بصيغة CSV")}
   }
-  if(!topServices.isNullOrEmpty()){
+  if(topServices!=null&&topServices.size()>0){
    Text("أكثر الخدمات طلبًا",fontWeight=FontWeight.Bold,color=DarkAccent)
    topServices.forEach{entry->
     val obj=entry.takeIf{it.isJsonObject}?.asJsonObject
