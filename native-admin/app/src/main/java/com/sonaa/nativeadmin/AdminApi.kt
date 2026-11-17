@@ -14,4 +14,5 @@ interface AdminApi {
  @PUT suspend fun put(@Url path:String,@Body body:JsonObject):JsonElement
  @DELETE suspend fun delete(@Url path:String):JsonElement
  @POST("api/notifications/admin/push-token") suspend fun registerFcmToken(@Body body: JsonObject): JsonElement
+ @HTTP(method = "DELETE", path = "api/notifications/admin/push-token", hasBody = true) suspend fun unregisterFcmToken(@Body body: JsonObject): JsonElement
 }

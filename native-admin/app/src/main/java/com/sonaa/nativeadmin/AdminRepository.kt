@@ -25,7 +25,12 @@ class AdminRepository(context:Context){
  }
  suspend fun getMe():JsonElement=api.me()
  suspend fun hasSession():Boolean{if(auth.currentToken().isNullOrBlank())return false;return try{api.me();true}catch(_:Exception){auth.clear();false}}
- suspend fun logout()=auth.clear()
+ suspend fun logout(){
+  val registered=appContext.getSharedPreferences("sonaa_admin_session",Context.MODE_PRIVATE).getString("registered_fcm_token",null)
+  if(!registered.isNullOrBlank())runCatching{api.unregisterFcmToken(JsonObject().apply{addProperty("token",registered)})}
+  appContext.getSharedPreferences("sonaa_admin_session",Context.MODE_PRIVATE).edit().remove("registered_fcm_token").remove("pending_fcm_token").apply()
+  auth.clear()
+ }
  suspend fun get(section:AdminSection):JsonElement=when(section.method){
   "POST"->api.post(section.path,section.defaultBody())
   else->api.get(section.path)
@@ -55,7 +60,13 @@ class AdminRepository(context:Context){
    "POST"->api.post(path,body);"PATCH"->api.patch(path,body);"PUT"->api.put(path,body);"DELETE"->api.delete(path);else->error("طريقة غير مدعومة")
   }
  }catch(e:HttpException){throw apiFailure(e)}
- suspend fun registerFcm(token:String){api.registerFcmToken(JsonObject().apply{addProperty("token",token);addProperty("platform","fcm-android")})}
+ suspend fun registerFcm(token:String){
+  val prefs=appContext.getSharedPreferences("sonaa_admin_session",Context.MODE_PRIVATE)
+  val previous=prefs.getString("registered_fcm_token",null)
+  if(!previous.isNullOrBlank()&&previous!=token)runCatching{api.unregisterFcmToken(JsonObject().apply{addProperty("token",previous)})}
+  api.registerFcmToken(JsonObject().apply{addProperty("token",token);addProperty("platform","fcm-android")})
+  prefs.edit().putString("registered_fcm_token",token).remove("pending_fcm_token").apply()
+ }
 }
 enum class AdminSection(
  val title:String,

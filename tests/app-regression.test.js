@@ -96,7 +96,31 @@ test('push token registration posts the Expo token for the active session and cl
   assert.ok(app.includes('Notifications.getExpoPushTokenAsync({ projectId })'));
   assert.ok(app.includes('pushTokenRef.current = result.data'));
   assert.ok(app.includes('body: { token: result.data, platform: Platform.OS }'));
-  assert.ok(app.includes('return () => { cancelled = true; responseSubscription.remove(); };'));
+  assert.ok(app.includes('tokenRefreshSubscription.remove()'));
+  assert.ok(app.includes("method: 'DELETE', token: session.token, body: { token: registeredToken }"));
+  assert.ok(app.includes('Notifications.addPushTokenListener'));
+});
+
+test('push notification taps open the relevant wallet, orders, or admin section', () => {
+  assert.ok(app.includes("'technician_settlement', 'wallet_debit', 'commission_deducted'"));
+  assert.ok(app.includes("type === 'new_opportunity'"));
+  assert.ok(app.includes("'order_created'"));
+  assert.ok(app.includes("const destination = String(data.destination || '')"));
+});
+
+test('native admin push service handles order and wallet notification types and respects server destination', () => {
+  const servicePath = path.join(root, 'native-admin/app/src/main/java/com/sonaa/nativeadmin/SonaaMessagingService.kt');
+  const service = fs.readFileSync(servicePath, 'utf8');
+  assert.ok(service.includes('message.data["destination"]'));
+  assert.ok(service.includes('"fanni_wallet_settlement"'));
+  assert.ok(service.includes('"admin_order_offer_accepted"'));
+  assert.ok(service.includes('"wallet_charge" -> "topups"'));
+  const apiSource = fs.readFileSync(path.join(root, 'native-admin/app/src/main/java/com/sonaa/nativeadmin/AdminApi.kt'), 'utf8');
+  const repositorySource = fs.readFileSync(path.join(root, 'native-admin/app/src/main/java/com/sonaa/nativeadmin/AdminRepository.kt'), 'utf8');
+  assert.ok(apiSource.includes('unregisterFcmToken'));
+  assert.ok(repositorySource.includes('remove("registered_fcm_token")'));
+  assert.ok(repositorySource.includes('api.unregisterFcmToken'));
+
 });
 
 test('required runtime packages are declared', () => {
