@@ -75,6 +75,15 @@ class AdminViewModel(app:Application):AndroidViewModel(app){
   try{val data=repo.get("api/admin/ui-layout/$safePage");_state.value=_state.value.copy(busy=false,payload=data)}
   catch(e:Exception){_state.value=_state.value.copy(busy=false,error=e.message?: "تعذر تحميل تخطيط الصفحة")}
  }
+ fun filterPageVisits(pageKey:String)=viewModelScope.launch{
+  val clean=pageKey.trim()
+  _state.value=_state.value.copy(section=AdminSection.PAGE_VISITS,busy=true,error=null,actionMessage=null)
+  try{
+   val path="api/admin/page-visits"+if(clean.isBlank())"" else "?pageKey="+Uri.encode(clean)
+   val data=repo.get(path)
+   _state.value=_state.value.copy(busy=false,payload=data,actionMessage=if(clean.isBlank())"عرض كل صفحات الموقع" else "تم تطبيق فلتر الصفحة: $clean")
+  }catch(e:Exception){_state.value=_state.value.copy(busy=false,error=e.message?: "تعذر تصفية سجل الزيارات")}
+ }
  fun openClientOrders(phone:String){_state.value=_state.value.copy(sectionSearch=phone.trim());load(AdminSection.ORDERS)}
  fun searchClients(query:String)=viewModelScope.launch{
   val clean=query.trim()
