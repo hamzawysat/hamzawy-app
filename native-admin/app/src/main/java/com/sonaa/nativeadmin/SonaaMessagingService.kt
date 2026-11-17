@@ -17,9 +17,9 @@ class SonaaMessagingService : FirebaseMessagingService() {
         val channel = channelFor(type)
         val title = message.notification?.title ?: message.data["title"] ?: "إشعار من صُنّاع"
         val body = message.notification?.body ?: message.data["message"] ?: ""
-        val allowedDestinations = setOf("orders", "technicians", "clients", "recovery", "support", "topups", "wallets")
+        val allowedDestinations = setOf("orders", "storeOrders", "commerceSubscriptions", "technicians", "clients", "clientWallet", "wallet", "recovery", "support", "topups", "wallets")
         val destination = message.data["destination"]?.takeIf { it in allowedDestinations } ?: when (channel) {
-            "order_new" -> "orders"
+            "storeOrders" -> "orders"\n            "commerceSubscriptions", "clientWallet" -> "clients"\n            "wallet" -> "wallets"\n            "order_new" -> "orders"
             "fanni_register" -> "technicians"
             "client_register" -> "clients"
             "password_reset" -> "recovery"
@@ -40,7 +40,7 @@ class SonaaMessagingService : FirebaseMessagingService() {
         getSystemService(NotificationManager::class.java).notify(notificationId, notification)
     }
     private fun channelFor(type: String) = when (type) {
-        "order_new", "new_order", "admin_new_order", "admin_order_offer_accepted",
+        "order_new", "new_order", "admin_new_order", "admin_store_order", "admin_order_offer_accepted",
         "admin_order_cancelled", "admin_order_completed", "admin_fanni_offer",
         "admin_price_change_requested", "admin_client_rating" -> "order_new"
         "fanni_register", "new_fanni", "admin_new_technician", "admin_fanni_profile_edit",
@@ -50,9 +50,9 @@ class SonaaMessagingService : FirebaseMessagingService() {
         "password_reset", "admin_password_recovery", "admin_password_recovery_message" -> "password_reset"
         "support", "new_complaint", "admin_support_request", "admin_new_complaint",
         "admin_support_followup" -> "support"
-        "wallet_charge", "topup_request", "admin_new_topup", "wallet_credit",
+        "wallet_charge", "topup_request", "admin_new_topup", "admin_client_topup",\n        "admin_service_payment_held", "admin_subscription_request", "admin_subscription_renewed", "wallet_credit",
         "fanni_wallet_settlement", "technician_settlement", "topup_approved",
-        "topup_rejected", "wallet_debit", "commission_deducted" -> "wallet_charge"
+        "topup_rejected", "wallet_debit", "commission_deducted", "client_wallet_topup_approved",\n        "client_wallet_topup_rejected", "client_wallet_credit", "client_wallet_debit",\n        "client_wallet_settlement", "client_service_refunded" -> "wallet_charge"
         else -> "support"
     }
     companion object {
