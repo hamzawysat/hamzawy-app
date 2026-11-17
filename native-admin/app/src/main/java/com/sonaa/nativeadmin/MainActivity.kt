@@ -263,11 +263,11 @@ class MainActivity : ComponentActivity() {
             AdminSection.NOTIFICATIONS->state.adminUnreadCount
             AdminSection.PENDING->dashboardTechnicians?.count{it.isJsonObject&&it.asJsonObject.get("isApproved")?.asBoolean!=true&&it.asJsonObject.get("isDisabled")?.asBoolean!=true&&it.asJsonObject.get("status")?.asString.orEmpty() !in listOf("rejected","مرفوض")}
             AdminSection.PROFILE_EDITS->dashboardProfileEdits?.size()
-            AdminSection.ORDERS->dashboardOrders?.count{it.isJsonObject&&it.asJsonObject.get("status")?.asString in listOf("قيد المراجعة","pending","مراجعة","بانتظار المراجعة")}
-            AdminSection.TOPUPS->dashboardTopups?.count{it.isJsonObject&&it.asJsonObject.get("status")?.asString in listOf("pending","قيد المراجعة","جديد","جديدة")}
+            AdminSection.ORDERS->dashboardOrders?.count{it.isJsonObject&&it.asJsonObject.get("status")?.asString.orEmpty() in listOf("قيد المراجعة","pending","مراجعة","بانتظار المراجعة")}
+            AdminSection.TOPUPS->dashboardTopups?.count{it.isJsonObject&&it.asJsonObject.get("status")?.asString.orEmpty() in listOf("pending","قيد المراجعة","جديد","جديدة")}
             AdminSection.CLIENT_TOPUPS->dashboardClientTopups?.count{it.isJsonObject&&it.asJsonObject.get("status")?.asString=="قيد المراجعة"}
-            AdminSection.COMPLAINTS->dashboardComplaints?.count{it.isJsonObject&&it.asJsonObject.get("status")?.asString in listOf("جديدة","pending","open","قيد المراجعة")}
-            AdminSection.RECOVERY->dashboardRecoveryRequests?.count{it.isJsonObject&&it.asJsonObject.get("status")?.asString in listOf("بانتظار الدعم","قيد التحقق","جديدة","pending")}
+            AdminSection.COMPLAINTS->dashboardComplaints?.count{it.isJsonObject&&it.asJsonObject.get("status")?.asString.orEmpty() in listOf("جديدة","pending","open","قيد المراجعة")}
+            AdminSection.RECOVERY->dashboardRecoveryRequests?.count{it.isJsonObject&&it.asJsonObject.get("status")?.asString.orEmpty() in listOf("بانتظار الدعم","قيد التحقق","جديدة","pending")}
             else->null
         }
         Box(Modifier.fillMaxWidth().background(Color.White).padding(horizontal = 14.dp, vertical = 9.dp)) {
