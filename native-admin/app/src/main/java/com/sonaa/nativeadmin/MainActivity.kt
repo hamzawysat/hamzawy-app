@@ -19,6 +19,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -1453,10 +1454,10 @@ private data class RowAction(val label:String,val method:String,val path:String,
                             val client=item.asJsonObject
                             val clientId=client.get("_id")?.asString?:client.get("id")?.asString.orEmpty()
                             val registered=client.get("registered")?.asBoolean?:clientId.isNotBlank()
-                            if(registered&&clientId.isNotBlank()&&onCanWriteApi("api/password-recovery/admin/support-passwords")){
+                            if(registered&&clientId.isNotBlank()&&(onCanWriteApi("api/password-recovery/admin/support-passwords")||onCanReadApi("api/password-recovery/admin/support-passwords"))){
                                 Row(Modifier.fillMaxWidth().padding(top=6.dp),horizontalArrangement=Arrangement.spacedBy(6.dp)){
-                                    OutlinedButton(onClick={vm.issueClientSupportPassword(clientId)},modifier=Modifier.weight(1f)){Text("إصدار كلمة دعم")}
-                                    OutlinedButton(onClick={vm.revealClientSupportPassword(clientId)},modifier=Modifier.weight(1f)){Text("عرض كلمة الدعم")}
+                                    if(onCanWriteApi("api/password-recovery/admin/support-passwords"))OutlinedButton(onClick={vm.issueClientSupportPassword(clientId)},modifier=Modifier.weight(1f)){Text("إصدار كلمة دعم")}
+                                    if(onCanReadApi("api/password-recovery/admin/support-passwords"))OutlinedButton(onClick={vm.revealClientSupportPassword(clientId)},modifier=Modifier.weight(1f)){Text("عرض كلمة الدعم")}
                                 }
                             }
                         }
