@@ -2425,7 +2425,7 @@ private fun storeProductCopy(source:com.google.gson.JsonObject):com.google.gson.
         }},
         confirmButton={TextButton(enabled=!busy&&name.trim().length>=2&&price.toDoubleOrNull()?.let{it>=0}==true&&(originalPrice.isBlank()||originalPrice.toDoubleOrNull()?.let{it>=0}==true)&&audience in listOf("both","client","fanni")&&priority.toIntOrNull()?.let{it in 0..100}==true&&(!advertised||adDays.toIntOrNull()?.let{it in 1..365}==true)&&(stock.isBlank()||stock.toIntOrNull()?.let{it>=0}==true),onClick={
             val adUntil=if(advertised){java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",java.util.Locale.US).apply{timeZone=java.util.TimeZone.getTimeZone("UTC")}.format(java.util.Date(System.currentTimeMillis()+(adDays.toIntOrNull()?.coerceIn(1,365)?:7)*86400000L))}else null
-            val finalCategory=newCategory.trim().ifBlank{category.trim().ifBlank{"عام"}}
+            val finalCategory=newCategory.trim().ifBlank{category.trim().ifBlank{"عام"}}.take(80)
             val body=JsonObject().apply{
                 addProperty("name",name.trim());addProperty("category",finalCategory);addProperty("price",price.toDouble())
                 if(originalPrice.isBlank())add("originalPrice",com.google.gson.JsonNull.INSTANCE)else addProperty("originalPrice",originalPrice.toDoubleOrNull())
