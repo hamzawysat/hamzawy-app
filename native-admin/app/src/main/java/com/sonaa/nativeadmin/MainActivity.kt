@@ -54,6 +54,7 @@ import com.google.firebase.messaging.FirebaseMessaging
 import coil.compose.AsyncImage
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -310,6 +311,7 @@ class MainActivity : ComponentActivity() {
             state.section == AdminSection.CLIENT_SUBSCRIPTIONS -> ClientSubscriptionsScreen(state.items,state.busy,{path->canWriteApi(state.adminInfo,path)}) { method,path,body -> vm.mutate(method,path,body) }
             state.section == AdminSection.STORE_PRODUCTS -> StoreProductsScreen(state.payload,state.items,state.busy,state.storeUploadedImageUrl,state.storeUploadedImageFileId,{uri,purpose->vm.uploadStoreImage(uri,purpose)},vm::clearStoreUpload,{path->canWriteApi(state.adminInfo,path)}) { method,path,body -> vm.mutate(method,path,body) }
             state.section == AdminSection.STORE_ORDERS -> StoreOrdersScreen(state.payload,state.items,state.busy,{path->canWriteApi(state.adminInfo,path)}) { method,path,body -> vm.mutate(method,path,body) }
+            state.section == AdminSection.UI_LAYOUT -> UiLayoutEditorScreen(state.payload,state.uiLayoutPage,state.busy,{page->vm.loadUiLayout(page)},{method,path,body->vm.mutate(method,path,body)})
             else -> ListScreen(state.section, state.items, state.sectionSearch, state.adminInbox, state.adminUnreadCount, state.notificationDeliveries, state.adminNotificationError, vm::retry, vm::loadVoice, vm::openFanniProfile, vm::openFanniIdentity, vm::issueSupportPassword, vm::revealSupportPassword, vm::issueClientSupportPassword, vm::revealClientSupportPassword, vm::openWalletTransactions, vm::openClientWalletTransactions, vm::openClientOrders, vm::openClientProfile, vm::searchClients, vm::searchSupport, vm::filterAuditLogs, vm::bulkPublish, vm::openRecovery, { section, ids, action -> vm.bulkAction(section, ids, action) }, vm::bulkRenameRegions, { path -> canWriteApi(state.adminInfo,path) }, { path -> canReadApi(state.adminInfo,path) }, { id -> vm.markAdminNotificationRead(id); Unit }, { vm.markAllAdminNotificationsRead(); Unit }) { method, path, body -> vm.mutate(method, path, body) }
         }
     }
@@ -382,7 +384,7 @@ private fun sectionGlyph(section:AdminSection):String=when(section){
  AdminSection.RECOVERY->"↻";AdminSection.NOTIFICATIONS->"♢";AdminSection.CONTENT->"▣"
  AdminSection.PRICING->"$";AdminSection.REPORTS->"▤";AdminSection.PAGE_VISITS->"◉"
  AdminSection.SECURITY->"⌑";AdminSection.SETTINGS->"⚙";AdminSection.ROLES->"♙"
- AdminSection.CLIENTS->"♧";AdminSection.CLIENT_WALLETS->"◉";AdminSection.CLIENT_TOPUPS->"+";AdminSection.COMMERCE_PLANS->"▣";AdminSection.CLIENT_SUBSCRIPTIONS->"★";AdminSection.STORE_PRODUCTS->"🛒";AdminSection.STORE_ORDERS->"📦"
+ AdminSection.CLIENTS->"♧";AdminSection.CLIENT_WALLETS->"◉";AdminSection.CLIENT_TOPUPS->"+";AdminSection.COMMERCE_PLANS->"▣";AdminSection.CLIENT_SUBSCRIPTIONS->"★";AdminSection.STORE_PRODUCTS->"🛒";AdminSection.STORE_ORDERS->"📦";AdminSection.UI_LAYOUT->"▦"
 }
 @Composable private fun VoicePlayer(path:String,onClose:()->Unit){
  var prepared by remember(path){mutableStateOf(false)}
@@ -453,7 +455,7 @@ private fun permissionKeyForNativePath(path:String):String?{
  if(clean.startsWith("api/orders/")&&clean.endsWith("/voice"))return "voiceReview"
  if(clean.startsWith("api/password-recovery/admin/requests")||clean.startsWith("api/password-recovery/admin/support-passwords"))return "passwordRecovery"
  if(clean.startsWith("api/support/admin"))return "support"
- if(clean.startsWith("api/admin/admin-users")||clean.startsWith("api/admin/audit-logs")||clean.startsWith("api/admin/page-visits"))return null
+ if(clean.startsWith("api/admin/admin-users")||clean.startsWith("api/admin/audit-logs")||clean.startsWith("api/admin/page-visits")||clean.startsWith("api/admin/ui-layout"))return null
  if(clean.startsWith("api/admin/wallet/")||clean.startsWith("api/admin/client-wallet/")||(clean.startsWith("api/admin/clients/")&&Regex("/wallet/(add-balance|deduct-balance|set-balance)$").containsMatchIn(clean))||clean.endsWith("/set-balance")||clean.endsWith("/add-balance"))return "wallet"
  val prefix="api/admin/"
  if(!clean.startsWith(prefix))return null
@@ -501,7 +503,7 @@ private fun canReadSection(info:JsonElement?,section:AdminSection):Boolean{
   AdminSection.CLIENT_WALLETS,AdminSection.CLIENT_TOPUPS->"wallet"
   AdminSection.COMMERCE_PLANS,AdminSection.CLIENT_SUBSCRIPTIONS->"commerce"
   AdminSection.STORE_PRODUCTS,AdminSection.STORE_ORDERS->"store"
-  AdminSection.SECURITY,AdminSection.PAGE_VISITS,AdminSection.ROLES->return false
+  AdminSection.SECURITY,AdminSection.PAGE_VISITS,AdminSection.ROLES,AdminSection.UI_LAYOUT->return false
  }
  return permissionDefaults(info).get(key)?.first==true
 }
