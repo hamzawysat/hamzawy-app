@@ -56,7 +56,8 @@ class AdminRepository(context:Context){
   if(mime !in listOf("image/jpeg","image/png","image/webp"))error("اختار صورة JPG أو PNG أو WebP")
   val bytes=appContext.contentResolver.openInputStream(uri)?.use{it.readBytes()}?:error("تعذر قراءة ملف الصورة")
   if(bytes.isEmpty()||bytes.size>5*1024*1024)error("حجم الصورة يجب ألا يتجاوز 5 ميجابايت")
-  return api.uploadStoreMedia("api/admin/store/media?purpose=$purpose",mime,bytes.toRequestBody(mime.toMediaType()))
+  return try{api.uploadStoreMedia("api/admin/store/media?purpose=$purpose",mime,bytes.toRequestBody(mime.toMediaType()))}
+  catch(e:HttpException){throw apiFailure(e)}
  }
  suspend fun downloadVoice(sn:String):File{
   val response=api.getVoice("api/orders/${sn}/voice")
