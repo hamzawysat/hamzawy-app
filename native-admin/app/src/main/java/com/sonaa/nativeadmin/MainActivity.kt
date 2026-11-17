@@ -418,7 +418,7 @@ private fun permissionDefaults(item:JsonElement?):Map<String,Pair<Boolean,Boolea
  val all=permissionSections.map{it.first}.toSet()
  val writes=when(role){
   "مشرف"->setOf("orders","complaints","support","offers")
-  "مشرف أول"->setOf("fannis","orders","complaints","services","clients","topups","wallet","support","regions","offers","notifications","clientsData")
+  "مشرف أول"->setOf("fannis","orders","complaints","services","clients","topups","wallet","support","regions","offers","notifications","clientsData","commerce","store")
   "مدير"->all
   else->emptySet()
  }
