@@ -2061,6 +2061,7 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
 ){
     var createOpen by remember{mutableStateOf(false)}
     var editingDetails by remember{mutableStateOf<JsonElement?>(null)}
+    var renewalTarget by remember{mutableStateOf<JsonElement?>(null)}
     var statusFilter by remember{mutableStateOf("active")}
     var subscriptionSearch by remember{mutableStateOf("")}
     fun subscriptionGroup(item:JsonElement):String{
@@ -2114,7 +2115,7 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
                     if(details.isNotBlank())Text("تفاصيل الاشتراك: $details",style=MaterialTheme.typography.bodySmall)
                     Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(5.dp)){
                         if(canWrite("api/admin/commerce/subscriptions/$id/details"))OutlinedButton(onClick={editingDetails=item},enabled=!busy,modifier=Modifier.weight(1f)){Text("التفاصيل")}
-                        if(canWrite("api/admin/commerce/subscriptions/$id/renew"))OutlinedButton(onClick={onAction("POST","api/admin/commerce/subscriptions/$id/renew",JsonObject())},enabled=!busy,modifier=Modifier.weight(1f)){Text("تجديد")}
+                        if(canWrite("api/admin/commerce/subscriptions/$id/renew"))OutlinedButton(onClick={renewalTarget=item},enabled=!busy,modifier=Modifier.weight(1f)){Text("تجديد")}
                     }
                     Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(5.dp)){
                         if(canWrite("api/admin/commerce/subscriptions/$id/status"))OutlinedButton(onClick={onAction("PATCH","api/admin/commerce/subscriptions/$id/status",JsonObject().apply{addProperty("status",if(status=="active")"paused" else "active");addProperty("reason","تحديث من تطبيق الإدارة")})},enabled=!busy,modifier=Modifier.weight(1f)){Text(if(status=="active")"إيقاف مؤقت" else "تفعيل")}
@@ -2154,6 +2155,18 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
             text={OutlinedTextField(details,{details=it},label={Text("بيانات الاشتراك أو السيريال")},minLines=4)},
             confirmButton={TextButton(enabled=!busy,onClick={onAction("PATCH","api/admin/commerce/subscriptions/$id/details",JsonObject().apply{addProperty("details",details.trim())});editingDetails=null}){Text("حفظ")}},
             dismissButton={TextButton(onClick={editingDetails=null}){Text("إلغاء")}}
+        )
+    }
+}
+    renewalTarget?.let{item->
+        val o=item.asJsonObject
+        val id=o.get("_id")?.asString?:o.get("id")?.asString.orEmpty()
+        AlertDialog(
+            onDismissRequest={renewalTarget=null},
+            title={Text("تأكيد تجديد الاشتراك")},
+            text={Text("هل تريد تجديد اشتراك "+(o.get("itemName")?.asString?: "العميل")+" للعميل "+(o.get("client")?.asJsonObject?.get("name")?.asString?: "—")+"؟")},
+            confirmButton={TextButton(enabled=!busy,onClick={onAction("POST","api/admin/commerce/subscriptions/$id/renew",JsonObject());renewalTarget=null}){Text("تأكيد التجديد")}},
+            dismissButton={TextButton(onClick={renewalTarget=null}){Text("إلغاء")}}
         )
     }
 }
