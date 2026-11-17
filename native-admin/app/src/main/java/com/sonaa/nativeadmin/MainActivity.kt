@@ -51,6 +51,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
 import com.google.firebase.messaging.FirebaseMessaging
+import coil.compose.AsyncImage
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import java.text.SimpleDateFormat
@@ -61,6 +62,7 @@ import java.util.TimeZone
 private val Accent = Color(0xFF087F9C)
 private val DarkAccent = Color(0xFF07566B)
 private val Background = Color(0xFFF4F8FA)
+private fun storeImageSource(value:String):String = if(value.startsWith("/")) "https://www.hamzawy-sat.dynv6.net"+value else value
 class MainActivity : ComponentActivity() {
     private var pendingDestination by mutableStateOf<String?>(null)
     private var activeAdminViewModel: AdminViewModel? = null
@@ -2182,10 +2184,12 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
             val name=o.get("name")?.asString.orEmpty()
             val category=o.get("category")?.asString.orEmpty()
             val price=o.get("price")?.toString().orEmpty()
+            val productImage=o.get("imageUrl")?.takeIf{!it.isJsonNull}?.asString.orEmpty()
             val active=o.get("isActive")?.asBoolean!=false
             val advertised=o.get("isAdvertised")?.asBoolean==true
             Card(Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=Color.White)){
                 Column(Modifier.padding(12.dp),verticalArrangement=Arrangement.spacedBy(5.dp)){
+                    if(productImage.isNotBlank())AsyncImage(model=storeImageSource(productImage),contentDescription="صورة "+name,modifier=Modifier.fillMaxWidth().heightIn(max=180.dp),contentScale=ContentScale.Fit)
                     Text(name,fontWeight=FontWeight.Bold,color=DarkAccent)
                     Text(category+" • "+price+" جنيه • "+if(active)"ظاهر" else "مخفي",style=MaterialTheme.typography.bodySmall,color=if(active)Color(0xFF16834B) else Color(0xFFB3261E))
                     Text(if(o.get("type")?.asString=="subscription")"اشتراك / تجديد"+(o.get("subscriptionDuration")?.takeIf{!it.isJsonNull}?.asString?.let{" • "+it}.orEmpty()) else "منتج",style=MaterialTheme.typography.labelSmall,color=Color(0xFF0B7285))
@@ -2264,6 +2268,7 @@ private fun storeProductCopy(source:com.google.gson.JsonObject):com.google.gson.
             OutlinedTextField(description,{description=it},label={Text("الوصف المختصر")},minLines=2)
             OutlinedTextField(details,{details=it},label={Text("التفاصيل والمواصفات")},minLines=3)
             OutlinedTextField(imageUrl,{imageUrl=it;if(!it.startsWith("/api/store/media/"))imageFileId=""},label={Text("رابط الصورة أو مسار صورة المتجر")},singleLine=true)
+            if(imageUrl.isNotBlank())AsyncImage(model=storeImageSource(imageUrl),contentDescription="معاينة صورة المنتج",modifier=Modifier.fillMaxWidth().heightIn(max=180.dp),contentScale=ContentScale.Fit)
             OutlinedTextField(imageFileId,{imageFileId=it},label={Text("معرّف ملف الصورة (اختياري)")},singleLine=true)
             OutlinedButton(onClick={imagePicker.launch("image/*")},enabled=!busy,modifier=Modifier.fillMaxWidth()){Text("اختيار صورة من الجهاز ورفعها إلى MongoDB")}
             OutlinedTextField(stock,{stock=it},label={Text("الكمية — اتركها فارغة بدون تحديد")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Number),singleLine=true)
@@ -2320,6 +2325,7 @@ private fun storeProductCopy(source:com.google.gson.JsonObject):com.google.gson.
         text={Column(verticalArrangement=Arrangement.spacedBy(7.dp)){
             OutlinedTextField(name,{name=it},label={Text("اسم القسم")},singleLine=true)
             OutlinedTextField(imageUrl,{imageUrl=it;if(!it.startsWith("/api/store/media/"))imageFileId=""},label={Text("رابط صورة القسم (اختياري)")},singleLine=true)
+            if(imageUrl.isNotBlank())AsyncImage(model=storeImageSource(imageUrl),contentDescription="معاينة صورة القسم",modifier=Modifier.fillMaxWidth().heightIn(max=160.dp),contentScale=ContentScale.Fit)
             OutlinedTextField(imageFileId,{imageFileId=it},label={Text("معرّف ملف صورة القسم (اختياري)")},singleLine=true)
             OutlinedButton(onClick={imagePicker.launch("image/*")},enabled=!busy,modifier=Modifier.fillMaxWidth()){Text("اختيار صورة للقسم من الجهاز")}
         }},
