@@ -2018,7 +2018,7 @@ private fun storeProductCopy(source:com.google.gson.JsonObject):com.google.gson.
     val imagePicker=rememberLauncherForActivityResult(ActivityResultContracts.GetContent()){uri->if(uri!=null)onUploadImage(uri)}
     val source=initial?.asJsonObject
     var name by remember(initial,create){mutableStateOf(source?.get("name")?.asString.orEmpty())}
-    var imageUrl by remember(initial,create){mutableStateOf(source?.get("imageUrl")?.asString?:source?.get("customImageUrl")?.asString.orEmpty())}
+    var imageUrl by remember(initial,create){mutableStateOf(source?.get("customImageUrl")?.asString.orEmpty())}
     var imageFileId by remember(initial,create){mutableStateOf(source?.get("imageFileId")?.takeIf{!it.isJsonNull}?.asString.orEmpty())}
     LaunchedEffect(uploadedImageUrl,uploadedImageFileId){
         if(!uploadedImageUrl.isNullOrBlank()&&!uploadedImageFileId.isNullOrBlank()){
