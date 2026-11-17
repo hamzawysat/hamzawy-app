@@ -1612,6 +1612,34 @@ private data class RowAction(val label:String,val method:String,val path:String,
         dismissButton={TextButton(onClick={notifyOpen=false}){Text("إلغاء")}}
     )
     if(bulkRegionEditOpen) AlertDialog(onDismissRequest={bulkRegionEditOpen=false},title={Text("تعديل أسماء المناطق المحددة")},text={Column(Modifier.heightIn(max=480.dp).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(8.dp)){bulkRegionNames.toList().forEach{(id,name)->OutlinedTextField(value=name,onValueChange={value->bulkRegionNames=bulkRegionNames.toMutableMap().apply{put(id,value)}},label={Text("الاسم الجديد — $name")},singleLine=true,modifier=Modifier.fillMaxWidth())}}},confirmButton={TextButton(onClick={val clean=bulkRegionNames.mapValues{it.value.trim().replace(Regex("\\s+")," ")};if(clean.values.any{it.length<2||it.length>100})return@TextButton;bulkRegionEditOpen=false;selectedBulk=emptySet();onBulkRenameRegions(clean)},enabled=bulkRegionNames.isNotEmpty()&&bulkRegionNames.values.all{it.trim().length in 2..100}){Text("حفظ الأسماء")}},dismissButton={TextButton(onClick={bulkRegionEditOpen=false}){Text("إلغاء")}})
+    if(createAdminOpen)AlertDialog(
+        onDismissRequest={createAdminOpen=false;adminFanniMenuExpanded=false;adminRoleMenuExpanded=false},
+        title={Text("ترقية فني إلى منصب إداري")},
+        text={Column(verticalArrangement=Arrangement.spacedBy(8.dp)){
+            val selectedTechnician=eligibleAdminTechnicians.firstOrNull{entry->val o=entry.asJsonObject;o.get("_id")?.asString==selectedAdminFanniId||o.get("id")?.asString==selectedAdminFanniId}
+            val selectedObject=selectedTechnician?.asJsonObject
+            OutlinedButton(onClick={adminFanniMenuExpanded=true},modifier=Modifier.fillMaxWidth()){
+                Text(selectedObject?.let{(it.get("name")?.asString.orEmpty()+" — "+it.get("phone")?.asString.orEmpty()).trim(' ','—')}?: "اختر فنيًا معتمدًا")
+            }
+            DropdownMenu(expanded=adminFanniMenuExpanded,onDismissRequest={adminFanniMenuExpanded=false}){
+                eligibleAdminTechnicians.forEach{entry->
+                    val o=entry.asJsonObject
+                    val id=o.get("_id")?.asString?:o.get("id")?.asString.orEmpty()
+                    DropdownMenuItem(text={Text(o.get("name")?.asString.orEmpty()+" — "+o.get("phone")?.asString.orEmpty())},onClick={selectedAdminFanniId=id;adminFanniMenuExpanded=false})
+                }
+            }
+            OutlinedButton(onClick={adminRoleMenuExpanded=true},modifier=Modifier.fillMaxWidth()){Text("المنصب: $selectedAdminRole")}
+            DropdownMenu(expanded=adminRoleMenuExpanded,onDismissRequest={adminRoleMenuExpanded=false}){
+                listOf("مشرف","مشرف أول","مدير","قراءة فقط").forEach{role->DropdownMenuItem(text={Text(role)},onClick={selectedAdminRole=role;adminRoleMenuExpanded=false})}
+            }
+            Text("تُطبّق الصلاحيات الافتراضية للمنصب تلقائيًا.",style=MaterialTheme.typography.bodySmall,color=Color.Gray)
+        }},
+        confirmButton={TextButton(enabled=!busy&&selectedAdminFanniId.isNotBlank(),onClick={
+            val body=JsonObject().apply{addProperty("fanniId",selectedAdminFanniId);addProperty("role",selectedAdminRole)}
+            onAction("POST","api/admin/admin-users",body);createAdminOpen=false
+        }){Text("ترقية الفني")}},
+        dismissButton={TextButton(onClick={createAdminOpen=false}){Text("إلغاء")}}
+    )
     pendingBulk?.let{pendingAction->
         AlertDialog(
             onDismissRequest={pendingBulk=null},
@@ -1687,6 +1715,10 @@ private data class RowAction(val label:String,val method:String,val path:String,
     Column(Modifier.fillMaxSize().padding(horizontal = 14.dp)) {
         OutlinedTextField(query, { query = it }, modifier = Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 6.dp), label = { Text("بحث في " + section.title) }, singleLine = true)
         if(section==AdminSection.CLIENTS) Button(onClick={onClientSearch(query)},enabled=query.trim().length>=2,modifier=Modifier.fillMaxWidth()){Text("بحث في جميع العملاء على الخادم")}
+        if(section==AdminSection.ROLES&&onCanWriteApi("api/admin/admin-users")){
+            if(eligibleAdminTechnicians.isEmpty())Text("لا يوجد فني معتمد متاح للترقية حاليًا.",style=MaterialTheme.typography.bodySmall,color=Color.Gray)
+            Button(onClick={selectedAdminFanniId=eligibleAdminTechnicians.firstOrNull()?.let{it.asJsonObject.get("_id")?.asString?:it.asJsonObject.get("id")?.asString}.orEmpty();createAdminOpen=true},enabled=eligibleAdminTechnicians.isNotEmpty(),modifier=Modifier.fillMaxWidth()){Text("ترقية فني معتمد إلى منصب إداري")}
+        }
         if(section==AdminSection.ORDERS){
             Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(7.dp),verticalAlignment=Alignment.CenterVertically){
                 OutlinedTextField(deleteClientOrdersPhone,{deleteClientOrdersPhone=it.filter{ch->ch.isDigit()}.take(11)},modifier=Modifier.weight(1f),label={Text("حذف طلبات رقم العميل")},placeholder={Text("01xxxxxxxxx")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Phone),singleLine=true)
