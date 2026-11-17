@@ -117,6 +117,10 @@ test('push notification taps open the relevant wallet, orders, or admin section'
 test('native admin push service handles order and wallet notification types and respects server destination', () => {
   const servicePath = path.join(root, 'native-admin/app/src/main/java/com/sonaa/nativeadmin/SonaaMessagingService.kt');
   const service = fs.readFileSync(servicePath, 'utf8');
+  const mainActivity = fs.readFileSync(path.join(root, 'native-admin/app/src/main/java/com/sonaa/nativeadmin/MainActivity.kt'), 'utf8');
+  assert.ok(service.includes('sendBroadcast(Intent(ACTION_TOKEN_REFRESHED)'));
+  assert.ok(mainActivity.includes('activeAdminViewModel?.registerFcm(it)'));
+  assert.ok(mainActivity.includes('RECEIVER_NOT_EXPORTED'));
   assert.ok(service.includes('message.data["destination"]'));
   assert.ok(service.includes('"fanni_wallet_settlement"'));
   assert.ok(service.includes('"admin_order_offer_accepted"'));
