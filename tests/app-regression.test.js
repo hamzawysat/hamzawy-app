@@ -842,6 +842,7 @@ test('push notification taps route technician and client wallet events to the wa
   assert.match(hook, /if \(!session\) return;/);
   assert.match(hook, /clearLastNotificationResponseAsync/);
   assert.match(screens, /fanni_wallet_credit/);
+  assert.match(screens, /wallet_credit/);
   assert.match(screens, /fanni_wallet_settlement/);
   assert.match(screens, /setTechData\(current => \(\{ \.\.\.current, tab: 'wallet' \}\)\)/);
   assert.match(screens, /type\.startsWith\('client_wallet_'\)/);
