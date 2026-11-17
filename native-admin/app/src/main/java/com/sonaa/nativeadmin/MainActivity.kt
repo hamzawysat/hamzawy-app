@@ -1899,9 +1899,14 @@ private fun storeProductCopy(source:com.google.gson.JsonObject):com.google.gson.
 @Composable private fun StoreProductEditor(
     initial:JsonElement?,
     busy:Boolean,
+    uploadedImageUrl:String?,
+    uploadedImageFileId:String?,
+    onUploadImage:(android.net.Uri)->Unit,
+    onClearUpload:()->Unit,
     onDismiss:()->Unit,
     onSave:(String,String,JsonObject)->Unit
 ){
+    val imagePicker=rememberLauncherForActivityResult(ActivityResultContracts.GetContent()){uri->if(uri!=null)onUploadImage(uri)}
     val source=initial?.asJsonObject
     var name by remember(initial){mutableStateOf(source?.get("name")?.asString.orEmpty())}
     var category by remember(initial){mutableStateOf(source?.get("category")?.asString?: "عام")}
@@ -1920,6 +1925,11 @@ private fun storeProductCopy(source:com.google.gson.JsonObject):com.google.gson.
     var audience by remember(initial){mutableStateOf(source?.get("adAudience")?.asString?: "both")}
     var priority by remember(initial){mutableStateOf(source?.get("adPriority")?.toString()?: "0")}
     var adDays by remember(initial){mutableStateOf("7")}
+    LaunchedEffect(uploadedImageUrl,uploadedImageFileId){
+        if(!uploadedImageUrl.isNullOrBlank()&&!uploadedImageFileId.isNullOrBlank()){
+            imageUrl=uploadedImageUrl;imageFileId=uploadedImageFileId;onClearUpload()
+        }
+    }
     AlertDialog(
         onDismissRequest=onDismiss,
         title={Text(if(initial==null)"إضافة منتج" else "تعديل المنتج")},
@@ -1935,6 +1945,7 @@ private fun storeProductCopy(source:com.google.gson.JsonObject):com.google.gson.
             OutlinedTextField(details,{details=it},label={Text("التفاصيل والمواصفات")},minLines=3)
             OutlinedTextField(imageUrl,{imageUrl=it},label={Text("رابط الصورة أو مسار صورة المتجر")},singleLine=true)
             OutlinedTextField(imageFileId,{imageFileId=it},label={Text("معرّف ملف الصورة (اختياري)")},singleLine=true)
+            OutlinedButton(onClick={onClick@{imagePicker.launch("image/*")}},enabled=!busy,modifier=Modifier.fillMaxWidth()){Text("اختيار صورة من الجهاز ورفعها إلى MongoDB")}
             OutlinedTextField(stock,{stock=it},label={Text("الكمية — اتركها فارغة بدون تحديد")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Number),singleLine=true)
             Row(verticalAlignment=Alignment.CenterVertically){Text("المنتج ظاهر في المتجر",modifier=Modifier.weight(1f));Switch(active,{active=it})}
             Row(verticalAlignment=Alignment.CenterVertically){Text("نشر المنتج كإعلان",modifier=Modifier.weight(1f));Switch(advertised,{advertised=it})}
@@ -1965,13 +1976,23 @@ private fun storeProductCopy(source:com.google.gson.JsonObject):com.google.gson.
     initial:JsonElement?,
     create:Boolean,
     busy:Boolean,
+    uploadedImageUrl:String?,
+    uploadedImageFileId:String?,
+    onUploadImage:(android.net.Uri)->Unit,
+    onClearUpload:()->Unit,
     onDismiss:()->Unit,
     onSave:(String,String,JsonObject)->Unit
 ){
+    val imagePicker=rememberLauncherForActivityResult(ActivityResultContracts.GetContent()){uri->if(uri!=null)onUploadImage(uri)}
     val source=initial?.asJsonObject
     var name by remember(initial,create){mutableStateOf(source?.get("name")?.asString.orEmpty())}
-    var imageUrl by remember(initial,create){mutableStateOf(source?.get("customImageUrl")?.asString.orEmpty())}
+    var imageUrl by remember(initial,create){mutableStateOf(source?.get("imageUrl")?.asString?:source?.get("customImageUrl")?.asString.orEmpty())}
     var imageFileId by remember(initial,create){mutableStateOf(source?.get("imageFileId")?.takeIf{!it.isJsonNull}?.asString.orEmpty())}
+    LaunchedEffect(uploadedImageUrl,uploadedImageFileId){
+        if(!uploadedImageUrl.isNullOrBlank()&&!uploadedImageFileId.isNullOrBlank()){
+            imageUrl=uploadedImageUrl;imageFileId=uploadedImageFileId;onClearUpload()
+        }
+    }
     val oldName=source?.get("name")?.asString?:name
     AlertDialog(
         onDismissRequest=onDismiss,
@@ -1980,6 +2001,7 @@ private fun storeProductCopy(source:com.google.gson.JsonObject):com.google.gson.
             OutlinedTextField(name,{name=it},label={Text("اسم القسم")},singleLine=true)
             OutlinedTextField(imageUrl,{imageUrl=it},label={Text("رابط صورة القسم (اختياري)")},singleLine=true)
             OutlinedTextField(imageFileId,{imageFileId=it},label={Text("معرّف ملف صورة القسم (اختياري)")},singleLine=true)
+            OutlinedButton(onClick={imagePicker.launch("image/*")},enabled=!busy,modifier=Modifier.fillMaxWidth()){Text("اختيار صورة للقسم من الجهاز")}
         }},
         confirmButton={TextButton(enabled=!busy&&name.trim().length in 2..80,onClick={
             val body=JsonObject().apply{addProperty("name",name.trim());addProperty("imageUrl",imageUrl.trim());if(imageFileId.isBlank())add("imageFileId",com.google.gson.JsonNull.INSTANCE)else addProperty("imageFileId",imageFileId.trim())}
