@@ -100,7 +100,7 @@ class AdminViewModel(app:Application):AndroidViewModel(app){
   _state.value=_state.value.copy(busy=true,error=null,identityFanniId=id,identityFrontPath=null,identityBackPath=null)
   try{
    val front=repo.downloadFanniIdentity(id,"front")
-   val back=repo.downloadFanniIdentity(id,"back")
+   val back=try{repo.downloadFanniIdentity(id,"back")}catch(e:Exception){front.delete();throw e}
    _state.value=_state.value.copy(busy=false,identityFrontPath=front.absolutePath,identityBackPath=back.absolutePath)
   }catch(e:Exception){_state.value=_state.value.copy(busy=false,error=e.message?: "تعذر تحميل صور بطاقة الفني")}
  }
