@@ -303,7 +303,7 @@ class MainActivity : ComponentActivity() {
             state.editingClient!=null -> ClientProfileEditor(state.editingClient,state.editingClientId.orEmpty(),{vm.closeClientProfile()}) { method:String,path:String,body:JsonObject -> vm.saveEditedProfile(method,path,body) }
             state.editingProfile!=null -> ProfileEditor(state.editingProfile,state.editingProfileId.orEmpty(),{vm.closeProfile()}) { method:String,path:String,body:JsonObject -> vm.saveEditedProfile(method,path,body) }
             state.recoveryDetail!=null -> RecoveryConversationScreen(state.recoveryDetail,state.busy,state.error,state.actionMessage,vm::closeRecovery,{path->canWriteApi(state.adminInfo,path)}) { method,path,body -> vm.recoveryAction(method,path,body) }
-            state.section == AdminSection.SUPPORT -> SupportAdminScreen(state.supportCases,state.supportSelectedCase,state.actionMessage,{vm.retry()},{id->vm.openSupportCase(id)},{method,path,body->vm.supportAction(method,path,body)},{path->canWriteApi(state.adminInfo,path)})
+            state.section == AdminSection.SUPPORT -> SupportAdminScreen(state.supportCases,state.supportViolations,state.supportSearchResults,state.supportSelectedCase,state.actionMessage,{vm.retry()},{id->vm.openSupportCase(id)},{query->vm.searchSupport(query)},{method,path,body->vm.supportAction(method,path,body)},{path->canWriteApi(state.adminInfo,path)})
             state.section == AdminSection.COMMERCE_PLANS -> CommercePlansScreen(state.items,state.busy,state.storeUploadedImageUrl,state.storeUploadedImageFileId,{uri,purpose->vm.uploadStoreImage(uri,purpose)},vm::clearStoreUpload,{path->canWriteApi(state.adminInfo,path)}) { method,path,body -> vm.mutate(method,path,body) }
             state.section == AdminSection.CLIENT_SUBSCRIPTIONS -> ClientSubscriptionsScreen(state.items,state.busy,{path->canWriteApi(state.adminInfo,path)}) { method,path,body -> vm.mutate(method,path,body) }
             state.section == AdminSection.STORE_PRODUCTS -> StoreProductsScreen(state.payload,state.items,state.busy,state.storeUploadedImageUrl,state.storeUploadedImageFileId,{uri,purpose->vm.uploadStoreImage(uri,purpose)},vm::clearStoreUpload,{path->canWriteApi(state.adminInfo,path)}) { method,path,body -> vm.mutate(method,path,body) }
@@ -805,14 +805,18 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
 
 @Composable private fun SupportAdminScreen(
  cases:List<JsonElement>,
+ violations:List<JsonElement>,
+ searchResults:List<JsonElement>,
  selected:JsonElement?,
  notice:String?,
  onRefresh:()->Unit,
  onOpen:(String)->Unit,
+ onSearch:(String)->Unit,
  onAction:(String,String,JsonObject)->Unit,
  canWrite:(String)->Boolean
 ){
  var reply by remember(selected){mutableStateOf("")}
+ var supportQuery by remember{mutableStateOf("")}
  var statusMenu by remember(selected){mutableStateOf(false)}
  var status by remember(selected){mutableStateOf(selected?.takeIf{it.isJsonObject}?.asJsonObject?.get("status")?.asString?: "جديدة")}
  val statuses=listOf("جديدة","بانتظار الدعم","قيد المعالجة","بانتظار رد المستخدم","تم الحل","مغلقة")
@@ -824,6 +828,37 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
    TextButton(onClick=onRefresh){Text("تحديث")}
   }
   Text("إجمالي الحالات المحمّلة: ${cases.size}",style=MaterialTheme.typography.bodySmall,color=Color.Gray)
+  OutlinedTextField(supportQuery,{supportQuery=it},modifier=Modifier.fillMaxWidth(),label={Text("بحث برقم الطلب أو الهاتف أو كود التتبع")},singleLine=true)
+  Button(onClick={onSearch(supportQuery)},enabled=supportQuery.trim().length>=2,modifier=Modifier.fillMaxWidth()){Text("بحث في الطلبات والشكاوى")}
+  if(searchResults.isNotEmpty()){
+   Text("نتائج البحث (${searchResults.size})",fontWeight=FontWeight.Bold,color=DarkAccent)
+   searchResults.forEach{entry->
+    val item=entry.takeIf{it.isJsonObject}?.asJsonObject?:return@forEach
+    val sn=item.get("sn")?.takeIf{!it.isJsonNull}?.asString.orEmpty()
+    val label=item.get("service")?.takeIf{!it.isJsonNull}?.asString?:item.get("text")?.takeIf{!it.isJsonNull}?.asString.orEmpty()
+    Card(Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=Color.White)){
+     Column(Modifier.padding(10.dp),verticalArrangement=Arrangement.spacedBy(3.dp)){
+      Text(if(sn.isNotBlank())"الطلب/الشكوى: $sn" else "نتيجة دعم",fontWeight=FontWeight.Bold,color=DarkAccent)
+      Text(label,style=MaterialTheme.typography.bodySmall)
+      Text("العميل: "+(item.get("clientName")?.toString()?.trim('"')?: "—")+" • الهاتف: "+(item.get("clientPhone")?.toString()?.trim('"')?: "—"),style=MaterialTheme.typography.labelSmall,color=Color.Gray)
+      Text("الحالة: "+(item.get("status")?.toString()?.trim('"')?: "—"),style=MaterialTheme.typography.labelSmall,color=Color.Gray)
+     }
+    }
+   }
+  }
+  Text("سجل مخالفات/عمليات الدعم (${violations.size})",fontWeight=FontWeight.Bold,color=DarkAccent)
+  if(violations.isEmpty())Text("لا توجد سجلات دعم مسجلة.",color=Color.Gray)
+  violations.forEach{entry->
+   val item=entry.takeIf{it.isJsonObject}?.asJsonObject?:return@forEach
+   Card(Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=Color(0xFFFFF8E8))){
+    Column(Modifier.padding(10.dp),verticalArrangement=Arrangement.spacedBy(3.dp)){
+     Text(item.get("action")?.toString()?.trim('"')?: "إجراء دعم",fontWeight=FontWeight.Bold,color=DarkAccent)
+     Text("المستهدف: "+(item.get("target")?.toString()?.trim('"')?: "—")+" • المشرف: "+(item.get("adminName")?.toString()?.trim('"')?: "—"),style=MaterialTheme.typography.bodySmall)
+     Text(item.get("details")?.toString()?.trim('"')?: "—",style=MaterialTheme.typography.bodySmall,color=Color.Gray)
+     Text(item.get("createdAt")?.toString()?.trim('"')?: "—",style=MaterialTheme.typography.labelSmall,color=Color.Gray)
+    }
+   }
+  }
   if(!notice.isNullOrBlank())Text(notice,color=Color(0xFF087F55),fontWeight=FontWeight.Bold)
   Text("قائمة المحادثات",fontWeight=FontWeight.Bold,color=DarkAccent)
   if(cases.isEmpty())Text("لا توجد محادثات دعم حاليًا",color=Color.Gray)
