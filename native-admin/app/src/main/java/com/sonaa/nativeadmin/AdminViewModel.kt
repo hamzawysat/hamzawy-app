@@ -373,7 +373,7 @@ class AdminViewModel(app:Application):AndroidViewModel(app){
   load(_state.value.section,true)
  }
  fun loadVoice(sn:String)=viewModelScope.launch{_state.value=_state.value.copy(busy=true,error=null);try{val file=repo.downloadVoice(sn);_state.value=_state.value.copy(busy=false,voicePath=file.absolutePath)}catch(e:Exception){_state.value=_state.value.copy(busy=false,error=e.message?: "تعذر تحميل التسجيل الصوتي")}}
- fun retry(){refreshDashboardSnapshot();if(_state.value.section==AdminSection.UI_LAYOUT)loadUiLayout(_state.value.uiLayoutPage)else load(_state.value.section)}
+ fun retry(){if(_state.value.section==AdminSection.DASHBOARD)load(AdminSection.DASHBOARD)else{refreshDashboardSnapshot();if(_state.value.section==AdminSection.UI_LAYOUT)loadUiLayout(_state.value.uiLayoutPage)else load(_state.value.section)}}
  fun logout()=viewModelScope.launch{repo.logout();_state.value=AdminUiState(checking=false)}
  fun registerFcm(token:String)=viewModelScope.launch{runCatching{repo.registerFcm(token)}}
 }
