@@ -308,7 +308,7 @@ private fun sectionGlyph(section:AdminSection):String=when(section){
  AdminSection.RECOVERY->"↻";AdminSection.NOTIFICATIONS->"♢";AdminSection.CONTENT->"▣"
  AdminSection.PRICING->"$";AdminSection.REPORTS->"▤";AdminSection.PAGE_VISITS->"◉"
  AdminSection.SECURITY->"⌑";AdminSection.SETTINGS->"⚙";AdminSection.ROLES->"♙"
- AdminSection.CLIENTS->"♧";AdminSection.CLIENT_WALLETS->"◉"
+ AdminSection.CLIENTS->"♧";AdminSection.CLIENT_WALLETS->"◉";AdminSection.CLIENT_TOPUPS->"+"
 }
 @Composable private fun VoicePlayer(path:String,onClose:()->Unit){
  var prepared by remember(path){mutableStateOf(false)}
@@ -420,7 +420,7 @@ private fun canReadSection(info:JsonElement?,section:AdminSection):Boolean{
   AdminSection.CONTENT->"content"
   AdminSection.PRICING->"pricing"
   AdminSection.SETTINGS->"settings"
-  AdminSection.CLIENTS,AdminSection.CLIENT_WALLETS->"clients"
+  AdminSection.CLIENTS,AdminSection.CLIENT_WALLETS,AdminSection.CLIENT_TOPUPS->"clients"
   AdminSection.SECURITY,AdminSection.PAGE_VISITS,AdminSection.ROLES->return false
  }
  return permissionDefaults(info).get(key)?.first==true
@@ -1553,6 +1553,10 @@ private fun rowActions(section:AdminSection,item:JsonElement):List<RowAction>{
     RowAction("حذف الخدمة","DELETE","api/admin/services/$id"+categoryQuery)
    )
   }
+  AdminSection.CLIENT_TOPUPS->listOf(
+   RowAction("اعتماد الشحن وإضافة الرصيد","POST","api/admin/client-wallet/topup-requests/$id/approve"),
+   RowAction("رفض طلب الشحن","POST","api/admin/client-wallet/topup-requests/$id/reject",JsonObject(),"reason","سبب الرفض (اختياري)")
+  )
   AdminSection.CLIENTS->if(phone!=null)listOf(
    RowAction("حظر العميل","POST","api/admin/clients/${Uri.encode(phone)}/block",JsonObject(),"reason","سبب الحظر (مطلوب)"),
    RowAction("إلغاء الحظر","POST","api/admin/clients/${Uri.encode(phone)}/unblock"),
