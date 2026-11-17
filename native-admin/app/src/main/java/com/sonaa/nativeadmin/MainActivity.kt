@@ -1640,3 +1640,151 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
     return listOf("status", "phone", "clientPhone", "area", "region", "createdAt", "specialties", "message", "adminNote", "orderCount", "lastOrder")
         .mapNotNull { k -> item.asJsonObject.get(k)?.takeIf { !it.isJsonNull }?.let { "$k: $it" } }.take(4).joinToString("  •  ")
 }
+
+
+@Composable private fun CommercePlansScreen(
+    items:List<JsonElement>,
+    busy:Boolean,
+    canWrite:(String)->Boolean,
+    onAction:(String,String,JsonObject)->Unit
+){
+    var editing by remember{mutableStateOf<JsonElement?>(null)}
+    var createOpen by remember{mutableStateOf(false)}
+    Column(Modifier.fillMaxSize().padding(14.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){
+        Text("باقات الاشتراك",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold,color=DarkAccent)
+        Text("إدارة كتالوج الباقات والأسعار والمدد وحالة الإتاحة",style=MaterialTheme.typography.bodySmall,color=Color.Gray)
+        if(canWrite("api/admin/commerce/catalog"))Button(onClick={editing=null;createOpen=true},enabled=!busy,modifier=Modifier.fillMaxWidth()){Text("إضافة باقة جديدة")}
+        if(items.isEmpty())Text(if(busy)"جاري تحميل الباقات..." else "لا توجد باقات اشتراك",color=Color.Gray)
+        items.forEach{item->
+            val o=item.takeIf{it.isJsonObject}?.asJsonObject?:return@forEach
+            val id=o.get("_id")?.asString?:o.get("id")?.asString.orEmpty()
+            val name=o.get("name")?.asString.orEmpty()
+            val price=o.get("price")?.toString().orEmpty()
+            val days=o.get("durationDays")?.toString().orEmpty()
+            val description=o.get("description")?.asString.orEmpty()
+            val active=o.get("active")?.asBoolean!=false
+            Card(Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=Color.White)){
+                Column(Modifier.padding(14.dp),verticalArrangement=Arrangement.spacedBy(5.dp)){
+                    Text(name.ifBlank{"باقة بدون اسم"},fontWeight=FontWeight.Bold,color=DarkAccent)
+                    Text("$price جنيه • $days يوم • "+if(active)"متاحة" else "متوقفة",color=if(active)Color(0xFF16834B) else Color(0xFFB3261E))
+                    if(description.isNotBlank())Text(description,color=Color.DarkGray,style=MaterialTheme.typography.bodySmall)
+                    Text("معرّف الباقة: $id",style=MaterialTheme.typography.labelSmall,color=Color.Gray)
+                    Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(7.dp)){
+                        if(canWrite("api/admin/commerce/catalog/$id"))OutlinedButton(onClick={editing=item},enabled=!busy,modifier=Modifier.weight(1f)){Text("تعديل")}
+                        if(canWrite("api/admin/commerce/catalog/$id"))OutlinedButton(onClick={onAction("PATCH","api/admin/commerce/catalog/$id",JsonObject().apply{addProperty("active",!active)})},enabled=!busy,modifier=Modifier.weight(1f)){Text(if(active)"إيقاف" else "تفعيل")}
+                    }
+                }
+            }
+        }
+    }
+    if(createOpen||editing!=null){
+        val current=editing
+        var name by remember(current){mutableStateOf(current?.asJsonObject?.get("name")?.asString.orEmpty())}
+        var price by remember(current){mutableStateOf(current?.asJsonObject?.get("price")?.toString().orEmpty())}
+        var days by remember(current){mutableStateOf(current?.asJsonObject?.get("durationDays")?.toString()?: "30")}
+        var description by remember(current){mutableStateOf(current?.asJsonObject?.get("description")?.asString.orEmpty())}
+        var features by remember(current){mutableStateOf(current?.asJsonObject?.get("features")?.takeIf{it.isJsonArray}?.asJsonArray?.joinToString(", "){it.asString}.orEmpty())}
+        var active by remember(current){mutableStateOf(current?.asJsonObject?.get("active")?.asBoolean!=false)}
+        AlertDialog(
+            onDismissRequest={createOpen=false;editing=null},
+            title={Text(if(current==null)"إضافة باقة اشتراك" else "تعديل باقة الاشتراك")},
+            text={Column(Modifier.heightIn(max=520.dp).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(7.dp)){
+                OutlinedTextField(name,{name=it},label={Text("اسم الباقة")},singleLine=true)
+                OutlinedTextField(price,{price=it},label={Text("السعر بالجنيه")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Decimal),singleLine=true)
+                OutlinedTextField(days,{days=it},label={Text("مدة الاشتراك بالأيام")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Number),singleLine=true)
+                OutlinedTextField(description,{description=it},label={Text("وصف الباقة")},minLines=2)
+                OutlinedTextField(features,{features=it},label={Text("المميزات — افصل بينها بفاصلة")},minLines=2)
+                Row(verticalAlignment=Alignment.CenterVertically){Text("الباقة متاحة",modifier=Modifier.weight(1f));Switch(active,{active=it})}
+            }},
+            confirmButton={TextButton(enabled=!busy&&name.trim().length>=2&&price.toDoubleOrNull()?.let{it>=0}==true&&days.toIntOrNull()?.let{it in 1..3650}==true,onClick={
+                val body=JsonObject().apply{
+                    addProperty("name",name.trim());addProperty("price",price.toDouble());addProperty("durationDays",days.toInt())
+                    addProperty("description",description.trim());addProperty("active",active)
+                    add("features",com.google.gson.JsonArray().apply{features.split(',', '،').map{it.trim()}.filter{it.isNotEmpty()}.take(30).forEach{add(it)}})
+                }
+                val id=current?.asJsonObject?.get("_id")?.asString?:current?.asJsonObject?.get("id")?.asString
+                onAction(if(id==null)"POST" else "PATCH",if(id==null)"api/admin/commerce/catalog" else "api/admin/commerce/catalog/$id",body)
+                createOpen=false;editing=null
+            }){Text("حفظ")}},
+            dismissButton={TextButton(onClick={createOpen=false;editing=null}){Text("إلغاء")}}
+        )
+    }
+}
+
+@Composable private fun ClientSubscriptionsScreen(
+    items:List<JsonElement>,
+    busy:Boolean,
+    canWrite:(String)->Boolean,
+    onAction:(String,String,JsonObject)->Unit
+){
+    var createOpen by remember{mutableStateOf(false)}
+    var editingDetails by remember{mutableStateOf<JsonElement?>(null)}
+    Column(Modifier.fillMaxSize().padding(14.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){
+        Text("اشتراكات العملاء",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold,color=DarkAccent)
+        Text("متابعة الاشتراكات النشطة والمعلقة والمنتهية وتجديدها",style=MaterialTheme.typography.bodySmall,color=Color.Gray)
+        if(canWrite("api/admin/commerce/subscriptions"))Button(onClick={createOpen=true},enabled=!busy,modifier=Modifier.fillMaxWidth()){Text("إضافة اشتراك لعميل")}
+        if(items.isEmpty())Text(if(busy)"جاري تحميل الاشتراكات..." else "لا توجد اشتراكات",color=Color.Gray)
+        items.forEach{item->
+            val o=item.takeIf{it.isJsonObject}?.asJsonObject?:return@forEach
+            val id=o.get("_id")?.asString?:o.get("id")?.asString.orEmpty()
+            val client=o.get("client")?.takeIf{it.isJsonObject}?.asJsonObject
+            val clientName=client?.get("name")?.asString.orEmpty()
+            val clientPhone=client?.get("phone")?.asString.orEmpty()
+            val itemName=o.get("itemName")?.asString.orEmpty()
+            val status=o.get("status")?.asString.orEmpty()
+            val payment=o.get("paymentStatus")?.asString.orEmpty()
+            val amount=o.get("amount")?.toString().orEmpty()
+            val end=o.get("endsAt")?.asString.orEmpty().take(10)
+            val details=o.get("subscriptionDetails")?.asString.orEmpty()
+            Card(Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=Color.White)){
+                Column(Modifier.padding(13.dp),verticalArrangement=Arrangement.spacedBy(5.dp)){
+                    Text(clientName.ifBlank{"عميل"}+" • "+itemName,fontWeight=FontWeight.Bold,color=DarkAccent)
+                    Text(clientPhone,color=Color.Gray,style=MaterialTheme.typography.bodySmall)
+                    Text("الحالة: $status • الدفع: $payment • القيمة: $amount جنيه",style=MaterialTheme.typography.bodySmall)
+                    Text("ينتهي: "+end.ifBlank{"—"},style=MaterialTheme.typography.bodySmall,color=Color.Gray)
+                    if(details.isNotBlank())Text("تفاصيل الاشتراك: $details",style=MaterialTheme.typography.bodySmall)
+                    Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(5.dp)){
+                        if(canWrite("api/admin/commerce/subscriptions/$id/details"))OutlinedButton(onClick={editingDetails=item},enabled=!busy,modifier=Modifier.weight(1f)){Text("التفاصيل")}
+                        if(canWrite("api/admin/commerce/subscriptions/$id/renew"))OutlinedButton(onClick={onAction("POST","api/admin/commerce/subscriptions/$id/renew",JsonObject())},enabled=!busy,modifier=Modifier.weight(1f)){Text("تجديد")}
+                    }
+                    Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(5.dp)){
+                        if(canWrite("api/admin/commerce/subscriptions/$id/status"))OutlinedButton(onClick={onAction("PATCH","api/admin/commerce/subscriptions/$id/status",JsonObject().apply{addProperty("status",if(status=="active")"paused" else "active");addProperty("reason","تحديث من تطبيق الإدارة")})},enabled=!busy,modifier=Modifier.weight(1f)){Text(if(status=="active")"إيقاف مؤقت" else "تفعيل")}
+                        if(canWrite("api/admin/commerce/subscriptions/$id/status"))OutlinedButton(onClick={onAction("PATCH","api/admin/commerce/subscriptions/$id/status",JsonObject().apply{addProperty("status","cancelled");addProperty("reason","إلغاء من تطبيق الإدارة")})},enabled=!busy,modifier=Modifier.weight(1f)){Text("إلغاء الاشتراك")}
+                    }
+                }
+            }
+        }
+    }
+    if(createOpen){
+        var phone by remember{mutableStateOf("")}
+        var itemId by remember{mutableStateOf("")}
+        var activate by remember{mutableStateOf(true)}
+        AlertDialog(
+            onDismissRequest={createOpen=false},
+            title={Text("إضافة اشتراك عميل")},
+            text={Column(verticalArrangement=Arrangement.spacedBy(8.dp)){
+                OutlinedTextField(phone,{phone=it},label={Text("رقم هاتف العميل المسجل")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Phone),singleLine=true)
+                OutlinedTextField(itemId,{itemId=it},label={Text("معرّف الباقة")},singleLine=true)
+                Text("يمكنك نسخ معرّف الباقة من قسم باقات الاشتراك.",style=MaterialTheme.typography.bodySmall,color=Color.Gray)
+                Row(verticalAlignment=Alignment.CenterVertically){Text("تفعيل فوري وخصم السعر من المحفظة",modifier=Modifier.weight(1f),style=MaterialTheme.typography.bodySmall);Switch(activate,{activate=it})}
+                if(!activate)Text("سيُنشأ طلب اشتراك بانتظار التفعيل دون خصم من المحفظة.",style=MaterialTheme.typography.bodySmall,color=Color.Gray)
+            }},
+            confirmButton={TextButton(enabled=!busy&&phone.trim().isNotBlank()&&itemId.trim().isNotBlank(),onClick={
+                val body=JsonObject().apply{addProperty("clientPhone",phone.trim());addProperty("itemId",itemId.trim());addProperty("status",if(activate)"active" else "pending");addProperty("paymentStatus",if(activate)"paid" else "pending")}
+                onAction("POST","api/admin/commerce/subscriptions",body);createOpen=false
+            }){Text("إنشاء الاشتراك")}},
+            dismissButton={TextButton(onClick={createOpen=false}){Text("إلغاء")}}
+        )
+    }
+    editingDetails?.let{item->
+        val id=item.asJsonObject.get("_id")?.asString?:item.asJsonObject.get("id")?.asString.orEmpty()
+        var details by remember(item){mutableStateOf(item.asJsonObject.get("subscriptionDetails")?.asString.orEmpty())}
+        AlertDialog(
+            onDismissRequest={editingDetails=null},
+            title={Text("تفاصيل الاشتراك")},
+            text={OutlinedTextField(details,{details=it},label={Text("بيانات الاشتراك أو السيريال")},minLines=4)},
+            confirmButton={TextButton(enabled=!busy,onClick={onAction("PATCH","api/admin/commerce/subscriptions/$id/details",JsonObject().apply{addProperty("details",details.trim())});editingDetails=null}){Text("حفظ")}},
+            dismissButton={TextButton(onClick={editingDetails=null}){Text("إلغاء")}}
+        )
+    }
+}
