@@ -56,9 +56,38 @@ class AdminRepository(context:Context){
   if(purpose !in listOf("product","category"))error("نوع صورة المتجر غير صالح")
   val mime=appContext.contentResolver.getType(uri)?.substringBefore(";")?.lowercase()?:error("تعذر تحديد نوع الصورة")
   if(mime !in listOf("image/jpeg","image/png","image/webp"))error("اختار صورة JPG أو PNG أو WebP")
-  val bytes=appContext.contentResolver.openInputStream(uri)?.use{it.readBytes()}?:error("تعذر قراءة ملف الصورة")
-  if(bytes.isEmpty()||bytes.size>5*1024*1024)error("حجم الصورة يجب ألا يتجاوز 5 ميجابايت")
-  try{api.uploadStoreMedia("api/admin/store/media?purpose=$purpose",mime,bytes.toRequestBody(mime.toMediaType()))}
+  val sourceBytes=appContext.contentResolver.openInputStream(uri)?.use{it.readBytes()}?:error("تعذر قراءة ملف الصورة")
+  if(sourceBytes.isEmpty()||sourceBytes.size>20*1024*1024)error("حجم الصورة الأصلية يجب ألا يتجاوز 20 ميجابايت")
+  var bytes=sourceBytes
+  var uploadMime=mime
+  if(sourceBytes.size>5*1024*1024){
+   val bounds=android.graphics.BitmapFactory.Options().apply{inJustDecodeBounds=true}
+   android.graphics.BitmapFactory.decodeByteArray(sourceBytes,0,sourceBytes.size,bounds)
+   if(bounds.outWidth>0&&bounds.outHeight>0){
+    var sample=1
+    while(maxOf(bounds.outWidth/sample,bounds.outHeight/sample)>1600)sample*=2
+    val options=android.graphics.BitmapFactory.Options().apply{inSampleSize=sample}
+    val bitmap=android.graphics.BitmapFactory.decodeByteArray(sourceBytes,0,sourceBytes.size,options)
+    if(bitmap!=null){
+     try{
+      val scale=minOf(1f,1600f/maxOf(bitmap.width,bitmap.height))
+      val resized=if(scale<1f)android.graphics.Bitmap.createScaledBitmap(bitmap,(bitmap.width*scale).toInt().coerceAtLeast(1),(bitmap.height*scale).toInt().coerceAtLeast(1),true) else bitmap
+      try{
+       var compressed:ByteArray?=null
+       for(quality in listOf(82,72,62)){
+        val output=java.io.ByteArrayOutputStream()
+        resized.compress(android.graphics.Bitmap.CompressFormat.WEBP,quality,output)
+        val candidate=output.toByteArray()
+        if(candidate.size<=5*1024*1024){compressed=candidate;break}
+       }
+       if(compressed!=null){bytes=compressed;uploadMime="image/webp"}
+      }finally{if(resized!==bitmap)resized.recycle()}
+     }finally{bitmap.recycle()}
+    }
+   }
+  }
+  if(bytes.size>5*1024*1024)error("حجم الصورة بعد الضغط يجب ألا يتجاوز 5 ميجابايت. اختار صورة أصغر.")
+  try{api.uploadStoreMedia("api/admin/store/media?purpose=$purpose",uploadMime,bytes.toRequestBody(uploadMime.toMediaType()))}
   catch(e:HttpException){throw apiFailure(e)}
  }
  suspend fun downloadFanniIdentity(id:String,side:String):File=withContext(Dispatchers.IO){
