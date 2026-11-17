@@ -11,6 +11,7 @@ import com.google.firebase.messaging.RemoteMessage
 class SonaaMessagingService : FirebaseMessagingService() {
     override fun onNewToken(token: String) {
         getSharedPreferences("sonaa_admin_session", Context.MODE_PRIVATE).edit().putString("pending_fcm_token", token).apply()
+        sendBroadcast(Intent(ACTION_TOKEN_REFRESHED).setPackage(packageName).putExtra("token", token))
     }
     override fun onMessageReceived(message: RemoteMessage) {
         val type = message.data["type"].orEmpty()
@@ -59,6 +60,7 @@ class SonaaMessagingService : FirebaseMessagingService() {
         else -> "support"
     }
     companion object {
+        const val ACTION_TOKEN_REFRESHED = "com.sonaa.nativeadmin.FCM_TOKEN_REFRESHED"
         fun createChannels(manager: NotificationManager) {
             if (Build.VERSION.SDK_INT >= 26) listOf(
                 "order_new" to "طلبات جديدة", "fanni_register" to "تسجيل فني جديد",
