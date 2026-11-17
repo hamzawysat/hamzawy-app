@@ -60,7 +60,7 @@ export function TechnicianDashboard({ context }) {
     const serviceMatch = technicianServiceFilter === 'الكل' || String(item.service || item.specialty || '') === technicianServiceFilter;
     return (!query || haystack.includes(query)) && serviceMatch;
   });
-    const tabs = [{ key: 'home', label: 'الرئيسية' }, { key: 'available', label: `الفرص (${filteredAvailableOrders.length})` }, { key: 'offers', label: `عروضي (${technicianOffers.filter(o => !isAcceptedJob(o) && !isCompletedJob(o)).length})` }, { key: 'currentJobs', label: `الطلبات الجارية (${technicianOffers.filter(o => isAcceptedJob(o) && !isCompletedJob(o)).length})` }, { key: 'completed', label: `المكتملة` }, { key: 'wallet', label: 'المحفظة' }, { key: 'store', label: 'المتجر' }, { key: 'profile', label: 'حسابي' }, { key: 'support', label: 'الدعم الفني' }];
+    const tabs = [{ key: 'home', label: 'الرئيسية' }, { key: 'available', label: `الفرص (${filteredAvailableOrders.length})` }, { key: 'offers', label: `عروضي (${technicianOffers.filter(o => !isAcceptedJob(o) && !isCompletedJob(o)).length})` }, { key: 'currentJobs', label: `الطلبات الجارية (${technicianOffers.filter(o => isAcceptedJob(o) && !isCompletedJob(o)).length})` }, { key: 'completed', label: 'المكتملة' }, { key: 'wallet', label: 'المحفظة' }, { key: 'store', label: 'المتجر' }, { key: 'profile', label: 'حسابي' }, { key: 'support', label: 'الدعم الفني' }, { key: '__empty', empty: true }];
   const hasMoreAvailable = technicianOrdersPagination
     ? Number(technicianOrdersPagination.page || 1) < Number(technicianOrdersPagination.pages || 1)
     : technicianOrders.length >= 20;
@@ -88,7 +88,7 @@ export function TechnicianDashboard({ context }) {
           </View>
         </View>
       </View>
-      <View style={styles.tabRowPremium}>{tabs.map(item => <TouchableOpacity key={item.key} onPress={() => item.key === 'support' ? setScreen('support') : setTechData(v => ({ ...v, tab: item.key }))} style={[styles.pillPremium, tab === item.key && styles.pillPremiumActive]}><Text style={[styles.pillPremiumText, tab === item.key && styles.pillPremiumTextActive]}>{item.label}</Text></TouchableOpacity>)}</View>
+      <View style={[styles.tabRowPremium, { justifyContent: 'space-between', gap: 0 }]}>{tabs.map(item => item.empty ? <View key={item.key} accessible={false} importantForAccessibility="no" pointerEvents="none" style={[styles.pillPremium, { flexBasis: '19%', maxWidth: '19%' }]} /> : <TouchableOpacity key={item.key} onPress={() => item.key === 'support' ? setScreen('support') : setTechData(v => ({ ...v, tab: item.key }))} style={[styles.pillPremium, { flexBasis: '19%', maxWidth: '19%' }, tab === item.key && styles.pillPremiumActive]}><Text style={[styles.pillPremiumText, tab === item.key && styles.pillPremiumTextActive]}>{item.label}</Text></TouchableOpacity>)}</View>
       <StoreAdBanner role="fanni" session={session} visible={tab !== 'store'} onOpenStore={() => setTechData(v => ({ ...v, tab: 'store' }))} />
       {offerDraft ? <View style={styles.formCard}>
         <Text style={styles.cardTitlePremium}>تقديم عرض على {offerDraft.order.service || 'الخدمة'} — {offerDraft.order.sn}</Text>
