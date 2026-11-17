@@ -681,7 +681,8 @@ test('embedded client account keeps the site name and removes only the account h
   assert.ok(!account.includes('>حسابي</Text>'), 'account heading must be removed from source');
   assert.ok(account.includes('<View style={styles.dataCard}>'));
   assert.ok(client.includes('أهلًا {session.user?.name || \'بك\'}'));
-  assert.ok(client.includes('عميل صُنّاع'));
+  assert.ok(client.includes('عميل'), 'client role label should use the approved generic wording');
+  assert.ok(!client.includes('عميل صُنّاع'), 'legacy client role label should not remain');
   assert.ok(client.includes('<PublicContentBanner />'), 'client account should use the same visible site name as other tabs');
 });
 
