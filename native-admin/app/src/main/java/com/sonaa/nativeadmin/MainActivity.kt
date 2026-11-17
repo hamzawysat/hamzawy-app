@@ -391,7 +391,7 @@ private fun permissionKeyForNativePath(path:String):String?{
   "topup-requests"->"topups"
   "clients"->"clients"
   "client-accounts"->"clientsData"
-  "client-wallet"->"clients"
+  "client-wallet"->"wallet"
   "pricing"->"pricing"
   "settings"->"settings"
   "content"->"content"
