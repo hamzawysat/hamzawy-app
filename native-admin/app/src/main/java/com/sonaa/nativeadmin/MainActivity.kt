@@ -1358,7 +1358,7 @@ private data class RowAction(val label:String,val method:String,val path:String,
                             Text("تحديد للإجراء الجماعي",style=MaterialTheme.typography.labelSmall,color=Color.Gray)
                         }
                         Text(primary(item), fontWeight = FontWeight.Bold, color = DarkAccent)
-                        val detail = secondary(item)
+                        val detail = secondary(item, section)
                         if (detail.isNotBlank()) Text(detail, color = Color.DarkGray, modifier = Modifier.padding(top = 5.dp))
                         if(section==AdminSection.OFFERS && item.isJsonObject){
                             val orderSn=item.asJsonObject.get("sn")?.asString.orEmpty()
@@ -1569,8 +1569,21 @@ private fun primary(item: JsonElement): String {
     val keys = listOf("name", "title", "service", "sn", "clientName", "fanniName", "text", "regionName")
     return keys.firstNotNullOfOrNull { k -> o.get(k)?.takeIf { it.isJsonPrimitive && !it.asString.isNullOrBlank() }?.asString } ?: "عنصر"
 }
-private fun secondary(item: JsonElement): String {
+private fun secondary(item: JsonElement, section: AdminSection): String {
     if (!item.isJsonObject) return ""
+    val obj=item.asJsonObject
+    if(section==AdminSection.CLIENTS){
+        fun value(key:String):String=obj.get(key)?.takeIf{!it.isJsonNull}?.toString()?.trim('"').orEmpty()
+        val parts=mutableListOf<String>()
+        value("phone").takeIf{it.isNotBlank()}?.let{parts.add("الهاتف: $it")}
+        value("status").takeIf{it.isNotBlank()}?.let{parts.add("الحالة: "+if(it=="معلق")"موقوف" else it)}
+        value("orderCount").takeIf{it.isNotBlank()}?.let{parts.add("الطلبات: $it")}
+        value("ratingAverage").takeIf{it.isNotBlank()}?.let{parts.add("التقييم: $it")}
+        value("ratingCount").takeIf{it.isNotBlank()}?.let{parts.add("عدد التقييمات: $it")}
+        value("completedJobs").takeIf{it.isNotBlank()}?.let{parts.add("أعمال مكتملة: $it")}
+        value("walletFrozen").takeIf{it=="true"}?.let{parts.add("المحفظة مجمدة")}
+        return parts.joinToString("  •  ")
+    }
     return listOf("status", "phone", "clientPhone", "area", "region", "createdAt", "specialties", "message", "adminNote", "orderCount", "lastOrder")
         .mapNotNull { k -> item.asJsonObject.get(k)?.takeIf { !it.isJsonNull }?.let { "$k: $it" } }.take(4).joinToString("  •  ")
 }
