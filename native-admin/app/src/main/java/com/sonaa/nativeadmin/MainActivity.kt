@@ -1905,8 +1905,13 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
                 Column(Modifier.padding(12.dp),verticalArrangement=Arrangement.spacedBy(5.dp)){
                     Text(name,fontWeight=FontWeight.Bold,color=DarkAccent)
                     Text(category+" • "+price+" جنيه • "+if(active)"ظاهر" else "مخفي",style=MaterialTheme.typography.bodySmall,color=if(active)Color(0xFF16834B) else Color(0xFFB3261E))
+                    Text(if(o.get("type")?.asString=="subscription")"اشتراك / تجديد"+(o.get("subscriptionDuration")?.takeIf{!it.isJsonNull}?.asString?.let{" • "+it}.orEmpty()) else "منتج",style=MaterialTheme.typography.labelSmall,color=Color(0xFF0B7285))
+                    o.get("description")?.takeIf{!it.isJsonNull}?.asString?.takeIf{it.isNotBlank()}?.let{Text(it,style=MaterialTheme.typography.bodySmall,color=Color.DarkGray)}
+                    o.get("offerText")?.takeIf{!it.isJsonNull}?.asString?.takeIf{it.isNotBlank()}?.let{Text("العرض: "+it,style=MaterialTheme.typography.bodySmall,color=Color(0xFF9A6700))}
+                    o.get("originalPrice")?.takeIf{!it.isJsonNull}?.toString()?.let{oldPrice->if(oldPrice.toDoubleOrNull()!=null&&(oldPrice.toDouble()>price.toDoubleOrNull()?:0.0))Text("السعر قبل العرض: "+oldPrice+" جنيه",style=MaterialTheme.typography.labelSmall,color=Color.Gray)}
                     Text(if(advertised)"منشور كإعلان" else "غير منشور كإعلان",style=MaterialTheme.typography.labelSmall,color=if(advertised)Color(0xFF9A6700) else Color.Gray)
                     Text("المخزون: "+(o.get("stock")?.takeIf{!it.isJsonNull}?.toString()?: "غير محدد"),style=MaterialTheme.typography.bodySmall,color=Color.Gray)
+                    o.get("imageUrl")?.takeIf{!it.isJsonNull}?.asString?.takeIf{it.isNotBlank()}?.let{Text("الصورة: "+it,style=MaterialTheme.typography.labelSmall,color=Color.Gray,maxLines=1,overflow=TextOverflow.Ellipsis)}
                     Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(5.dp)){
                         if(canWrite("api/admin/store/products/"+id))OutlinedButton(onClick={editing=item},enabled=!busy,modifier=Modifier.weight(1f)){Text("تعديل")}
                         if(canWrite("api/admin/store/products/"+id))OutlinedButton(onClick={onAction("PUT","api/admin/store/products/"+id,storeProductCopy(o).apply{addProperty("isActive",!active)})},enabled=!busy,modifier=Modifier.weight(1f)){Text(if(active)"إخفاء" else "إظهار")}
