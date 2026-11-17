@@ -1182,9 +1182,11 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
         val array=root.get("sectionOrder")?.takeIf{it.isJsonArray}?.asJsonArray?:return
         val target=(index+delta).coerceIn(0,array.size()-1)
         if(target==index)return
-        val moved=array.remove(index)
-        array.add(target,moved)
-        root.add("sectionOrder",array)
+        val reordered=array.toList().toMutableList()
+        val moved=reordered.removeAt(index)
+        reordered.add(target,moved)
+        val updated=com.google.gson.JsonArray().apply{reordered.forEach{add(it)}}
+        root.add("sectionOrder",updated)
         raw=root.toString()
     }
     fun moveTab(sectionId:String,index:Int,delta:Int){
@@ -1193,9 +1195,11 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
         val array=groups.get(sectionId)?.takeIf{it.isJsonArray}?.asJsonArray?:return
         val target=(index+delta).coerceIn(0,array.size()-1)
         if(target==index)return
-        val moved=array.remove(index)
-        array.add(target,moved)
-        groups.add(sectionId,array)
+        val reordered=array.toList().toMutableList()
+        val moved=reordered.removeAt(index)
+        reordered.add(target,moved)
+        val updated=com.google.gson.JsonArray().apply{reordered.forEach{add(it)}}
+        groups.add(sectionId,updated)
         root.add("tabOrder",groups)
         raw=root.toString()
     }
