@@ -2058,3 +2058,88 @@ private fun storeProductCopy(source:com.google.gson.JsonObject):com.google.gson.
         }
     }
 }
+
+
+private data class StoreCsvPreview(val products:List<JsonObject>,val errors:List<String>)
+private fun parseStoreCsvProducts(source:String):StoreCsvPreview{
+    val firstLine=source.lineSequence().firstOrNull().orEmpty()
+    val delimiter=listOf(',', ';', '\t').maxByOrNull{firstLine.count{ch->ch==it}}?:','
+    val rows=mutableListOf<List<String>>()
+    val row=mutableListOf<String>()
+    val cell=StringBuilder()
+    var quoted=false
+    var index=0
+    while(index<source.length){
+        val ch=source[index]
+        when{
+            ch=='"'&&quoted&&index+1<source.length&&source[index+1]=='"'->{cell.append('"');index++}
+            ch=='"'->{quoted=!quoted}
+            ch==delimiter&&!quoted->{row.add(cell.toString().trim());cell.setLength(0)}
+            (ch=='\n'||ch=='\r')&&!quoted->{
+                if(ch=='\r'&&index+1<source.length&&source[index+1]=='\n')index++
+                row.add(cell.toString().trim());cell.setLength(0)
+                if(row.any{it.isNotBlank()})rows.add(row.toList())
+                row.clear()
+            }
+            else->cell.append(ch)
+        }
+        index++
+    }
+    row.add(cell.toString().trim())
+    if(row.any{it.isNotBlank()})rows.add(row.toList())
+    if(rows.size<2)error("ملف CSV يجب أن يحتوي على صف عناوين وصف منتج واحد على الأقل")
+    fun norm(value:String)=value.trim().lowercase().replace(Regex("[\\s_\\-]+"),"")
+    val aliases=mapOf(
+        "name" to listOf("name","product","productname","title","اسم","اسم المنتج","المنتج"),
+        "price" to listOf("price","currentprice","السعر","السعر الحالي"),
+        "category" to listOf("category","section","group","القسم","الفئة","التصنيف"),
+        "originalPrice" to listOf("originalprice","oldprice","السعر القديم","السعر قبل العرض"),
+        "offerText" to listOf("offer","offertext","العرض","تفاصيل العرض"),
+        "description" to listOf("description","desc","الوصف","الوصف المختصر"),
+        "details" to listOf("details","specifications","التفاصيل","المواصفات"),
+        "type" to listOf("type","نوع المنتج","النوع"),
+        "subscriptionDuration" to listOf("duration","subscriptionduration","مدة الاشتراك"),
+        "stock" to listOf("stock","quantity","qty","المخزون","الكمية")
+    )
+    val headers=rows.first()
+    val mapping=aliases.mapValues{(_,names)->headers.indexOfFirst{header->names.any{norm(header)==norm(it)}}}
+    if((mapping["name"]?:-1)<0||(mapping["price"]?:-1)<0)error("لازم ملف CSV يحتوي على عمود اسم المنتج وعمود السعر")
+    fun cellAt(cells:List<String>,key:String):String{
+        val col=mapping[key]?:-1
+        return if(col>=0)cells.getOrNull(col).orEmpty().trim() else ""
+    }
+    fun number(raw:String):Double?{
+        if(raw.isBlank())return null
+        val english=raw.map{ch->when(ch){in '٠'..'٩'->('0'.code+(ch-'٠')).toChar();in '۰'..'۹'->('0'.code+(ch-'۰')).toChar();else->ch}}.joinToString("")
+            .replace("٫",".").replace("٬","").replace(" ","").replace(",",".").replace(Regex("[^0-9.\\-]"),"")
+        return english.toDoubleOrNull()
+    }
+    val valid=mutableListOf<JsonObject>()
+    val errors=mutableListOf<String>()
+    rows.drop(1).forEachIndexed{rowIndex,cells->
+        if(cells.all{it.isBlank()})return@forEachIndexed
+        val rowNumber=rowIndex+2
+        val name=cellAt(cells,"name")
+        val price=number(cellAt(cells,"price"))
+        if(name.length !in 2..120){errors.add("الصف "+rowNumber+": اسم المنتج مطلوب ومن حرفين إلى 120 حرفًا");return@forEachIndexed}
+        if(price==null||price<0||price>100000000){errors.add("الصف "+rowNumber+": السعر غير صحيح");return@forEachIndexed}
+        val originalRaw=cellAt(cells,"originalPrice")
+        val original=if(originalRaw.isBlank())null else number(originalRaw)
+        if(originalRaw.isNotBlank()&&(original==null||original<0||original>100000000)){errors.add("الصف "+rowNumber+": السعر قبل العرض غير صحيح");return@forEachIndexed}
+        val stockRaw=cellAt(cells,"stock")
+        val stock=if(stockRaw.isBlank())null else number(stockRaw)?.toInt()
+        if(stockRaw.isNotBlank()&&(stock==null||stock<0)){errors.add("الصف "+rowNumber+": الكمية يجب أن تكون عددًا صحيحًا غير سالب");return@forEachIndexed}
+        val rawType=cellAt(cells,"type")
+        val type=if(rawType.contains("اشتراك")||rawType.equals("subscription",true))"subscription" else "product"
+        valid.add(JsonObject().apply{
+            addProperty("name",name);addProperty("category",cellAt(cells,"category").ifBlank{"عام"});addProperty("price",price)
+            if(original==null)add("originalPrice",com.google.gson.JsonNull.INSTANCE)else addProperty("originalPrice",original)
+            addProperty("offerText",cellAt(cells,"offerText"));addProperty("description",cellAt(cells,"description"));addProperty("details",cellAt(cells,"details"))
+            addProperty("type",type);addProperty("subscriptionDuration",cellAt(cells,"subscriptionDuration"));addProperty("imageUrl","");add("imageFileId",com.google.gson.JsonNull.INSTANCE)
+            addProperty("isActive",true);addProperty("isAdvertised",false);addProperty("adAudience","both");addProperty("adPriority",0);add("adExpiresAt",com.google.gson.JsonNull.INSTANCE)
+            if(stock==null)add("stock",com.google.gson.JsonNull.INSTANCE)else addProperty("stock",stock)
+        })
+    }
+    if(valid.size>500)error("الحد الأقصى للاستيراد 500 منتج في الدفعة الواحدة. قسّم الملف إلى دفعات.")
+    return StoreCsvPreview(valid,errors)
+}
