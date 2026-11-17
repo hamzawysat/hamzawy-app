@@ -15,6 +15,7 @@ export function usePushNotifications(session, onNotificationResponse) {
   const responseHandlerRef = useRef(onNotificationResponse);
   useEffect(() => { responseHandlerRef.current = onNotificationResponse; }, [onNotificationResponse]);
   useEffect(() => {
+    if (!session) return;
     let cancelled = false;
     let lastResponseIdentifier = '';
     const handleResponse = response => {
