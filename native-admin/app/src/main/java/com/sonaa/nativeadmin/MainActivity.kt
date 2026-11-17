@@ -1652,6 +1652,10 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
 @Composable private fun CommercePlansScreen(
     items:List<JsonElement>,
     busy:Boolean,
+    uploadedImageUrl:String?,
+    uploadedImageFileId:String?,
+    onUploadImage:(android.net.Uri,String)->Unit,
+    onClearUpload:()->Unit,
     canWrite:(String)->Boolean,
     onAction:(String,String,JsonObject)->Unit
 ){
@@ -1880,8 +1884,8 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
             }
         }
     }
-    if(editing!=null)StoreProductEditor(editing?.takeIf{it.isJsonObject&&it.asJsonObject.size()>0},busy,{editing=null}){method,path,body->onAction(method,path,body);editing=null}
-    if(categoryCreate||categoryEditing!=null)StoreCategoryEditor(categoryEditing,categoryCreate,busy,{categoryCreate=false;categoryEditing=null}){method,path,body->onAction(method,path,body);categoryCreate=false;categoryEditing=null}
+    if(editing!=null)StoreProductEditor(editing?.takeIf{it.isJsonObject&&it.asJsonObject.size()>0},busy,uploadedImageUrl,uploadedImageFileId,{uri->onUploadImage(uri,"product")},onClearUpload,{editing=null}){method,path,body->onAction(method,path,body);editing=null}
+    if(categoryCreate||categoryEditing!=null)StoreCategoryEditor(categoryEditing,categoryCreate,busy,uploadedImageUrl,uploadedImageFileId,{uri->onUploadImage(uri,"category")},onClearUpload,{categoryCreate=false;categoryEditing=null}){method,path,body->onAction(method,path,body);categoryCreate=false;categoryEditing=null}
 }
 
 private fun storeProductCopy(source:com.google.gson.JsonObject):com.google.gson.JsonObject{
