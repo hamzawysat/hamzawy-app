@@ -60,9 +60,9 @@ class AdminRepository(context:Context){
   if(sourceBytes.isEmpty()||sourceBytes.size>20*1024*1024)error("حجم الصورة الأصلية يجب ألا يتجاوز 20 ميجابايت")
   var bytes=sourceBytes
   var uploadMime=mime
-  if(sourceBytes.size>5*1024*1024){
-   val bounds=android.graphics.BitmapFactory.Options().apply{inJustDecodeBounds=true}
-   android.graphics.BitmapFactory.decodeByteArray(sourceBytes,0,sourceBytes.size,bounds)
+  val bounds=android.graphics.BitmapFactory.Options().apply{inJustDecodeBounds=true}
+  android.graphics.BitmapFactory.decodeByteArray(sourceBytes,0,sourceBytes.size,bounds)
+  if(sourceBytes.size>5*1024*1024||maxOf(bounds.outWidth,bounds.outHeight)>1600){
    if(bounds.outWidth>0&&bounds.outHeight>0){
     var sample=1
     while(maxOf(bounds.outWidth/sample,bounds.outHeight/sample)>1600)sample*=2
@@ -78,7 +78,7 @@ class AdminRepository(context:Context){
         val output=java.io.ByteArrayOutputStream()
         resized.compress(android.graphics.Bitmap.CompressFormat.WEBP,quality,output)
         val candidate=output.toByteArray()
-        if(candidate.size<=5*1024*1024){compressed=candidate;break}
+        if(candidate.size<=5*1024*1024&&candidate.size<sourceBytes.size){compressed=candidate;break}
        }
        if(compressed!=null){bytes=compressed;uploadMime="image/webp"}
       }finally{if(resized!==bitmap)resized.recycle()}
