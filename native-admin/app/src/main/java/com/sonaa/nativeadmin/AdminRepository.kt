@@ -61,7 +61,7 @@ class AdminRepository(context:Context){
   try{api.uploadStoreMedia("api/admin/store/media?purpose=$purpose",mime,bytes.toRequestBody(mime.toMediaType()))}
   catch(e:HttpException){throw apiFailure(e)}
  }
- suspend fun downloadFanniIdentity(id:String,side:String):File{
+ suspend fun downloadFanniIdentity(id:String,side:String):File=withContext(Dispatchers.IO){
   if(side !in listOf("front","back"))error("وجه البطاقة غير صالح")
   val response=api.getVoice("api/fanni/admin/"+id+"/identity/"+side)
   if(!response.isSuccessful)throw apiFailure(HttpException(response))
@@ -69,7 +69,7 @@ class AdminRepository(context:Context){
   if(bytes.isEmpty()||bytes.size>10*1024*1024)error("حجم صورة البطاقة غير صالح")
   val file=File(appContext.cacheDir,"fanni-identity-"+id+"-"+side+"-"+System.currentTimeMillis()+".img")
   file.writeBytes(bytes)
-  return file
+  file
  }
  suspend fun downloadVoice(sn:String):File{
   val response=api.getVoice("api/orders/${sn}/voice")
