@@ -889,3 +889,16 @@ test('push notification taps route technician and client wallet events to the wa
   assert.match(screens, /setNotificationsOpen\(false\)/);
   assert.match(screens, /setTechData\(current => \(\{ \.\.\.current, tab: 'wallet' \}\)\)/);
 });
+
+
+test('technician can pause new opportunities without affecting current orders or notifications', () => {
+  const screen = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianDashboard.js'), 'utf8');
+  const backendContract = screen.includes("api('/fanni/availability'") &&
+    screen.includes("acceptingOrders: nextValue");
+  assert.ok(backendContract, 'technician app must persist availability through the backend');
+  assert.ok(screen.includes('استقبال الطلبات الجديدة متوقف'), 'paused available-orders tab must explain why no opportunities appear');
+  assert.ok(screen.includes('رسائل العملاء ما زالت تعمل بشكل طبيعي'), 'paused state must reassure that current customer messages continue');
+  assert.ok(screen.includes("acceptingOrders: result.acceptingOrders !== false"), 'server-confirmed availability must update the technician profile');
+  assert.ok(app.includes('Notifications.setNotificationHandler('), 'native notification delivery must remain enabled');
+  assert.ok(app.includes('Notifications.addNotificationResponseReceivedListener'), 'notification tap handling must remain enabled');
+});
