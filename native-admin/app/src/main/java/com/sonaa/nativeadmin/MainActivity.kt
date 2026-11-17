@@ -1650,7 +1650,7 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
 ){
     var editing by remember{mutableStateOf<JsonElement?>(null)}
     var createOpen by remember{mutableStateOf(false)}
-    Column(Modifier.fillMaxSize().padding(14.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(14.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){
         Text("باقات الاشتراك",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold,color=DarkAccent)
         Text("إدارة كتالوج الباقات والأسعار والمدد وحالة الإتاحة",style=MaterialTheme.typography.bodySmall,color=Color.Gray)
         if(canWrite("api/admin/commerce/catalog"))Button(onClick={editing=null;createOpen=true},enabled=!busy,modifier=Modifier.fillMaxWidth()){Text("إضافة باقة جديدة")}
@@ -1719,7 +1719,7 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
 ){
     var createOpen by remember{mutableStateOf(false)}
     var editingDetails by remember{mutableStateOf<JsonElement?>(null)}
-    Column(Modifier.fillMaxSize().padding(14.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(14.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){
         Text("اشتراكات العملاء",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold,color=DarkAccent)
         Text("متابعة الاشتراكات النشطة والمعلقة والمنتهية وتجديدها",style=MaterialTheme.typography.bodySmall,color=Color.Gray)
         if(canWrite("api/admin/commerce/subscriptions"))Button(onClick={createOpen=true},enabled=!busy,modifier=Modifier.fillMaxWidth()){Text("إضافة اشتراك لعميل")}
