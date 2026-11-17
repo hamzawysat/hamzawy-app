@@ -972,13 +972,6 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
  var service by remember{mutableStateOf("")}
  var area by remember{mutableStateOf("")}
  val context=LocalContext.current
- var exportMessage by remember{mutableStateOf<String?>(null)}
- val csvSaver=rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")){uri->
-  if(uri!=null){
-   val result=runCatching{context.contentResolver.openOutputStream(uri)?.use{it.write(csv.toByteArray(Charsets.UTF_8))}?:error("تعذر فتح ملف التصدير")}
-   exportMessage=if(result.isSuccess)"تم حفظ ملف CSV بنجاح" else "تعذر حفظ الملف: "+(result.exceptionOrNull()?.message?: "خطأ غير معروف")
-  }
- }
  val root=payload?.takeIf{it.isJsonObject}?.asJsonObject
  val summary=root?.get("summary")?.takeIf{it.isJsonObject}?.asJsonObject
  val topServices=root?.get("topServices")?.takeIf{it.isJsonArray}?.asJsonArray
@@ -994,6 +987,13 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
     append(csvCell(obj?.get("service")?.toString()?.trim('"')?:entry.toString()))
      .append(',').append(csvCell(obj?.get("count")?.toString()?: "")).append('\n')
    }
+  }
+ }
+ var exportMessage by remember{mutableStateOf<String?>(null)}
+ val csvSaver=rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")){uri->
+  if(uri!=null){
+   val result=runCatching{context.contentResolver.openOutputStream(uri)?.use{it.write(csv.toByteArray(Charsets.UTF_8))}?:error("تعذر فتح ملف التصدير")}
+   exportMessage=if(result.isSuccess)"تم حفظ ملف CSV بنجاح" else "تعذر حفظ الملف: "+(result.exceptionOrNull()?.message?: "خطأ غير معروف")
   }
  }
  Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){
