@@ -2337,7 +2337,7 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
             }
         }
     }
-    if(editing!=null)StoreProductEditor(editing?.takeIf{it.isJsonObject&&it.asJsonObject.size()>0},busy,uploadedImageUrl,uploadedImageFileId,{uri->onUploadImage(uri,"product")},onClearUpload,{editing=null}){method,path,body->onAction(method,path,body);editing=null}
+    if(editing!=null)StoreProductEditor(editing?.takeIf{it.isJsonObject&&it.asJsonObject.size()>0},categories,busy,uploadedImageUrl,uploadedImageFileId,{uri->onUploadImage(uri,"product")},onClearUpload,{editing=null}){method,path,body->onAction(method,path,body);editing=null}
     if(categoryCreate||categoryEditing!=null)StoreCategoryEditor(categoryEditing,categoryCreate,busy,uploadedImageUrl,uploadedImageFileId,{uri->onUploadImage(uri,"category")},onClearUpload,{categoryCreate=false;categoryEditing=null}){method,path,body->onAction(method,path,body);categoryCreate=false;categoryEditing=null}
 }
 
@@ -2351,6 +2351,7 @@ private fun storeProductCopy(source:com.google.gson.JsonObject):com.google.gson.
 
 @Composable private fun StoreProductEditor(
     initial:JsonElement?,
+    categories:List<JsonElement>,
     busy:Boolean,
     uploadedImageUrl:String?,
     uploadedImageFileId:String?,
@@ -2363,6 +2364,9 @@ private fun storeProductCopy(source:com.google.gson.JsonObject):com.google.gson.
     val source=initial?.asJsonObject
     var name by remember(initial){mutableStateOf(source?.get("name")?.asString.orEmpty())}
     var category by remember(initial){mutableStateOf(source?.get("category")?.asString?: "عام")}
+    var newCategory by remember(initial){mutableStateOf("")}
+    var categoryMenuExpanded by remember{mutableStateOf(false)}
+    val categoryOptions=(listOf("عام")+categories.mapNotNull{it.takeIf{v->v.isJsonObject}?.asJsonObject?.get("name")?.takeIf{!it.isJsonNull}?.asString}).distinct()
     var price by remember(initial){mutableStateOf(source?.get("price")?.toString().orEmpty())}
     var originalPrice by remember(initial){mutableStateOf(source?.get("originalPrice")?.takeIf{!it.isJsonNull}?.toString().orEmpty())}
     var offer by remember(initial){mutableStateOf(source?.get("offerText")?.asString.orEmpty())}
@@ -2388,7 +2392,13 @@ private fun storeProductCopy(source:com.google.gson.JsonObject):com.google.gson.
         title={Text(if(initial==null)"إضافة منتج" else "تعديل المنتج")},
         text={Column(Modifier.heightIn(max=540.dp).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(6.dp)){
             OutlinedTextField(name,{name=it},label={Text("اسم المنتج *")},singleLine=true)
-            OutlinedTextField(category,{category=it},label={Text("القسم")},singleLine=true)
+            Box(Modifier.fillMaxWidth()){
+                OutlinedButton(onClick={categoryMenuExpanded=true},modifier=Modifier.fillMaxWidth()){Text("القسم الحالي: "+category)}
+                DropdownMenu(expanded=categoryMenuExpanded,onDismissRequest={categoryMenuExpanded=false}){
+                    categoryOptions.forEach{option->DropdownMenuItem(text={Text(option)},onClick={category=option;newCategory="";categoryMenuExpanded=false})}
+                }
+            }
+            OutlinedTextField(newCategory,{newCategory=it},label={Text("أو اكتب قسمًا جديدًا")},singleLine=true)
             OutlinedTextField(price,{price=it},label={Text("السعر الحالي *")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Decimal),singleLine=true)
             OutlinedTextField(originalPrice,{originalPrice=it},label={Text("السعر قبل العرض")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Decimal),singleLine=true)
             OutlinedTextField(offer,{offer=it},label={Text("تفاصيل العرض")})
@@ -2409,8 +2419,9 @@ private fun storeProductCopy(source:com.google.gson.JsonObject):com.google.gson.
         }},
         confirmButton={TextButton(enabled=!busy&&name.trim().length>=2&&price.toDoubleOrNull()?.let{it>=0}==true&&(originalPrice.isBlank()||originalPrice.toDoubleOrNull()?.let{it>=0}==true)&&audience in listOf("both","client","fanni")&&priority.toIntOrNull()?.let{it in 0..100}==true&&(!advertised||adDays.toIntOrNull()?.let{it in 1..365}==true)&&(stock.isBlank()||stock.toIntOrNull()?.let{it>=0}==true),onClick={
             val adUntil=if(advertised){java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",java.util.Locale.US).apply{timeZone=java.util.TimeZone.getTimeZone("UTC")}.format(java.util.Date(System.currentTimeMillis()+(adDays.toIntOrNull()?.coerceIn(1,365)?:7)*86400000L))}else null
+            val finalCategory=newCategory.trim().ifBlank{category.trim().ifBlank{"عام"}}
             val body=JsonObject().apply{
-                addProperty("name",name.trim());addProperty("category",category.trim().ifBlank{"عام"});addProperty("price",price.toDouble())
+                addProperty("name",name.trim());addProperty("category",finalCategory);addProperty("price",price.toDouble())
                 if(originalPrice.isBlank())add("originalPrice",com.google.gson.JsonNull.INSTANCE)else addProperty("originalPrice",originalPrice.toDoubleOrNull())
                 addProperty("offerText",offer.trim());addProperty("type",type);addProperty("subscriptionDuration",duration.trim())
                 addProperty("description",description.trim());addProperty("details",details.trim());addProperty("imageUrl",imageUrl.trim())
