@@ -102,7 +102,9 @@ enum class AdminSection(
  CLIENT_WALLETS("محافظ العملاء","api/admin/client-wallet/accounts",listOf("accounts","data","items")),
  CLIENT_TOPUPS("طلبات شحن محافظ العملاء","api/admin/client-wallet/topup-requests",listOf("requests","data","items")),
  COMMERCE_PLANS("باقات الاشتراك","api/admin/commerce/catalog",listOf("items","data")),
- CLIENT_SUBSCRIPTIONS("اشتراكات العملاء","api/admin/commerce/subscriptions",listOf("subscriptions","data","items"));
+ CLIENT_SUBSCRIPTIONS("اشتراكات العملاء","api/admin/commerce/subscriptions",listOf("subscriptions","data","items")),
+ STORE_PRODUCTS("منتجات المتجر","api/admin/store/products",listOf("products","data","items")),
+ STORE_ORDERS("طلبات ومبيعات المتجر","api/admin/store/orders",listOf("orders","data","items"));
  fun defaultBody()=JsonObject()
  fun extract(p:JsonElement):List<JsonElement>{
   if(p.isJsonArray)return p.asJsonArray.map{it}
