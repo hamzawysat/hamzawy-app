@@ -69,6 +69,16 @@ class AdminViewModel(app:Application):AndroidViewModel(app){
  fun refresh()=load(AdminSection.DASHBOARD)
  fun open(section:AdminSection){_state.value=_state.value.copy(sectionSearch="");load(section)}
  fun openClientOrders(phone:String){_state.value=_state.value.copy(sectionSearch=phone.trim());load(AdminSection.ORDERS)}
+ fun searchClients(query:String)=viewModelScope.launch{
+  val clean=query.trim()
+  if(clean.length<2){load(AdminSection.CLIENTS);return@launch}
+  _state.value=_state.value.copy(section=AdminSection.CLIENTS,busy=true,error=null,sectionSearch=clean)
+  try{
+   val data=repo.get("api/admin/clients?search="+Uri.encode(clean))
+   val rows=AdminSection.CLIENTS.extract(data)
+   _state.value=_state.value.copy(busy=false,items=rows,payload=data)
+  }catch(e:Exception){_state.value=_state.value.copy(busy=false,error=e.message?: "تعذر البحث عن العملاء")}
+ }
  private fun load(section:AdminSection,preserveMessage:Boolean=false)=viewModelScope.launch{
   _state.value=_state.value.copy(section=section,busy=true,error=null,items=emptyList(),actionMessage=if(preserveMessage)_state.value.actionMessage else null)
   try{
