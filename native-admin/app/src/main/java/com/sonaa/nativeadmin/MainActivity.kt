@@ -250,6 +250,20 @@ class MainActivity : ComponentActivity() {
         }
         var sectionMenuExpanded by remember { mutableStateOf(false) }
         val readableSections = AdminSection.entries.filter { canReadSection(state.adminInfo,it) }
+        val dashboardRoot=state.stats?.takeIf{it.isJsonObject}?.asJsonObject
+        val dashboardCounts=dashboardRoot?.get("counts")?.takeIf{it.isJsonObject}?.asJsonObject?:dashboardRoot
+        val dashboardOrders=dashboardRoot?.get("dashboardOrders")?.takeIf{it.isJsonArray}?.asJsonArray
+        val dashboardTopups=dashboardRoot?.get("dashboardTopups")?.takeIf{it.isJsonArray}?.asJsonArray
+        val dashboardComplaints=dashboardRoot?.get("dashboardComplaints")?.takeIf{it.isJsonArray}?.asJsonArray
+        fun sectionBadgeCount(section:AdminSection):Int?=when(section){
+            AdminSection.NOTIFICATIONS->state.adminUnreadCount
+            AdminSection.CLIENTS,AdminSection.CLIENT_WALLETS->dashboardCounts?.get("clients")?.takeIf{it.isJsonPrimitive}?.asInt
+            AdminSection.TECHNICIANS->dashboardCounts?.get("technicians")?.takeIf{it.isJsonPrimitive}?.asInt
+            AdminSection.ORDERS->dashboardOrders?.size()
+            AdminSection.TOPUPS->dashboardTopups?.count{it.isJsonObject&&it.asJsonObject.get("status")?.asString=="pending"}
+            AdminSection.COMPLAINTS->dashboardComplaints?.count{it.isJsonObject&&it.asJsonObject.get("status")?.asString=="جديدة"}
+            else->null
+        }
         Box(Modifier.fillMaxWidth().background(Color.White).padding(horizontal = 14.dp, vertical = 9.dp)) {
             Surface(
                 onClick = { sectionMenuExpanded = true },
@@ -277,7 +291,16 @@ class MainActivity : ComponentActivity() {
             ) {
                 readableSections.forEach { tab ->
                     DropdownMenuItem(
-                        text = { Text(tab.title, fontWeight = if (tab == state.section) FontWeight.ExtraBold else FontWeight.Medium, color = if (tab == state.section) Accent else Color(0xFF263746)) },
+                        text = {
+                            Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)){
+                                Text(tab.title,modifier=Modifier.weight(1f),fontWeight=if(tab==state.section)FontWeight.ExtraBold else FontWeight.Medium,color=if(tab==state.section)Accent else Color(0xFF263746))
+                                sectionBadgeCount(tab)?.let{count->
+                                    Surface(color=if(count>0)Color(0xFFE3F3F6) else Color(0xFFF1F5F9),shape=RoundedCornerShape(9.dp)){
+                                        Text(count.toString(),modifier=Modifier.padding(horizontal=8.dp,vertical=3.dp),color=if(count>0)Accent else Color.Gray,fontWeight=FontWeight.Bold,style=MaterialTheme.typography.labelMedium)
+                                    }
+                                }
+                            }
+                        },
                         leadingIcon = {
                             Box(Modifier.size(34.dp).background(if (tab == state.section) Color(0xFFE1F4F7) else Color(0xFFF1F5F9), RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
                                 Text(sectionGlyph(tab), color = if (tab == state.section) Accent else Color(0xFF78909C), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black)
