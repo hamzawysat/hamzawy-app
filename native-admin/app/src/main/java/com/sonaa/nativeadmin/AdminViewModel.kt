@@ -8,7 +8,7 @@ import com.google.gson.JsonObject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-data class AdminUiState(val checking:Boolean=true,val authenticated:Boolean=false,val adminInfo:JsonElement?=null,val busy:Boolean=false,val error:String?=null,val section:AdminSection=AdminSection.DASHBOARD,val stats:JsonElement?=null,val items:List<JsonElement> = emptyList(),val actionMessage:String?=null,val payload:JsonElement?=null,val voicePath:String?=null,val editingProfile:JsonElement?=null,val editingProfileId:String?=null,val walletFanniId:String?=null,val walletTransactions:List<JsonElement> = emptyList(),val editingClient:JsonElement?=null,val editingClientId:String?=null,val recoveryDetail:JsonElement?=null,val recoveryDetailId:String?=null,val supportCases:List<JsonElement> = emptyList(),val supportSelectedCase:JsonElement?=null,val supportPasswordText:String?=null,val supportPasswordTitle:String="كلمة دعم العميل",val sectionSearch:String="",val storeUploadedImageUrl:String?=null,val storeUploadedImageFileId:String?=null,val identityFanniId:String?=null,val identityFrontPath:String?=null,val identityBackPath:String?=null)
+data class AdminUiState(val checking:Boolean=true,val authenticated:Boolean=false,val adminInfo:JsonElement?=null,val busy:Boolean=false,val error:String?=null,val section:AdminSection=AdminSection.DASHBOARD,val stats:JsonElement?=null,val items:List<JsonElement> = emptyList(),val actionMessage:String?=null,val payload:JsonElement?=null,val voicePath:String?=null,val editingProfile:JsonElement?=null,val editingProfileId:String?=null,val walletFanniId:String?=null,val walletTransactions:List<JsonElement> = emptyList(),val editingClient:JsonElement?=null,val editingClientId:String?=null,val recoveryDetail:JsonElement?=null,val recoveryDetailId:String?=null,val supportCases:List<JsonElement> = emptyList(),val supportSelectedCase:JsonElement?=null,val supportPasswordText:String?=null,val supportPasswordTitle:String="كلمة دعم العميل",val sectionSearch:String="",val storeUploadedImageUrl:String?=null,val storeUploadedImageFileId:String?=null,val identityFanniId:String?=null,val identityFrontPath:String?=null,val identityBackPath:String?=null,val adminInbox:List<JsonElement> = emptyList(),val adminUnreadCount:Int=0,val notificationDeliveries:List<JsonElement> = emptyList(),val adminNotificationError:String?=null)
 class AdminViewModel(app:Application):AndroidViewModel(app){
  private val repo=AdminRepository(app)
  private val _state=MutableStateFlow(AdminUiState())
@@ -81,8 +81,14 @@ class AdminViewModel(app:Application):AndroidViewModel(app){
    }
    val loaded=section.extract(data)
    val supportCases=if(section==AdminSection.SUPPORT)runCatching{repo.get("api/support/admin").asJsonObject.get("supportCases")?.takeIf{it.isJsonArray}?.asJsonArray?.map{it}?:emptyList()}.getOrDefault(emptyList()) else _state.value.supportCases
+   val inboxResult=if(section==AdminSection.NOTIFICATIONS)runCatching{repo.get("api/notifications/admin")}else null
+   val deliveryResult=if(section==AdminSection.NOTIFICATIONS)runCatching{repo.get("api/notifications/admin/delivery-log")}else null
+   val adminInbox=inboxResult?.getOrNull()?.takeIf{it.isJsonObject}?.asJsonObject?.get("notifications")?.takeIf{it.isJsonArray}?.asJsonArray?.map{it}?:if(section==AdminSection.NOTIFICATIONS)emptyList() else _state.value.adminInbox
+   val adminUnreadCount=inboxResult?.getOrNull()?.takeIf{it.isJsonObject}?.asJsonObject?.get("unreadCount")?.takeIf{it.isJsonPrimitive}?.asInt?:if(section==AdminSection.NOTIFICATIONS)0 else _state.value.adminUnreadCount
+   val notificationDeliveries=deliveryResult?.getOrNull()?.takeIf{it.isJsonObject}?.asJsonObject?.get("deliveries")?.takeIf{it.isJsonArray}?.asJsonArray?.map{it}?:if(section==AdminSection.NOTIFICATIONS)emptyList() else _state.value.notificationDeliveries
+   val adminNotificationError=if(section==AdminSection.NOTIFICATIONS)listOfNotNull(inboxResult?.exceptionOrNull()?.message,deliveryResult?.exceptionOrNull()?.message).takeIf{it.isNotEmpty()}?.joinToString(" • ") else _state.value.adminNotificationError
    val visible=when(section){AdminSection.PENDING->loaded.filter{it.isJsonObject&&it.asJsonObject.get("isApproved")?.asBoolean!=true&&it.asJsonObject.get("isDisabled")?.asBoolean!=true&&it.asJsonObject.get("status")?.asString!="rejected"};AdminSection.DISABLED->loaded.filter{it.isJsonObject&&(it.asJsonObject.get("isDisabled")?.asBoolean==true||it.asJsonObject.get("status")?.asString=="disabled")};AdminSection.OFFERS->loaded.filter{it.isJsonObject&&it.asJsonObject.get("offers")?.let{v->v.isJsonArray&&v.asJsonArray.size()>0}==true};else->loaded}
-   _state.value=_state.value.copy(busy=false,stats=if(section==AdminSection.DASHBOARD||section==AdminSection.STATS)data else _state.value.stats,items=visible,payload=data,supportCases=supportCases,supportSelectedCase=if(section==AdminSection.SUPPORT)null else _state.value.supportSelectedCase)
+   _state.value=_state.value.copy(busy=false,stats=if(section==AdminSection.DASHBOARD||section==AdminSection.STATS)data else _state.value.stats,items=visible,payload=data,supportCases=supportCases,supportSelectedCase=if(section==AdminSection.SUPPORT)null else _state.value.supportSelectedCase,adminInbox=adminInbox,adminUnreadCount=adminUnreadCount,notificationDeliveries=notificationDeliveries,adminNotificationError=adminNotificationError)
   }
   catch(e:Exception){_state.value=_state.value.copy(busy=false,error=e.message?: "تعذر تحميل البيانات")}
  }
@@ -209,6 +215,8 @@ class AdminViewModel(app:Application):AndroidViewModel(app){
  fun issueClientSupportPassword(id:String)=issueSupportPassword("client",id)
  fun revealClientSupportPassword(id:String)=revealSupportPassword("client",id)
  fun closeSupportPassword(){_state.value=_state.value.copy(supportPasswordText=null)}
+ fun markAdminNotificationRead(id:String)=mutate("PATCH","api/notifications/admin/$id/read")
+ fun markAllAdminNotificationsRead()=mutate("PATCH","api/notifications/admin/read-all")
  fun openSupportCase(id:String)=viewModelScope.launch{
   _state.value=_state.value.copy(busy=true,error=null)
   try{
