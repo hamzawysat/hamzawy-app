@@ -529,7 +529,7 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
 }
 
 @Composable private fun WalletTransactionsScreen(items:List<JsonElement>,onBack:()->Unit){
- val labels=mapOf("commission" to "عمولة طلب","topup" to "شحن محفظة","admin_adjustment" to "تسوية إدارية","refund" to "استرداد")
+ val labels=mapOf("commission" to "عمولة طلب","topup" to "شحن محفظة","admin_adjustment" to "تسوية إدارية","refund" to "استرداد","client_topup" to "شحن محفظة العميل","client_admin_adjustment" to "إضافة إدارية لمحفظة العميل","client_admin_deduction" to "خصم إداري من محفظة العميل","client_admin_settlement" to "تسوية محفظة العميل","client_refund" to "استرداد قيمة خدمة")
  Column(Modifier.fillMaxSize().padding(16.dp)){
   Text("حركات المحفظة",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.ExtraBold,color=DarkAccent)
   Text("سجل العمليات المالية مع الرصيد قبل الحركة وبعدها",style=MaterialTheme.typography.bodySmall,color=Color.Gray)
@@ -1525,7 +1525,7 @@ private fun rowActions(section:AdminSection,item:JsonElement):List<RowAction>{
    )
   }
   AdminSection.CLIENTS->if(phone!=null)listOf(
-   RowAction("حظر العميل","POST","api/admin/clients/${Uri.encode(phone)}/block",JsonObject().apply{addProperty("reason","حظر من تطبيق الإدارة")}),
+   RowAction("حظر العميل","POST","api/admin/clients/${Uri.encode(phone)}/block",JsonObject(),"reason","سبب الحظر (مطلوب)"),
    RowAction("إلغاء الحظر","POST","api/admin/clients/${Uri.encode(phone)}/unblock"),
    RowAction("تغيير كلمة المرور","PATCH","api/admin/clients/${Uri.encode(phone)}/password",JsonObject(), "newPassword","كلمة المرور الجديدة","confirmPassword","تأكيد كلمة المرور"),
    RowAction("حفظ ملاحظة داخلية","POST","api/admin/clients/${Uri.encode(phone)}/note",JsonObject(), "note","الملاحظة الداخلية"),
