@@ -1395,7 +1395,7 @@ private data class RowAction(val label:String,val method:String,val path:String,
                             Checkbox(checked=selectedBulk.contains(bulkKey),onCheckedChange={checked->selectedBulk=if(checked)selectedBulk+bulkKey else selectedBulk-bulkKey})
                             Text("تحديد للإجراء الجماعي",style=MaterialTheme.typography.labelSmall,color=Color.Gray)
                         }
-                        Text(primary(item), fontWeight = FontWeight.Bold, color = DarkAccent)
+                        Text(primary(item,section), fontWeight = FontWeight.Bold, color = DarkAccent)
                         val detail = secondary(item, section)
                         if (detail.isNotBlank()) Text(detail, color = Color.DarkGray, modifier = Modifier.padding(top = 5.dp))
                         if(section==AdminSection.ORDERS&&item.isJsonObject){
@@ -1645,15 +1645,31 @@ private fun rowActions(section:AdminSection,item:JsonElement):List<RowAction>{
   else->emptyList()
  }
 }
-private fun primary(item: JsonElement): String {
+private fun primary(item: JsonElement, section:AdminSection): String {
     if (!item.isJsonObject) return item.toString()
     val o = item.asJsonObject
+    if(section==AdminSection.ORDERS){
+        val sn=o.get("sn")?.takeIf{!it.isJsonNull}?.asString.orEmpty()
+        val client=o.get("clientName")?.takeIf{!it.isJsonNull}?.asString.orEmpty()
+        return listOf(sn,client).filter{it.isNotBlank()}.joinToString(" — ").ifBlank{"طلب بدون رقم"}
+    }
     val keys = listOf("name", "title", "service", "sn", "clientName", "fanniName", "text", "regionName")
     return keys.firstNotNullOfOrNull { k -> o.get(k)?.takeIf { it.isJsonPrimitive && !it.asString.isNullOrBlank() }?.asString } ?: "عنصر"
 }
 private fun secondary(item: JsonElement, section: AdminSection): String {
     if (!item.isJsonObject) return ""
     val obj=item.asJsonObject
+    if(section==AdminSection.ORDERS){
+        fun value(key:String):String=obj.get(key)?.takeIf{!it.isJsonNull}?.toString()?.trim('"').orEmpty()
+        return listOf(
+            value("service").takeIf{it.isNotBlank()}?.let{"الخدمة: $it"},
+            value("status").takeIf{it.isNotBlank()}?.let{"الحالة: $it"},
+            value("clientPhone").takeIf{it.isNotBlank()}?.let{"هاتف العميل: $it"},
+            value("area").takeIf{it.isNotBlank()}?.let{"المنطقة: $it"},
+            value("budget").takeIf{it.isNotBlank()}?.let{"الميزانية: $it جنيه"},
+            value("createdAt").takeIf{it.isNotBlank()}?.let{"التاريخ: $it"}
+        ).filterNotNull().joinToString("  •  ")
+    }
     if(section==AdminSection.CLIENTS){
         fun value(key:String):String=obj.get(key)?.takeIf{!it.isJsonNull}?.toString()?.trim('"').orEmpty()
         val parts=mutableListOf<String>()
