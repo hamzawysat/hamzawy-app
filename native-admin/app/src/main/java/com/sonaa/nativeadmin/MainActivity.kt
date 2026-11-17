@@ -57,17 +57,33 @@ private val DarkAccent = Color(0xFF07566B)
 private val Background = Color(0xFFF4F8FA)
 class MainActivity : ComponentActivity() {
     private var pendingDestination by mutableStateOf<String?>(null)
+    private var activeAdminViewModel: AdminViewModel? = null
+    private var fcmReceiverRegistered = false
+    private val fcmTokenReceiver = object : android.content.BroadcastReceiver() {
+        override fun onReceive(context: android.content.Context?, intent: Intent?) {
+            intent?.getStringExtra("token")?.takeIf { it.isNotBlank() }?.let { activeAdminViewModel?.registerFcm(it) }
+        }
+    }
     private val askNotifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         initializeFirebase()
+        val tokenFilter = android.content.IntentFilter(SonaaMessagingService.ACTION_TOKEN_REFRESHED)
+        if (Build.VERSION.SDK_INT >= 33) {
+            registerReceiver(fcmTokenReceiver, tokenFilter, android.content.Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            @Suppress("DEPRECATION")
+            registerReceiver(fcmTokenReceiver, tokenFilter)
+        }
+        fcmReceiverRegistered = true
         SonaaMessagingService.createChannels(getSystemService(NotificationManager::class.java))
         if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED)
             askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
         pendingDestination = intent?.getStringExtra("destination")
         setContent {
             val vm: AdminViewModel = viewModel()
+            activeAdminViewModel = vm
             val state by vm.state.collectAsState()
             LaunchedEffect(Unit) { vm.restore() }
             LaunchedEffect(pendingDestination, state.authenticated, state.adminInfo) { if (state.authenticated) { navigate(pendingDestination, state.adminInfo, vm); pendingDestination = null } }
@@ -123,6 +139,14 @@ class MainActivity : ComponentActivity() {
             else -> null
         }
         if (section != null && vm != null && canReadSection(adminInfo, section)) vm.open(section)
+    }
+    override fun onDestroy() {
+        if (fcmReceiverRegistered) {
+            runCatching { unregisterReceiver(fcmTokenReceiver) }
+            fcmReceiverRegistered = false
+        }
+        activeAdminViewModel = null
+        super.onDestroy()
     }
     private fun initializeFirebase() {
         if (FirebaseApp.getApps(this).isEmpty()) {
