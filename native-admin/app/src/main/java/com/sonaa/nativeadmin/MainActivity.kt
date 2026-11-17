@@ -1173,8 +1173,32 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
     var confirmReset by remember(page){mutableStateOf(false)}
     val layout=payload?.takeIf{it.isJsonObject}?.asJsonObject?.get("layout")?.takeIf{it.isJsonObject}?.asJsonObject
     val sectionLabels=mapOf("dashboard" to "الرئيسية والإحصائيات","clients" to "العملاء","technicians" to "الفنيون","finance" to "المحافظ والشحن","commerce" to "التجارة والمتجر","service-management" to "الخدمات والمناطق","customer-operations" to "عمليات العملاء","platform-admin" to "إدارة المنصة")
-    val sectionOrder=layout?.get("sectionOrder")?.takeIf{it.isJsonArray}?.asJsonArray?.mapNotNull{it.takeIf{v->v.isJsonPrimitive}?.asString}.orEmpty()
-    val tabOrder=layout?.get("tabOrder")?.takeIf{it.isJsonObject}?.asJsonObject
+    val editorRoot=runCatching{JsonParser.parseString(raw).takeIf{it.isJsonObject}?.asJsonObject}.getOrNull()
+    val editorLayout=editorRoot?.get("sectionOrder")?.takeIf{it.isJsonArray}?.asJsonArray
+    val sectionOrder=editorLayout?.mapNotNull{it.takeIf{v->v.isJsonPrimitive}?.asString}.orEmpty()
+    val tabOrder=editorRoot?.get("tabOrder")?.takeIf{it.isJsonObject}?.asJsonObject
+    fun moveSection(index:Int,delta:Int){
+        val root=runCatching{JsonParser.parseString(raw).asJsonObject}.getOrNull()?:return
+        val array=root.get("sectionOrder")?.takeIf{it.isJsonArray}?.asJsonArray?:return
+        val target=(index+delta).coerceIn(0,array.size()-1)
+        if(target==index)return
+        val moved=array.remove(index)
+        array.add(target,moved)
+        root.add("sectionOrder",array)
+        raw=root.toString()
+    }
+    fun moveTab(sectionId:String,index:Int,delta:Int){
+        val root=runCatching{JsonParser.parseString(raw).asJsonObject}.getOrNull()?:return
+        val groups=root.get("tabOrder")?.takeIf{it.isJsonObject}?.asJsonObject?:return
+        val array=groups.get(sectionId)?.takeIf{it.isJsonArray}?.asJsonArray?:return
+        val target=(index+delta).coerceIn(0,array.size()-1)
+        if(target==index)return
+        val moved=array.remove(index)
+        array.add(target,moved)
+        groups.add(sectionId,array)
+        root.add("tabOrder",groups)
+        raw=root.toString()
+    }
     val sectionCount=layout?.get("sectionOrder")?.takeIf{it.isJsonArray}?.asJsonArray?.size()?:0
     val elementCount=layout?.get("elements")?.takeIf{it.isJsonObject}?.asJsonObject?.size()?:0
     val tabCount=layout?.get("tabOrder")?.takeIf{it.isJsonObject}?.asJsonObject?.entrySet()?.sumOf{entry->entry.value.takeIf{it.isJsonArray}?.asJsonArray?.size()?:0}?:0
@@ -1199,9 +1223,20 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
             sectionOrder.forEach{sectionId->
                 val tabs=tabOrder?.get(sectionId)?.takeIf{it.isJsonArray}?.asJsonArray?.mapNotNull{it.takeIf{v->v.isJsonPrimitive}?.asString}.orEmpty()
                 Card(Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=Color.White)){
-                    Column(Modifier.padding(10.dp),verticalArrangement=Arrangement.spacedBy(3.dp)){
-                        Text(sectionLabels[sectionId]?:sectionId,fontWeight=FontWeight.SemiBold)
-                        Text(tabs.joinToString(" • ").ifBlank{"لا توجد تبويبات في هذه المجموعة"},style=MaterialTheme.typography.bodySmall,color=Color.Gray)
+                    Column(Modifier.padding(10.dp),verticalArrangement=Arrangement.spacedBy(5.dp)){
+                        Row(verticalAlignment=Alignment.CenterVertically){
+                            Text(sectionLabels[sectionId]?:sectionId,modifier=Modifier.weight(1f),fontWeight=FontWeight.SemiBold)
+                            TextButton(onClick={moveSection(index,-1)},enabled=!busy&&index>0){Text("↑")}
+                            TextButton(onClick={moveSection(index,1)},enabled=!busy&&index<sectionOrder.lastIndex){Text("↓")}
+                        }
+                        val tabRows=tabOrder?.get(sectionId)?.takeIf{it.isJsonArray}?.asJsonArray?.mapNotNull{it.takeIf{v->v.isJsonPrimitive}?.asString}.orEmpty()
+                        tabRows.forEachIndexed{tabIndex,tabId->
+                            Row(verticalAlignment=Alignment.CenterVertically){
+                                Text(tabId,modifier=Modifier.weight(1f),style=MaterialTheme.typography.bodySmall,color=Color.Gray)
+                                TextButton(onClick={moveTab(sectionId,tabIndex,-1)},enabled=!busy&&tabIndex>0){Text("↑")}
+                                TextButton(onClick={moveTab(sectionId,tabIndex,1)},enabled=!busy&&tabIndex<tabRows.lastIndex){Text("↓")}
+                            }
+                        }
                     }
                 }
             }
