@@ -2244,3 +2244,34 @@ private fun parseStoreCsvProducts(source:String):StoreCsvPreview{
     if(valid.size>500)error("الحد الأقصى للاستيراد 500 منتج في الدفعة الواحدة. قسّم الملف إلى دفعات.")
     return StoreCsvPreview(valid,errors)
 }
+
+
+@Composable private fun FanniIdentityScreen(
+    frontPath:String?,
+    backPath:String?,
+    busy:Boolean,
+    onClose:()->Unit
+){
+    val front=remember(frontPath){frontPath?.let{android.graphics.BitmapFactory.decodeFile(it)}}
+    val back=remember(backPath){backPath?.let{android.graphics.BitmapFactory.decodeFile(it)}}
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(14.dp),verticalArrangement=Arrangement.spacedBy(12.dp)){
+        Text("صور بطاقة الرقم القومي للفني",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold,color=DarkAccent)
+        Text("صور سرية للمراجعة الإدارية فقط. لا تُعرض إلا بعد طلب مصادق عليه من الخادم.",style=MaterialTheme.typography.bodySmall,color=Color.Gray)
+        if(busy)Text("جاري تحميل صور البطاقة...",color=Color.Gray)
+        Card(Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=Color.White)){
+            Column(Modifier.padding(10.dp),verticalArrangement=Arrangement.spacedBy(7.dp)){
+                Text("الوجه الأمامي",fontWeight=FontWeight.Bold,color=DarkAccent)
+                if(front!=null)Image(front.asImageBitmap(),contentDescription="الوجه الأمامي للبطاقة",modifier=Modifier.fillMaxWidth().heightIn(max=420.dp),contentScale=ContentScale.Fit)
+                else Text("الصورة الأمامية غير متاحة أو لم يكتمل تحميلها",color=Color.Gray)
+            }
+        }
+        Card(Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=Color.White)){
+            Column(Modifier.padding(10.dp),verticalArrangement=Arrangement.spacedBy(7.dp)){
+                Text("الوجه الخلفي",fontWeight=FontWeight.Bold,color=DarkAccent)
+                if(back!=null)Image(back.asImageBitmap(),contentDescription="الوجه الخلفي للبطاقة",modifier=Modifier.fillMaxWidth().heightIn(max=420.dp),contentScale=ContentScale.Fit)
+                else Text("الصورة الخلفية غير متاحة أو لم يكتمل تحميلها",color=Color.Gray)
+            }
+        }
+        Button(onClick=onClose,modifier=Modifier.fillMaxWidth()){Text("إغلاق صور البطاقة")}
+    }
+}
