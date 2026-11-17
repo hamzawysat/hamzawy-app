@@ -1,102 +1,243 @@
-# Native Admin parity audit
+# المراجعة الشاملة لمطابقة تطبيق الإدارة Kotlin مع لوحة الإدارة Web
 
-Audit basis: current `main` branch of `hamzawy-app` compared with the web administration console and backend routes in `hamzawy-backend-v2`.
+تاريخ المراجعة: 2026-11-17  
+المستودعات التي تمت مراجعتها:
+- تطبيق Android الأصلي: `hamzawysat/hamzawy-app`
+- لوحة الإدارة والـBackend: `hamzawysat/hamzawy-backend-v2`
 
-## Confirmed web administration areas
+> هذه مراجعة كود ثابتة للمسارات والشاشات والعمليات والصلاحيات. نجاح Gradle يثبت قابلية البناء فقط، ولا يثبت اكتمال الوظائف أو نجاحها على بيانات الإنتاج.
 
-The web console defines these 29 tabs:
+## 1) الخلاصة التنفيذية
 
-1. Dashboard summary
-2. Statistics
-3. All clients
-4. Client orders
-5. All technicians
-6. Pending technician approval
-7. Technician profile edit requests
-8. Disabled technicians
-9. Levels and badges
-10. Technician offers
-11. Client wallets
-12. Technician wallets
-13. Wallet top-up requests
-14. Subscription plans
-15. Client subscriptions
-16. Store management
-17. Store orders and sales
-18. Services
-19. Service regions
-20. Complaints
-21. Support and violations
-22. Notifications
-23. Announcements and FAQs
-24. Pricing and commissions
-25. Reports
-26. Page visits
-27. Audit/security log
-28. Platform settings
-29. Admin roles and permissions
+- لوحة المتصفح تعرّف 8 مجموعات رئيسية و29 تبويبًا إداريًا.
+- تطبيق Kotlin يعرّف 25 قيمة في `AdminSection`، لكن العدد لا يعني وجود 25 شاشة مكتملة؛ معظمها يمر عبر `ListScreen` عامة، وثلاثة أقسام فقط لها معالجة خاصة إضافية بجانب الدعم: Dashboard/Stats وPage Visits وReports وConfig.
+- توجد وحدات إدارية كاملة في الويب لا يوجد لها قسم Native مستقل أو مسار تحميل/عرض/تحرير مقابل.
+- توجد كذلك وظائف جزئية في أقسام موجودة، وأخطاء ربط وصلاحيات تمنع الوصول لبعض الشاشات أو تجعل إشعارًا يفتح القسم الخطأ.
 
+## 2) مطابقة تبويبات لوحة الويب واحدًا واحدًا
 
-## Native Kotlin baseline
+| تبويب لوحة الويب | حالة Kotlin الحالية | النتيجة |
+|---|---|---|
+| ملخص الإدارة | Dashboard مخصص | جزئي؛ لا يعرض كل بيانات وإشارات لوحة الويب |
+| الإحصائيات | Dashboard مخصص | جزئي |
+| كل العملاء | قائمة عامة | جزئي؛ تفاصيل وعمليات ومرشحات ناقصة |
+| طلبات العملاء | قائمة عامة | جزئي؛ تفاصيل الطلب وسير العمل ليست مطابقة بالكامل |
+| كل الفنيين | قائمة عامة | جزئي؛ عرض بيانات الفني أقل من بطاقة الويب |
+| انتظار الاعتماد | قائمة عامة مع فلترة | جزئي |
+| طلبات تعديل البيانات | قائمة عامة | جزئي |
+| الفنيون الموقوفون | قائمة عامة مع فلترة | جزئي |
+| المستويات والشارات | قائمة عامة مع عناصر تحكم | جزئي |
+| عروض الفنيين | قائمة عامة | جزئي |
+| محافظ العملاء | لا يوجد قسم Native؛ وجهة الإشعار تُحوّل إلى العملاء | مفقود |
+| محافظ الفنيين | قائمة عامة + كشف حركات | جزئي |
+| طلبات شحن المحافظ | طلبات شحن الفنيين فقط | جزئي؛ لا يدير شحن العملاء |
+| باقات الاشتراك | لا يوجد | مفقود |
+| اشتراكات العملاء | لا يوجد؛ وجهة الإشعار تُحوّل إلى العملاء | مفقود |
+| إدارة المتجر | لا يوجد | مفقود |
+| طلبات ومبيعات المتجر | وجهة الإشعار تُحوّل إلى طلبات العملاء | مفقود وربط خاطئ |
+| الخدمات | قائمة عامة وإجراءات أساسية | جزئي |
+| مناطق الخدمة | قائمة عامة وإجراءات جماعية | جزئي |
+| الشكاوى | قائمة عامة وإجراءات حالة | جزئي |
+| الدعم والمخالفات | شاشة محادثات دعم مخصصة | جزئي مع خلل مؤكد: نتائج المخالفات والبحث لا تظهر في الشاشة |
+| الإشعارات | إرسال مباشر وقائمة حملات عامة | جزئي؛ لا توجد أدوات صندوق الوارد وتدقيق التسليم وسجل الحملات |
+| الإعلانات والأسئلة الشائعة | ConfigEditor | جزئي؛ لا توجد معاينة المحتوى مثل الويب |
+| الأسعار والعمولات | ConfigEditor | جزئي |
+| التقارير | ReportEditor | جزئي؛ التصدير ليس ملف CSV مرفقًا مثل تنزيل الويب |
+| سجل زيارات الموقع | PageVisitsScreen | جزئي؛ صلاحية القراءة للموظف غير مطابقة للويب |
+| سجل التدقيق والأمان | قائمة عامة مع فلتر تاريخ | جزئي |
+| صلاحيات المشرفين | قائمة عامة وحوار صلاحيات | جزئي؛ لا توجد شاشة إنشاء مشرف مكافئة، ومصفوفة الصلاحيات ناقصة |
 
-The native app currently declares 25 `AdminSection` entries. It has dedicated Compose handling for dashboard/statistics, page visits, reports, settings/pricing/content, technician wallet transactions, client and technician profile editing, password recovery, and support cases. Many remaining areas fall through to a shared generic `ListScreen`.
+## 3) النواقص المؤكدة حسب الوحدة
 
-Existing native sections include orders, technicians, pending/disabled technicians, profile edits, levels, offers, technician wallets, top-ups, services, regions, complaints, support, recovery, notifications, content, pricing, reports, page visits, security, settings, roles, and clients.
+### A. المتجر وإعلانات المتجر
 
-## Confirmed functional gaps
+لا توجد في `AdminSection` وحدة متجر ولا واجهة Compose تتعامل مع مسارات المتجر، بينما الويب يوفّر:
+- رفع ملفات وصور المتجر عبر `POST /api/admin/store/media`.
+- إعدادات الإعلانات ودورة عرض الصور عبر `GET/PUT /api/admin/store/ad-settings`.
+- إضافة/تعديل/حذف تصنيفات المتجر وصورها.
+- عرض المنتجات وإضافتها وتعديلها وحذفها وإخفاؤها وإظهارها.
+- رفع صورة المنتج أو حفظ رابط صورة، وتحرير السعر والسعر الأصلي والعرض والمخزون والتفاصيل.
+- استيراد المنتجات بالجملة من CSV مع مطابقة الأعمدة ومعالجة الصفوف غير الصالحة.
+- إعداد إعلان المنتج: التفعيل، الجمهور، عدد الأيام، الأولوية.
+- إدارة طلبات المتجر وتغيير الحالة وحالة الدفع والملاحظات.
+- عدّاد الطلبات الجديدة والتنبيه الدوري للإدارة.
 
-### Missing native administration modules
+المسارات الخلفية موجودة في `src/routes/admin/store.js`، ووظائف الويب في `frontend/js/admin-store.js`. لا يوجد مقابل Native ظاهر لهذه الوظائف.
 
-- Store products and categories
-- Store product media/image upload
-- Store CSV bulk import
-- Store advertisement settings, targeting, priority, and expiry
-- Store orders and sales management
-- Subscription plan catalog management
-- Client subscription management (create, edit details, renew, status changes)
-- Client wallet accounts and account selector
-- Client wallet top-up review
-- Client wallet add/deduct/set balance with reason and idempotency key
-- Client wallet transaction ledger and refunds
+### B. الاشتراكات والتجارة
 
-The backend exposes these admin route families:
-- `/api/admin/store/*`
-- `/api/admin/commerce/*`
-- `/api/admin/client-wallet/*`
-- `/api/admin/clients/:id/wallet/*`
+لا يوجد قسم Native للباقات أو اشتراكات العملاء. الويب يوفّر:
+- عرض وإنشاء وتعديل وتفعيل/تعطيل عناصر كتالوج التجارة.
+- عرض الاشتراكات وإنشاء اشتراك إداري لعميل.
+- تعديل تفاصيل الاشتراك.
+- التجديد مع ملاحظة وحالة دفع ومبلغ اختياري.
+- تغيير الحالة إلى active / paused / cancelled / expired مع سبب.
+- الوصول للاشتراك من قائمة العملاء وتفعيله للعميل.
 
-### Permission parity gaps
+المسارات في `src/routes/admin/commerce.js`، وواجهة الويب في `frontend/js/admin-commerce.js`.
 
-The web console uses separate permission keys for `commerce`, `store`, and `wallet` (client wallet). The native permission key list and path-to-permission mapping currently do not define the commerce and store keys or client-wallet-specific actions. These must be added consistently to section visibility, read checks, write checks, and action guards.
+### C. محافظ العملاء
 
-### Areas needing full workflow parity verification
+لا يوجد قسم Native مستقل ولا عمليات على مسارات محفظة العميل. الويب يوفّر:
+- تحميل قائمة كل حسابات العملاء واختيار عميل محدد.
+- عرض الرصيد وحالة تجميد المحفظة وحالة الحساب.
+- مراجعة طلبات شحن العملاء وقبولها أو رفضها مع سبب.
+- إضافة رصيد وخصم رصيد وتسوية الرصيد النهائي.
+- إلزام سبب العملية ومفتاح idempotency لمنع تكرار الخصم/الإضافة.
+- كشف حركات العميل.
+- استرداد طلب خدمة إلى محفظة العميل.
 
-The native app has a section or generic list for these areas, but a matching section title or API GET alone does not prove the full web workflow exists:
-- technician and client administration
-- order assignment, publishing, corrections, cancellation/refunds, bulk actions, voice review
-- technician wallet adjustments, freeze/unfreeze, and ledger
-- top-up approval/rejection
-- service/category ordering and region bulk actions
-- complaints, support violations, recovery requests
-- notification history and sending
-- content/FAQ editing
-- pricing history and reports/export
-- page visits, audit logs, admin user roles and granular permissions
+المسارات في `src/routes/admin/clientWallet.js`، والواجهة في `frontend/js/admin-client-wallet.js`. لا تخلط هذه الوظائف مع محفظة الفنيين الموجودة جزئيًا.
 
-Each action must be checked against its web counterpart, backend route, permission key, request payload, response refresh, validation, and error state before being marked complete.
+### D. العملاء
 
-## Firebase setup change
+الويب يعرض بطاقة عميل تتضمن حالة الحساب، عدد الطلبات، التقييمات، الأعمال المكتملة، ورصيد المحفظة، مع:
+- بحث خادمي بالاسم/الهاتف/كود الطلب.
+- فلتر الحسابات النشطة والموقوفة.
+- تعليق الحساب وإعادة تفعيله مع سبب.
+- ملاحظة داخلية.
+- تغيير كلمة المرور.
+- حذف الحساب المسجل مع شروط حماية.
+- فتح محرر بيانات العميل.
+- عمليات محفظة العميل.
+- تفعيل اشتراك للعميل.
+- إصدار/عرض كلمة دعم لمرة واحدة.
 
-- Added `native-admin/app/google-services.json` with the matching `com.sonaa.nativeadmin` client.
-- Added Google Services Gradle plugin `4.4.2` to the native-admin root and app module build scripts.
-- A final APK build after all three commits is required; earlier successful builds do not validate the final combined configuration.
+في Kotlin توجد قائمة عامة مع بعض إجراءات الحظر/إلغاء الحظر/الحذف/الملاحظة وتحرير الاسم والهاتف، لكن القائمة العامة لا تعرض حقول بطاقة الويب كاملة، والبحث محلي داخل العناصر المحمّلة ولا يرسل استعلام البحث نفسه إلى الخادم. لا توجد عمليات محفظة العميل أو الاشتراك أو كلمات الدعم.
 
-## Completion criteria
+### E. الفنيون وملفات الهوية
 
-A module is complete only when:
-1. Its native screen exposes the corresponding web operations and fields.
-2. It calls the correct backend route and uses the correct HTTP method/payload.
-3. Read/write permissions match the backend/web permission model.
-4. Loading, empty, validation, success, and error states are handled.
-5. Mutations refresh the correct data and preserve selection/context.
-6. The Android build succeeds and the relevant workflow is tested.
+الويب يعرض معلومات أكثر من الحقول العامة التي تعرضها `ListScreen` في Kotlin، ومنها التقييم ومتوسطه وعدد الأعمال المكتملة والخدمات ومناطق العمل والأعمال والأسعار المسجلة.
+نواقص Native المؤكدة:
+- لا توجد شاشة عرض صور البطاقة الأمامية والخلفية، رغم وجودها في الويب عبر `/api/fanni/admin/:id/identity/front|back`.
+- لا توجد عمليات إصدار/عرض كلمة دعم مؤقتة للفني، الموجودة في `admin-people.js`.
+- محرر Kotlin لا يطبق تحقق إعادة القراءة بعد الحفظ الذي يطبقه محرر الويب للتأكد من تطابق البيانات المحفوظة.
+- البحث في مناطق العمل داخل محرر Kotlin غير متوفر مثل محرر الويب.
+- بطاقة الفني العامة في Kotlin لا تعرض جميع مؤشرات وتفاصيل بطاقة الويب.
+
+توجد بالفعل في Kotlin وظائف اعتماد/رفض/إيقاف/تفعيل، وتعديل المستوى والشارة والملاحظة والحدود والثقة والظهور، فلا تُسجّل هذه الوظائف على أنها مفقودة بالكامل؛ المطلوب استكمال الفروق والتحقق من كل مسار.
+
+### F. محافظ الفنيين وطلبات الشحن
+
+الموجود Native: قائمة الفنيين، فتح كشف الحركات، إضافة/تعيين الرصيد، تجميد/فك التجميد، وقبول/رفض طلبات شحن الفنيين.
+الفروق المؤكدة:
+- شاشة المحافظ العامة لا تعرض لوحة إجمالي الأرصدة ومحدد الفني وسير العمل المالي بنفس تفاصيل الويب.
+- إجراءات الإضافة/التسوية في قائمة Kotlin لا تطلب سببًا موثقًا مثل شاشة الويب المالية المخصصة.
+- لا يوجد في قسم طلبات الشحن Native تبديل مكافئ بين طلبات شحن العملاء وطلبات شحن الفنيين.
+
+### G. الطلبات والنشر والتسجيلات الصوتية
+
+الموجود Native: قائمة الطلبات، تصحيح البيانات، تعيين فني من العروض، إلغاء/أرشفة/حذف، حذف جماعي، نشر جماعي، والاستماع للتسجيل الصوتي.
+النواقص المؤكدة:
+- لا يوجد إجراء نشر فردي للطلب في `rowActions(ORDERS)`، بينما الويب يوفر `publishOrder(sn)` لكل طلب بالإضافة إلى النشر الجماعي.
+- لا يوجد إجراء Native يرسل `POST /api/orders/admin/:sn/voice-reviewed` لتأكيد مراجعة التسجيل؛ Native يحمّل ويشغّل التسجيل فقط.
+- فلاتر الطلبات في Kotlin حقول نصية عامة للحالة والمنطقة والتاريخ، وليست نفس خيارات وفلاتر الويب المهيكلة.
+- عرض الطلب في Kotlin بطاقة عامة تعتمد على حقول primary/secondary محدودة، وليس شاشة تفاصيل مخصصة مطابقة لعرض الويب.
+
+### H. الدعم والمخالفات والبحث
+
+هذا خلل ربط مهم:
+- `AdminSection.SUPPORT.path` يحمل `/api/admin/support/violations`.
+- `AdminViewModel.load()` يحمّل نتائج هذا المسار في `state.items`، ثم يحمّل محادثات الدعم من `/api/support/admin` في `supportCases`.
+- لكن `HomeScreen` يعرض `SupportAdminScreen` ويمرر إليها `supportCases` فقط، ولا يمرر `state.items`.
+- لذلك قائمة المخالفات التي جرى تحميلها لا تظهر في الشاشة.
+- يوجد زر بحث في `ListScreen` ويستدعي `vm.searchSupport`، لكن شاشة الدعم الخاصة لا تستخدم `ListScreen` ولا تستقبل callback البحث؛ بالتالي بحث الدعم/الطلبات لا يظهر من واجهة القسم الحالية.
+
+محادثات الدعم نفسها موجودة Native: فتح المحادثة، قراءة الرسائل، الرد، تغيير الحالة وحذف رسالة.
+
+### I. الإشعارات
+
+Native يدعم تسجيل FCM token وإرسال إشعار مباشر من شاشة الإشعارات، ويعرض سجل الحملات العامة مع حذف الحملة. لكن الويب يتضمن أيضًا:
+- صندوق وارد الإدارة.
+- تعليم إشعار كمقروء وقراءة الكل.
+- سجل تدقيق تسليم الإشعارات حسب القناة.
+- سجل الحملات وتفاصيلها وحذف الحملة.
+- واجهة إرسال ذات أوضاع وجمهور وبيانات مستلم أكثر اكتمالًا.
+
+هذه الأجزاء غير موجودة في شاشة Kotlin الحالية. يجب أن تكون مراجعة الإشعارات مستقلة لكل من FCM، وإشعارات التطبيق، وسجل التسليم، وصندوق وارد الإدارة.
+
+### J. الإعلانات والمحتوى والأسعار والتقارير
+
+- المحتوى: Kotlin يضيف/يعدل/يفعل/يعطل/يحذف FAQ ويحفظ الإعلان، لكنه لا يقدم زر معاينة المحتوى الموجود في الويب.
+- الأسعار: شاشة Kotlin تعرض حقول الأسعار وسجلًا مختصرًا؛ يلزم مطابقة سجل التغييرات والتحقق من رسائل التوضيح والقيود.
+- التقارير: الفلاتر الأساسية متقاربة، لكن الويب ينشئ ملف CSV قابلًا للتنزيل، بينما Kotlin يضع نص CSV في `Intent.EXTRA_TEXT` لمشاركته ولا ينشئ ملفًا فعليًا كمرفق.
+- الزيارات: شاشة Kotlin موجودة، لكن صلاحية الوصول غير مطابقة (موضح في قسم الصلاحيات).
+
+### K. إعدادات النظام والأدوات الإدارية
+
+- الإعدادات العامة الأساسية موجودة في Kotlin.
+- محرر تخطيط صفحات الإدارة `ui-layout` موجود كمسارات Backend (`GET/PUT/DELETE /api/admin/ui-layout/:page`) ومرتبط بأدوات المحرر في الويب، ولا يوجد له قسم أو شاشة Native.
+- إدارة المشرفين في Kotlin تعرض المستخدمين وتغيير الدور وسحب الصلاحية وتخصيص الصلاحيات، لكن لا توجد واجهة إنشاء/ترقية مشرف داخل شاشة الأدوار نفسها مثل الويب؛ التعيين موجود كإجراء على بطاقة الفني، وليس سير عمل كاملًا داخل قسم الأدوار.
+
+## 4) أخطاء ربط الإشعارات والتنقل
+
+في `MainActivity.navigate()`:
+- `storeOrders` يتحول إلى `AdminSection.ORDERS` بدل قسم طلبات المتجر.
+- `commerceSubscriptions` و`clientWallet` يتحولان إلى `AdminSection.CLIENTS`.
+وهذا يعني أن الإشعار قد يفتح شاشة غير صحيحة، حتى لو كان destination موجودًا ضمن القائمة المسموح بها في `SonaaMessagingService`.
+
+## 5) فجوات الصلاحيات المؤكدة
+
+Backend `src/middleware/auth.js` يعرف 21 مفتاح صلاحية، بينما `permissionSections` في Kotlin يعرف 19 مفتاحًا فقط. المفتاحان غير الموجودين في Kotlin:
+- `commerce`
+- `store`
+
+النتائج:
+- لا يمكن تحرير أو عرض صلاحيات التجارة والمتجر من حوار صلاحيات Kotlin.
+- الدور «مشرف أول» له صلاحيات تجارة على الخادم، لكن المصفوفة المحلية في Kotlin لا تمثلها.
+- أدوار المدير لا تعرض في Kotlin كامل مفاتيح الصلاحيات الـ21.
+
+كذلك:
+- `canReadSection()` في Kotlin يرجع false دائمًا لـ `PAGE_VISITS` لغير المدير الرئيسي، بينما الويب يربط `pageVisits` بصلاحية `dashboard` ويسمح بها لمن لديه قراءة Dashboard.
+- `SECURITY` و`ROLES` محجوبان عن غير المدير الرئيسي في Kotlin والويب، وهذا متوافق مع الحماية المقصودة.
+- يجب توحيد تعريفات الأدوار والقراءة والتنفيذ مع الخادم بدل إعادة كتابة Defaults محلية قد تختلف عنه.
+
+## 6) نواقص عامة في تجربة القوائم
+
+- `ListScreen` تستخدم بحثًا محليًا عبر نص JSON للعناصر المحمّلة؛ الويب لديه بحث خادمي في العملاء وبعض الأقسام.
+- مرشحات الحالة والمنطقة والتاريخ في Kotlin عامة نصية، ولا تعادل المرشحات المتخصصة في صفحات العملاء والطلبات والفنيين.
+- لا توجد شارات أعداد الحالات المعلقة بجانب أقسام قائمة Kotlin كما في تبويبات لوحة الويب.
+- عرض العنصر العام يقتصر على أول حقل مناسب كعنوان وأربعة حقول ثانوية، فلا يعرض تفاصيل كل نوع سجل وحقوله الخاصة.
+- يجب تدقيق كل عملية تعديل على حدة للتأكد من: طلب API، طريقة HTTP، payload، التحقق من المدخلات، رسالة الخطأ، تحديث القائمة، وعدم فقد سياق الفلتر أو العنصر المحدد.
+
+## 7) نطاق Backend الذي تمت مراجعته
+
+تمت مراجعة مسارات الإدارة التالية:
+- `admin.js`
+- `admin/clients.js`
+- `admin/commerce.js`
+- `admin/complaints.js`
+- `admin/fanniManagement.js`
+- `admin/fanniProfiles.js`
+- `admin/offers.js`
+- `admin/operations.js`
+- `admin/orders.js`
+- `admin/platform.js`
+- `admin/services.js`
+- `admin/store.js`
+- `admin/uiLayout.js`
+- `admin/users.js`
+- `admin/wallet.js`
+- `admin/clientWallet.js`
+
+كما تمت مراجعة ملفات عرض وإجراءات الويب المرتبطة بكل هذه الوحدات، بما فيها `admin-core.js` و`admin-shell.js` وملفات `frontend/js/admin/*` وملفات المتجر والاشتراكات ومحافظ العملاء.
+
+## 8) الاختبارات وحدود الإثبات
+
+- آخر Workflow للبناء Native على commit المراجعة نجح: `44145985780`.
+- ملف Workflow يشغّل `gradle :app:assembleDebug` ويرفع APK Debug فقط.
+- لا يشغّل اختبارات واجهات Android أو اختبارات تكامل لكل عمليات الإدارة، ولا يختبر صلاحيات الحسابات الفرعية أو استجابات Backend على بيانات حقيقية.
+- لذلك حالة البناء: ناجح. حالة مطابقة الوظائف: غير مكتملة وتحتاج تنفيذ واختبارات وظيفية.
+
+## 9) معيار إغلاق كل وحدة
+
+لا تُعتبر الوحدة مكتملة إلا بعد:
+1. وجود شاشة Native متخصصة تعرض الحقول والإجراءات المقابلة للويب.
+2. ربط كل إجراء بالمسار الصحيح وطريقة HTTP والـpayload الصحيح.
+3. تطابق صلاحيات القراءة والتنفيذ مع Backend.
+4. حالات تحميل/فراغ/خطأ/نجاح وتحقق من المدخلات.
+5. تحديث البيانات بعد العملية مع الحفاظ على البحث والفلتر والاختيار.
+6. اختبار العملية بحساب مدير رئيسي وحساب فرعي بصلاحيات مختلفة.
+7. اختبار Android فعليًا، وليس الاكتفاء ببناء APK.
+
+**القرار:** لا يبدأ اعتبار نقل لوحة الإدارة مكتملًا بمجرد إضافة المتجر والاشتراكات ومحفظة العملاء. المطلوب إغلاق كل الفجوات أعلاه ثم إعادة جولة مطابقة كاملة على كل تبويب وعملية.
