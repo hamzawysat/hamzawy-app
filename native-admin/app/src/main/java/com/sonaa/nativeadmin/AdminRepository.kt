@@ -98,7 +98,8 @@ enum class AdminSection(
  SECURITY("سجل التدقيق والأمان","api/admin/audit-logs",listOf("logs","items","data")),
  SETTINGS("إعدادات المنصة","api/admin/settings",listOf("settings","data")),
  ROLES("صلاحيات المشرفين","api/admin/admin-users",listOf("users","admins","data","items")),
- CLIENTS("كل العملاء","api/admin/clients",listOf("clients","items","data"));
+ CLIENTS("كل العملاء","api/admin/clients",listOf("clients","items","data")),
+ CLIENT_WALLETS("محافظ العملاء","api/admin/client-wallet/accounts",listOf("accounts","data","items"));
  fun defaultBody()=JsonObject()
  fun extract(p:JsonElement):List<JsonElement>{
   if(p.isJsonArray)return p.asJsonArray.map{it}
