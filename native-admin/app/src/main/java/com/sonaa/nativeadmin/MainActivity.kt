@@ -2621,7 +2621,8 @@ private fun parseStoreCsvProducts(source:String,columnMapping:Map<String,Int>?=n
         val type=if(rawType.contains("اشتراك")||rawType.equals("subscription",true))"subscription" else "product"
         val imageUrl=cellAt(cells,"imageUrl")
         val parsedImage=if(imageUrl.isBlank())null else runCatching{Uri.parse(imageUrl)}.getOrNull()
-        if(imageUrl.isNotBlank()&&(parsedImage?.scheme?.lowercase() !in listOf("http","https")||parsedImage.host.isNullOrBlank()||imageUrl.length>1000)){
+        val validImageScheme=parsedImage?.scheme?.lowercase()=="http"||parsedImage?.scheme?.lowercase()=="https"
+        if(imageUrl.isNotBlank()&&(!validImageScheme||parsedImage?.host.isNullOrBlank()||imageUrl.length>1000)){
             errors.add("الصف "+rowNumber+": رابط الصورة يجب أن يبدأ بـ https:// أو http://")
             return@forEachIndexed
         }
