@@ -19,7 +19,7 @@ class SonaaMessagingService : FirebaseMessagingService() {
         val body = message.notification?.body ?: message.data["message"] ?: ""
         val allowedDestinations = setOf("orders", "storeOrders", "commerceSubscriptions", "technicians", "clients", "clientWallet", "wallet", "recovery", "support", "topups", "wallets")
         val destination = message.data["destination"]?.takeIf { it in allowedDestinations } ?: when (channel) {
-            "storeOrders" -> "orders"\n            "commerceSubscriptions", "clientWallet" -> "clients"\n            "wallet" -> "wallets"\n            "order_new" -> "orders"
+            "order_new" -> "orders"
             "fanni_register" -> "technicians"
             "client_register" -> "clients"
             "password_reset" -> "recovery"
