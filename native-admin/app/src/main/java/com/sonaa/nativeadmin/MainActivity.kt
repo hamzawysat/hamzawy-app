@@ -2046,7 +2046,7 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
         "name" to "اسم المنتج *","price" to "السعر *","category" to "القسم",
         "description" to "الوصف","details" to "التفاصيل والمواصفات","originalPrice" to "السعر قبل العرض",
         "offerText" to "تفاصيل العرض","type" to "نوع المنتج","subscriptionDuration" to "مدة الاشتراك",
-        "stock" to "الكمية / المخزون"
+        "stock" to "الكمية / المخزون","imageUrl" to "رابط الصورة","isActive" to "حالة المنتج"
     )
     val context=LocalContext.current
     val csvPicker=rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()){uri->
@@ -2372,6 +2372,7 @@ private fun parseStoreCsvProducts(source:String,columnMapping:Map<String,Int>?=n
     row.add(cell.toString().trim())
     if(row.any{it.isNotBlank()})rows.add(row.toList())
     if(rows.size<2)error("ملف CSV يجب أن يحتوي على صف عناوين وصف منتج واحد على الأقل")
+    if(rows.size-1>500)error("الحد الأقصى للاستيراد 500 منتج في الدفعة الواحدة. قسّم الملف إلى دفعات.")
     fun norm(value:String)=value.trim().lowercase().replace(Regex("[\\s_\\-]+"),"")
     val aliases=mapOf(
         "name" to listOf("name","product","productname","title","اسم","اسم المنتج","المنتج"),
@@ -2383,7 +2384,9 @@ private fun parseStoreCsvProducts(source:String,columnMapping:Map<String,Int>?=n
         "details" to listOf("details","specifications","التفاصيل","المواصفات"),
         "type" to listOf("type","نوع المنتج","النوع"),
         "subscriptionDuration" to listOf("duration","subscriptionduration","مدة الاشتراك"),
-        "stock" to listOf("stock","quantity","qty","المخزون","الكمية")
+        "stock" to listOf("stock","quantity","qty","المخزون","الكمية"),
+        "imageUrl" to listOf("image","imageurl","image_url","رابط الصورة","رابط صورة المنتج","صورة المنتج"),
+        "isActive" to listOf("active","isactive","enabled","نشط","مفعل","حالة المنتج")
     )
     val headers=rows.first().mapIndexed{index,value->if(index==0)value.removePrefix(String(charArrayOf(0xFEFF.toChar()))) else value}
     val mapping=aliases.mapValues{(_,names)->headers.indexOfFirst{header->names.any{norm(header)==norm(it)}}}.toMutableMap()
@@ -2416,12 +2419,19 @@ private fun parseStoreCsvProducts(source:String,columnMapping:Map<String,Int>?=n
         if(stockRaw.isNotBlank()&&stock==null){errors.add("الصف "+rowNumber+": الكمية يجب أن تكون عددًا صحيحًا غير سالب");return@forEachIndexed}
         val rawType=cellAt(cells,"type")
         val type=if(rawType.contains("اشتراك")||rawType.equals("subscription",true))"subscription" else "product"
+        val imageUrl=cellAt(cells,"imageUrl")
+        if(imageUrl.isNotBlank()&&(!imageUrl.startsWith("https://",true)&&!imageUrl.startsWith("http://",true)||imageUrl.length>1000)){
+            errors.add("الصف "+rowNumber+": رابط الصورة يجب أن يبدأ بـ https:// أو http://")
+            return@forEachIndexed
+        }
+        val activeRaw=cellAt(cells,"isActive").trim().lowercase()
+        val isActive=activeRaw.isBlank()||activeRaw !in listOf("0","false","no","inactive","غير مفعل","مخفي","لا")
         valid.add(JsonObject().apply{
             addProperty("name",name);addProperty("category",cellAt(cells,"category").ifBlank{"عام"});addProperty("price",price)
             if(original==null)add("originalPrice",com.google.gson.JsonNull.INSTANCE)else addProperty("originalPrice",original)
             addProperty("offerText",cellAt(cells,"offerText"));addProperty("description",cellAt(cells,"description"));addProperty("details",cellAt(cells,"details"))
-            addProperty("type",type);addProperty("subscriptionDuration",cellAt(cells,"subscriptionDuration"));addProperty("imageUrl","");add("imageFileId",com.google.gson.JsonNull.INSTANCE)
-            addProperty("isActive",true);addProperty("isAdvertised",false);addProperty("adAudience","both");addProperty("adPriority",0);add("adExpiresAt",com.google.gson.JsonNull.INSTANCE)
+            addProperty("type",type);addProperty("subscriptionDuration",cellAt(cells,"subscriptionDuration"));addProperty("imageUrl",imageUrl);add("imageFileId",com.google.gson.JsonNull.INSTANCE)
+            addProperty("isActive",isActive);addProperty("isAdvertised",false);addProperty("adAudience","both");addProperty("adPriority",0);add("adExpiresAt",com.google.gson.JsonNull.INSTANCE)
             if(stock==null)add("stock",com.google.gson.JsonNull.INSTANCE)else addProperty("stock",stock)
         })
     }
