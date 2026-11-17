@@ -1945,7 +1945,7 @@ private fun storeProductCopy(source:com.google.gson.JsonObject):com.google.gson.
             OutlinedTextField(details,{details=it},label={Text("التفاصيل والمواصفات")},minLines=3)
             OutlinedTextField(imageUrl,{imageUrl=it},label={Text("رابط الصورة أو مسار صورة المتجر")},singleLine=true)
             OutlinedTextField(imageFileId,{imageFileId=it},label={Text("معرّف ملف الصورة (اختياري)")},singleLine=true)
-            OutlinedButton(onClick={onClick@{imagePicker.launch("image/*")}},enabled=!busy,modifier=Modifier.fillMaxWidth()){Text("اختيار صورة من الجهاز ورفعها إلى MongoDB")}
+            OutlinedButton(onClick={imagePicker.launch("image/*")},enabled=!busy,modifier=Modifier.fillMaxWidth()){Text("اختيار صورة من الجهاز ورفعها إلى MongoDB")}
             OutlinedTextField(stock,{stock=it},label={Text("الكمية — اتركها فارغة بدون تحديد")},keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Number),singleLine=true)
             Row(verticalAlignment=Alignment.CenterVertically){Text("المنتج ظاهر في المتجر",modifier=Modifier.weight(1f));Switch(active,{active=it})}
             Row(verticalAlignment=Alignment.CenterVertically){Text("نشر المنتج كإعلان",modifier=Modifier.weight(1f));Switch(advertised,{advertised=it})}
