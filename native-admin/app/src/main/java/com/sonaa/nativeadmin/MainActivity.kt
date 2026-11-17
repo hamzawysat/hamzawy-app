@@ -2620,17 +2620,18 @@ private fun parseStoreCsvProducts(source:String,columnMapping:Map<String,Int>?=n
         val rawType=cellAt(cells,"type")
         val type=if(rawType.contains("اشتراك")||rawType.equals("subscription",true))"subscription" else "product"
         val imageUrl=cellAt(cells,"imageUrl")
-        if(imageUrl.isNotBlank()&&(!imageUrl.startsWith("https://",true)&&!imageUrl.startsWith("http://",true)||imageUrl.length>1000)){
+        val parsedImage=if(imageUrl.isBlank())null else runCatching{Uri.parse(imageUrl)}.getOrNull()
+        if(imageUrl.isNotBlank()&&(parsedImage?.scheme?.lowercase() !in listOf("http","https")||parsedImage.host.isNullOrBlank()||imageUrl.length>1000)){
             errors.add("الصف "+rowNumber+": رابط الصورة يجب أن يبدأ بـ https:// أو http://")
             return@forEachIndexed
         }
         val activeRaw=cellAt(cells,"isActive").trim().lowercase()
         val isActive=activeRaw.isBlank()||activeRaw !in listOf("0","false","no","inactive","غير مفعل","مخفي","لا")
         val product=JsonObject().apply{
-            addProperty("name",name);addProperty("category",cellAt(cells,"category").ifBlank{"عام"});addProperty("price",price)
+            addProperty("name",name);addProperty("category",cellAt(cells,"category").ifBlank{"عام"}.take(80));addProperty("price",price)
             if(original==null)add("originalPrice",com.google.gson.JsonNull.INSTANCE)else addProperty("originalPrice",original)
-            addProperty("offerText",cellAt(cells,"offerText"));addProperty("description",cellAt(cells,"description"));addProperty("details",cellAt(cells,"details"))
-            addProperty("type",type);addProperty("subscriptionDuration",cellAt(cells,"subscriptionDuration"));addProperty("imageUrl",imageUrl);add("imageFileId",com.google.gson.JsonNull.INSTANCE)
+            addProperty("offerText",cellAt(cells,"offerText").take(200));addProperty("description",cellAt(cells,"description").take(2000));addProperty("details",cellAt(cells,"details").take(5000))
+            addProperty("type",type);addProperty("subscriptionDuration",cellAt(cells,"subscriptionDuration").take(60));addProperty("imageUrl",imageUrl);add("imageFileId",com.google.gson.JsonNull.INSTANCE)
             addProperty("isActive",isActive);addProperty("isAdvertised",false);addProperty("adAudience","both");addProperty("adPriority",0);add("adExpiresAt",com.google.gson.JsonNull.INSTANCE)
             if(stock==null)add("stock",com.google.gson.JsonNull.INSTANCE)else addProperty("stock",stock)
         }
