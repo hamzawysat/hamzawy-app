@@ -972,6 +972,13 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
  var service by remember{mutableStateOf("")}
  var area by remember{mutableStateOf("")}
  val context=LocalContext.current
+ var exportMessage by remember{mutableStateOf<String?>(null)}
+ val csvSaver=rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")){uri->
+  if(uri!=null){
+   val result=runCatching{context.contentResolver.openOutputStream(uri)?.use{it.write(csv.toByteArray(Charsets.UTF_8))}?:error("تعذر فتح ملف التصدير")}
+   exportMessage=if(result.isSuccess)"تم حفظ ملف CSV بنجاح" else "تعذر حفظ الملف: "+(result.exceptionOrNull()?.message?: "خطأ غير معروف")
+  }
+ }
  val root=payload?.takeIf{it.isJsonObject}?.asJsonObject
  val summary=root?.get("summary")?.takeIf{it.isJsonObject}?.asJsonObject
  val topServices=root?.get("topServices")?.takeIf{it.isJsonArray}?.asJsonArray
@@ -998,6 +1005,8 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
   Button(onClick={onGenerate("POST","api/admin/reports",JsonObject().apply{addProperty("startDate",startDate);addProperty("endDate",endDate);addProperty("service",service);addProperty("area",area)})},modifier=Modifier.fillMaxWidth()){Text("إنشاء التقرير")}
   if(summary!=null){
    summary.entrySet().forEach{Text(it.key+" : "+it.value.toString())}
+   OutlinedButton(onClick={csvSaver.launch("hamzawy-sat-report.csv")},modifier=Modifier.fillMaxWidth()){Text("حفظ التقرير كملف CSV على الجهاز")}
+   exportMessage?.let{Text(it,color=if(it.startsWith("تم"))Color(0xFF087F55) else MaterialTheme.colorScheme.error)}
    OutlinedButton(onClick={
     val intent=Intent(Intent.ACTION_SEND).apply{
      type="text/csv"
