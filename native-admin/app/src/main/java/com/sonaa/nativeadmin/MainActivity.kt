@@ -1612,13 +1612,13 @@ private fun rowActions(section:AdminSection,item:JsonElement):List<RowAction>{
   )
   AdminSection.TOPUPS->listOf(
    RowAction("قبول الشحن","POST","api/admin/topup-requests/$id/approve"),
-   RowAction("رفض الشحن","POST","api/admin/topup-requests/$id/reject",JsonObject().apply{addProperty("reason","رفض من تطبيق الإدارة")})
+   RowAction("رفض الشحن","POST","api/admin/topup-requests/$id/reject",JsonObject(),"reason","سبب الرفض (اختياري)")
   )
   AdminSection.WALLETS->listOf(
-   RowAction("تعيين الرصيد","POST","api/admin/fannis/$id/set-balance",JsonObject(),"amount","الرصيد الجديد بالجنيه"),
-   RowAction("إضافة رصيد","POST","api/admin/fannis/$id/add-balance",JsonObject(),"amount","المبلغ المراد إضافته"),
-   RowAction("تجميد المحفظة","POST","api/admin/wallet/freeze/$id",JsonObject().apply{addProperty("action","freeze");addProperty("reason","من تطبيق الإدارة")}),
-   RowAction("فك تجميد المحفظة","POST","api/admin/wallet/freeze/$id",JsonObject().apply{addProperty("action","unfreeze");addProperty("reason","من تطبيق الإدارة")})
+   RowAction("تعيين الرصيد","POST","api/admin/fannis/$id/set-balance",JsonObject(),"amount","الرصيد الجديد بالجنيه","reason","سبب التسوية"),
+   RowAction("إضافة رصيد","POST","api/admin/fannis/$id/add-balance",JsonObject(),"amount","المبلغ المراد إضافته","reason","سبب الإضافة"),
+   RowAction("تجميد المحفظة","POST","api/admin/wallet/freeze/$id",JsonObject().apply{addProperty("action","freeze")},"reason","سبب تجميد المحفظة"),
+   RowAction("فك تجميد المحفظة","POST","api/admin/wallet/freeze/$id",JsonObject().apply{addProperty("action","unfreeze")},"reason","سبب إلغاء التجميد")
   )
   AdminSection.SERVICES->{
    val name=value("name")?:return emptyList()
