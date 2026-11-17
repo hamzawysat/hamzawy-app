@@ -234,7 +234,7 @@ class MainActivity : ComponentActivity() {
         if(state.section==AdminSection.ORDERS)state.voicePath?.let { path -> VoicePlayer(path) { } }
         state.actionMessage?.let { message ->
             Card(Modifier.fillMaxWidth().padding(horizontal=12.dp, vertical=6.dp), colors=CardDefaults.cardColors(containerColor=Color(0xFFEAF6F8))) {
-                Text(message, modifier=Modifier.padding(10.dp), color=DarkAccent, maxLines=5)
+                Text(message, modifier=Modifier.padding(10.dp), color=DarkAccent, maxLines=10)
             }
         }
         state.supportPasswordText?.let { secret ->
