@@ -8,7 +8,7 @@ import com.google.gson.JsonObject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-data class AdminUiState(val checking:Boolean=true,val authenticated:Boolean=false,val adminInfo:JsonElement?=null,val busy:Boolean=false,val error:String?=null,val section:AdminSection=AdminSection.DASHBOARD,val stats:JsonElement?=null,val items:List<JsonElement> = emptyList(),val actionMessage:String?=null,val payload:JsonElement?=null,val voicePath:String?=null,val editingProfile:JsonElement?=null,val editingProfileId:String?=null,val walletFanniId:String?=null,val walletTransactions:List<JsonElement> = emptyList(),val editingClient:JsonElement?=null,val editingClientId:String?=null,val recoveryDetail:JsonElement?=null,val recoveryDetailId:String?=null,val supportCases:List<JsonElement> = emptyList(),val supportSelectedCase:JsonElement?=null)
+data class AdminUiState(val checking:Boolean=true,val authenticated:Boolean=false,val adminInfo:JsonElement?=null,val busy:Boolean=false,val error:String?=null,val section:AdminSection=AdminSection.DASHBOARD,val stats:JsonElement?=null,val items:List<JsonElement> = emptyList(),val actionMessage:String?=null,val payload:JsonElement?=null,val voicePath:String?=null,val editingProfile:JsonElement?=null,val editingProfileId:String?=null,val walletFanniId:String?=null,val walletTransactions:List<JsonElement> = emptyList(),val editingClient:JsonElement?=null,val editingClientId:String?=null,val recoveryDetail:JsonElement?=null,val recoveryDetailId:String?=null,val supportCases:List<JsonElement> = emptyList(),val supportSelectedCase:JsonElement?=null,val supportPasswordText:String?=null,val supportPasswordTitle:String="كلمة دعم العميل")
 class AdminViewModel(app:Application):AndroidViewModel(app){
  private val repo=AdminRepository(app)
  private val _state=MutableStateFlow(AdminUiState())
@@ -138,6 +138,30 @@ class AdminViewModel(app:Application):AndroidViewModel(app){
   }catch(e:Exception){_state.value=_state.value.copy(busy=false,error=e.message?: "تعذر تحميل حركات محفظة العميل")}
  }
  fun closeWalletTransactions(){_state.value=_state.value.copy(walletFanniId=null,walletTransactions=emptyList())}
+ fun issueClientSupportPassword(id:String)=viewModelScope.launch{
+  _state.value=_state.value.copy(busy=true,error=null,supportPasswordText=null)
+  try{
+   val result=repo.mutate("POST","api/password-recovery/admin/support-passwords",JsonObject().apply{addProperty("role","client");addProperty("accountId",id)})
+   val secret=result.takeIf{it.isJsonObject}?.asJsonObject?.get("supportPassword")?.takeIf{!it.isJsonNull}?.asString
+    ?:result.takeIf{it.isJsonObject}?.asJsonObject?.get("data")?.takeIf{it.isJsonObject}?.asJsonObject?.get("supportPassword")?.takeIf{!it.isJsonNull}?.asString
+   if(secret.isNullOrBlank())error("لم يستلم التطبيق كلمة الدعم من الخادم")
+   _state.value=_state.value.copy(busy=false,supportPasswordText=secret,supportPasswordTitle="كلمة دعم جديدة للعميل")
+  }catch(e:Exception){_state.value=_state.value.copy(busy=false,error=e.message?: "تعذر إصدار كلمة الدعم")}
+ }
+ fun revealClientSupportPassword(id:String)=viewModelScope.launch{
+  _state.value=_state.value.copy(busy=true,error=null,supportPasswordText=null)
+  try{
+   val active=repo.get("api/password-recovery/admin/support-passwords?role=client&accountId=$id")
+   val supportId=active.takeIf{it.isJsonObject}?.asJsonObject?.get("id")?.takeIf{!it.isJsonNull}?.asString
+    ?:error("لا توجد كلمة دعم صالحة لهذا العميل")
+   val result=repo.get("api/password-recovery/admin/support-passwords/$supportId/reveal")
+   val secret=result.takeIf{it.isJsonObject}?.asJsonObject?.get("supportPassword")?.takeIf{!it.isJsonNull}?.asString
+    ?:result.takeIf{it.isJsonObject}?.asJsonObject?.get("data")?.takeIf{it.isJsonObject}?.asJsonObject?.get("supportPassword")?.takeIf{!it.isJsonNull}?.asString
+   if(secret.isNullOrBlank())error("تعذر استرجاع كلمة الدعم")
+   _state.value=_state.value.copy(busy=false,supportPasswordText=secret,supportPasswordTitle="كلمة الدعم الحالية للعميل")
+  }catch(e:Exception){_state.value=_state.value.copy(busy=false,error=e.message?: "تعذر عرض كلمة الدعم")}
+ }
+ fun closeSupportPassword(){_state.value=_state.value.copy(supportPasswordText=null)}
  fun openSupportCase(id:String)=viewModelScope.launch{
   _state.value=_state.value.copy(busy=true,error=null)
   try{
