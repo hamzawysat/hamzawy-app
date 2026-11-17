@@ -1714,6 +1714,9 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
         value("completedJobs").takeIf{it.isNotBlank()}?.let{parts.add("أعمال مكتملة: $it")}
         value("balance").ifBlank{value("walletBalance")}.takeIf{it.isNotBlank()}?.let{parts.add("الرصيد: $it ج")}
         value("trustScore").takeIf{it.isNotBlank()}?.let{parts.add("الثقة: $it")}
+        if(obj.get("isTrusted")?.takeIf{!it.isJsonNull}?.asBoolean==true)parts.add("شارة موثوق")
+        if(obj.get("isVerified")?.takeIf{!it.isJsonNull}?.asBoolean==true)parts.add("تم التحقق من الهوية")
+        if(obj.get("isFeatured")?.takeIf{!it.isJsonNull}?.asBoolean==true)parts.add("فني مميز")
         obj.get("activeSpecialties")?.takeIf{it.isJsonArray}?.asJsonArray?.mapNotNull{it.takeIf{v->!v.isJsonNull}?.asString}?.takeIf{it.isNotEmpty()}?.let{parts.add("الخدمات: "+it.joinToString("، "))}
         obj.get("areas")?.takeIf{it.isJsonArray}?.asJsonArray?.mapNotNull{it.takeIf{v->!v.isJsonNull}?.asString}?.takeIf{it.isNotEmpty()}?.let{parts.add("المناطق: "+it.joinToString("، "))}
         value("adminNote").takeIf{it.isNotBlank()}?.let{parts.add("ملاحظة الإدارة: $it")}
