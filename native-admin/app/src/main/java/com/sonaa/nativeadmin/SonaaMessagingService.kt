@@ -17,7 +17,8 @@ class SonaaMessagingService : FirebaseMessagingService() {
         val channel = channelFor(type)
         val title = message.notification?.title ?: message.data["title"] ?: "إشعار من صُنّاع"
         val body = message.notification?.body ?: message.data["message"] ?: ""
-        val destination = when (channel) {
+        val allowedDestinations = setOf("orders", "technicians", "clients", "recovery", "support", "topups", "wallets")
+        val destination = message.data["destination"]?.takeIf { it in allowedDestinations } ?: when (channel) {
             "order_new" -> "orders"
             "fanni_register" -> "technicians"
             "client_register" -> "clients"
@@ -38,12 +39,19 @@ class SonaaMessagingService : FirebaseMessagingService() {
         getSystemService(NotificationManager::class.java).notify(type.hashCode(), notification)
     }
     private fun channelFor(type: String) = when (type) {
-        "order_new", "new_order", "admin_new_order" -> "order_new"
-        "fanni_register", "new_fanni", "admin_new_technician" -> "fanni_register"
-        "client_register", "new_client", "admin_new_client" -> "client_register"
-        "password_reset", "admin_password_recovery" -> "password_reset"
-        "support", "new_complaint", "admin_support_request", "admin_new_complaint" -> "support"
-        "wallet_charge", "topup_request", "admin_new_topup" -> "wallet_charge"
+        "order_new", "new_order", "admin_new_order", "admin_order_offer_accepted",
+        "admin_order_cancelled", "admin_order_completed", "admin_fanni_offer",
+        "admin_price_change_requested", "admin_client_rating" -> "order_new"
+        "fanni_register", "new_fanni", "admin_new_technician", "admin_fanni_profile_edit",
+        "admin_fanni_login", "admin_fanni_logout" -> "fanni_register"
+        "client_register", "new_client", "admin_new_client", "admin_client_login",
+        "admin_client_logout" -> "client_register"
+        "password_reset", "admin_password_recovery", "admin_password_recovery_message" -> "password_reset"
+        "support", "new_complaint", "admin_support_request", "admin_new_complaint",
+        "admin_support_followup" -> "support"
+        "wallet_charge", "topup_request", "admin_new_topup", "wallet_credit",
+        "fanni_wallet_settlement", "technician_settlement", "topup_approved",
+        "topup_rejected", "wallet_debit", "commission_deducted" -> "wallet_charge"
         else -> "support"
     }
     companion object {
