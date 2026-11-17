@@ -1413,12 +1413,15 @@ private fun monthlyOrderStats(orders:List<JsonElement>):List<MonthlyOrderStat>{
 }
 
 private data class RowAction(val label:String,val method:String,val path:String,val body:JsonObject=JsonObject(),val inputKey:String?=null,val inputHint:String="",val secondInputKey:String?=null,val secondInputHint:String="")
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable private fun ListScreen(section: AdminSection, items: List<JsonElement>, initialQuery:String, adminInbox:List<JsonElement>, adminUnreadCount:Int, notificationDeliveries:List<JsonElement>, notificationLoadError:String?, retry: () -> Unit, onVoice:(String)->Unit, onEditProfile:(String)->Unit, onOpenIdentity:(String)->Unit, onIssueSupportPassword:(String,String)->Unit, onRevealSupportPassword:(String,String)->Unit, onIssueClientSupportPassword:(String)->Unit, onRevealClientSupportPassword:(String)->Unit, onOpenWallet:(String)->Unit, onOpenClientWallet:(String)->Unit, onOpenClientOrders:(String)->Unit, onEditClient:(String)->Unit, onClientSearch:(String)->Unit, onSupportSearch:(String)->Unit, onAuditFilter:(String)->Unit, onBulkPublish:(List<String>)->Unit, onOpenRecovery:(String)->Unit, onBulkAction:(AdminSection,List<String>,String)->Unit, onBulkRenameRegions:(Map<String,String>)->Unit, onCanWriteApi:(String)->Boolean, onCanReadApi:(String)->Boolean, onMarkNotificationRead:(String)->Unit, onMarkAllNotificationsRead:()->Unit, onAction:(String,String,JsonObject)->Unit) {
     var query by remember(section,initialQuery) { mutableStateOf(initialQuery) }
     var deleteClientOrdersPhone by remember(section){mutableStateOf("")}
     var statusFilter by remember(section) { mutableStateOf("") }
     var regionFilter by remember(section) { mutableStateOf("") }
     var dateFilter by remember(section) { mutableStateOf("") }
+    var datePickerOpen by remember(section){mutableStateOf(false)}
+    val datePickerState=rememberDatePickerState()
     var pending by remember { mutableStateOf<RowAction?>(null) }
     var actionInput by remember { mutableStateOf("") }
     var actionInput2 by remember { mutableStateOf("") }
@@ -1675,11 +1678,20 @@ private data class RowAction(val label:String,val method:String,val path:String,
                     regionOptions.forEach{value->FilterChip(selected=regionFilter==value,onClick={regionFilter=if(regionFilter==value)"" else value},label={Text(value)})}
                 }
             }
-            Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)){
+            Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(6.dp)){
                 OutlinedTextField(dateFilter,{dateFilter=it},modifier=Modifier.weight(1f),label={Text("التاريخ YYYY-MM-DD")},singleLine=true)
-                TextButton(onClick={statusFilter="";regionFilter="";dateFilter=""}){Text("مسح الفلاتر")}
+                TextButton(onClick={datePickerOpen=true}){Text("التقويم")}
+                TextButton(onClick={statusFilter="";regionFilter="";dateFilter=""}){Text("مسح")}
             }
         }
+        if(datePickerOpen)DatePickerDialog(
+            onDismissRequest={datePickerOpen=false},
+            confirmButton={TextButton(enabled=datePickerState.selectedDateMillis!=null,onClick={
+                datePickerState.selectedDateMillis?.let{millis->dateFilter=SimpleDateFormat("yyyy-MM-dd",Locale.US).apply{timeZone=TimeZone.getTimeZone("UTC")}.format(Date(millis))}
+                datePickerOpen=false
+            }){Text("اختيار")}},
+            dismissButton={TextButton(onClick={datePickerOpen=false}){Text("إلغاء")}}
+        ){DatePicker(state=datePickerState)}
         if(section==AdminSection.SECURITY) Button(onClick={onAuditFilter(dateFilter)},modifier=Modifier.fillMaxWidth()){Text(if(dateFilter.isBlank())"تحديث سجل التدقيق" else "تصفية سجل التدقيق بالتاريخ")}
         if (filtered.isEmpty()) {
             Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
