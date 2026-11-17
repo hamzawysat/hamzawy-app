@@ -321,7 +321,7 @@ class MainActivity : ComponentActivity() {
                 Button(onClick = vm::retry, modifier = Modifier.padding(top = 12.dp)) { Text("إعادة المحاولة") }
             }
             state.section == AdminSection.DASHBOARD || state.section == AdminSection.STATS -> Dashboard(state.stats, state.section == AdminSection.STATS)
-            state.section == AdminSection.PAGE_VISITS -> PageVisitsScreen(state.payload)
+            state.section == AdminSection.PAGE_VISITS -> PageVisitsScreen(state.payload, vm::filterPageVisits)
             state.section == AdminSection.REPORTS -> ReportEditor(state.payload) { method, path, body -> vm.mutate(method, path, body) }
             state.section == AdminSection.SETTINGS || state.section == AdminSection.PRICING || state.section == AdminSection.CONTENT -> ConfigEditor(state.section, state.payload,{path->canWriteApi(state.adminInfo,path)}) { method, path, body -> vm.mutate(method, path, body) }
             state.walletFanniId!=null -> WalletTransactionsScreen(state.walletTransactions,vm::closeWalletTransactions)
@@ -944,11 +944,12 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
  }
 }
 
-@Composable private fun PageVisitsScreen(payload:JsonElement?){
+@Composable private fun PageVisitsScreen(payload:JsonElement?,onFilter:(String)->Unit){
  val root=payload?.takeIf{it.isJsonObject}?.asJsonObject
  val summary=root?.get("summary")?.takeIf{it.isJsonArray}?.asJsonArray?.toList().orEmpty()
  val recent=root?.get("recent")?.takeIf{it.isJsonArray}?.asJsonArray?.toList().orEmpty()
  var filter by remember{mutableStateOf("")}
+ var selectedPage by remember{mutableStateOf("")}
  val term=filter.trim()
  val filteredSummary=summary.filter{entry->
   val o=entry.takeIf{it.isJsonObject}?.asJsonObject
@@ -961,7 +962,16 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
  Column(Modifier.fillMaxSize().padding(horizontal=14.dp,vertical=10.dp),verticalArrangement=Arrangement.spacedBy(8.dp)){
   Text("سجل زيارات الموقع",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold,color=DarkAccent)
   Text("إجمالي الزيارات: "+(root?.get("total")?.toString()?: "0"),fontWeight=FontWeight.Bold)
-  OutlinedTextField(filter,{filter=it},label={Text("تصفية باسم الصفحة أو المسار")},singleLine=true,modifier=Modifier.fillMaxWidth())
+  Text("فلترة حسب الصفحة",fontWeight=FontWeight.Bold,color=DarkAccent)
+  Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(6.dp)){
+   FilterChip(selected=selectedPage.isBlank(),onClick={selectedPage="";onFilter("")},label={Text("كل الصفحات")})
+   summary.forEach{entry->
+    val obj=entry.takeIf{it.isJsonObject}?.asJsonObject?:return@forEach
+    val key=obj.get("pageKey")?.takeIf{!it.isJsonNull}?.asString.orEmpty()
+    if(key.isNotBlank())FilterChip(selected=selectedPage==key,onClick={selectedPage=key;onFilter(key)},label={Text(obj.get("pageName")?.takeIf{!it.isJsonNull}?.asString?:key)})
+   }
+  }
+  OutlinedTextField(filter,{filter=it},label={Text("بحث داخل النتائج باسم الصفحة أو المسار")},singleLine=true,modifier=Modifier.fillMaxWidth())
   Text("ملخص الصفحات",fontWeight=FontWeight.Bold,color=DarkAccent)
   if(filteredSummary.isEmpty())Text("لا توجد صفحات مطابقة")
   filteredSummary.forEach{entry->
