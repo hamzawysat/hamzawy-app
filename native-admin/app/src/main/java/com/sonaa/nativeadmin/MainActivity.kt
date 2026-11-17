@@ -468,7 +468,7 @@ private fun permissionDefaults(item:JsonElement?):Map<String,Pair<Boolean,Boolea
 }
 private fun isRootAdminInfo(info:JsonElement?):Boolean{
  val o=info?.takeIf{it.isJsonObject}?.asJsonObject?:return false
- return o.get("isRootAdmin")?.asBoolean==true||o.get("adminRoleLabel")?.asString=="أدمن رئيسي"
+ return o.get("isRootAdmin")?.asBoolean==true||o.get("adminRoleLabel")?.asString in setOf("أدمن رئيسي","مدير عام")
 }
 private fun permissionKeyForNativePath(path:String):String?{
  val clean=path.substringBefore("?").removePrefix("/")
@@ -526,7 +526,8 @@ private fun canReadSection(info:JsonElement?,section:AdminSection):Boolean{
   AdminSection.CLIENT_WALLETS,AdminSection.CLIENT_TOPUPS->"wallet"
   AdminSection.COMMERCE_PLANS,AdminSection.CLIENT_SUBSCRIPTIONS->"commerce"
   AdminSection.STORE_PRODUCTS,AdminSection.STORE_ORDERS->"store"
-  AdminSection.SECURITY,AdminSection.PAGE_VISITS,AdminSection.ROLES,AdminSection.UI_LAYOUT->return false
+  AdminSection.PAGE_VISITS->"dashboard"
+  AdminSection.SECURITY,AdminSection.ROLES,AdminSection.UI_LAYOUT->return false
  }
  return permissionDefaults(info).get(key)?.first==true
 }
