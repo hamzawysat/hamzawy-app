@@ -2165,7 +2165,9 @@ private fun secondary(item: JsonElement, section: AdminSection): String {
                     val obj=cat.takeIf{it.isJsonObject}?.asJsonObject
                     val name=obj?.get("name")?.takeIf{!it.isJsonNull}?.asString.orEmpty()
                     val count=obj?.get("productCount")?.takeIf{!it.isJsonNull}?.toString().orEmpty()
+                    val categoryImage=obj?.get("imageUrl")?.takeIf{!it.isJsonNull}?.asString.orEmpty()
                     Row(verticalAlignment=Alignment.CenterVertically){
+                        if(categoryImage.isNotBlank())AsyncImage(model=storeImageSource(categoryImage),contentDescription="صورة قسم "+name,modifier=Modifier.size(58.dp),contentScale=ContentScale.Crop)
                         Column(Modifier.weight(1f)){
                             Text(name,fontWeight=FontWeight.SemiBold)
                             Text(count+" منتج",style=MaterialTheme.typography.labelSmall,color=Color.Gray)
