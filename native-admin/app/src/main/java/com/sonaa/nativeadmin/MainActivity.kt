@@ -9,6 +9,7 @@ import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -300,7 +301,7 @@ class MainActivity : ComponentActivity() {
             state.section == AdminSection.SUPPORT -> SupportAdminScreen(state.supportCases,state.supportSelectedCase,state.actionMessage,{vm.retry()},{id->vm.openSupportCase(id)},{method,path,body->vm.supportAction(method,path,body)},{path->canWriteApi(state.adminInfo,path)})
             state.section == AdminSection.COMMERCE_PLANS -> CommercePlansScreen(state.items,state.busy,{path->canWriteApi(state.adminInfo,path)}) { method,path,body -> vm.mutate(method,path,body) }
             state.section == AdminSection.CLIENT_SUBSCRIPTIONS -> ClientSubscriptionsScreen(state.items,state.busy,{path->canWriteApi(state.adminInfo,path)}) { method,path,body -> vm.mutate(method,path,body) }
-            state.section == AdminSection.STORE_PRODUCTS -> StoreProductsScreen(state.payload,state.items,state.busy,{path->canWriteApi(state.adminInfo,path)}) { method,path,body -> vm.mutate(method,path,body) }
+            state.section == AdminSection.STORE_PRODUCTS -> StoreProductsScreen(state.payload,state.items,state.busy,state.storeUploadedImageUrl,state.storeUploadedImageFileId,{uri,purpose->vm.uploadStoreImage(uri,purpose)},vm::clearStoreUpload,{path->canWriteApi(state.adminInfo,path)}) { method,path,body -> vm.mutate(method,path,body) }
             state.section == AdminSection.STORE_ORDERS -> StoreOrdersScreen(state.payload,state.items,state.busy,{path->canWriteApi(state.adminInfo,path)}) { method,path,body -> vm.mutate(method,path,body) }
             else -> ListScreen(state.section, state.items, state.sectionSearch, vm::retry, vm::loadVoice, vm::openFanniProfile, vm::openWalletTransactions, vm::openClientWalletTransactions, vm::openClientOrders, vm::openClientProfile, vm::searchSupport, vm::filterAuditLogs, vm::bulkPublish, vm::openRecovery, { section, ids, action -> vm.bulkAction(section, ids, action) }, vm::bulkRenameRegions, { path -> canWriteApi(state.adminInfo,path) }, { path -> canReadApi(state.adminInfo,path) }) { method, path, body -> vm.mutate(method, path, body) }
         }
