@@ -77,13 +77,12 @@ export function usePushNotifications(session, onNotificationResponse) {
       cancelled = true;
       responseSubscription.remove();
       tokenRefreshSubscription.remove();
-      const registeredToken = pushTokenRef.current;
-      pushTokenRef.current = null;
-      if (registeredToken) {
-        void api('/notifications/' + session.role + '/push-token', {
-          method: 'DELETE', token: session.token, body: { token: registeredToken }
-        }).catch(() => {});
-      }
+      // Do not unregister the device token from effect cleanup.
+      // This effect also restarts when the session object is refreshed (for
+      // example after a profile edit). Unregistering here races the next
+      // registration and can silently disable push notifications for that user.
+      // Explicit logout owns token removal in AppScreens.performLogout().
+
     };
   }, [session]);
   return pushTokenRef;
