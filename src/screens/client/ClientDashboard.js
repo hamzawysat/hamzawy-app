@@ -86,7 +86,7 @@ export function ClientDashboard({ context }) {
         <View style={styles.clientHeaderRight}>
           <View style={styles.clientHeaderInfo}>
             <Text style={styles.clientNameSmall} numberOfLines={1}>أهلًا {session.user?.name || 'بك'}</Text>
-            <Text style={styles.clientRoleSmall}>عميل صُنّاع</Text>
+            <Text style={styles.clientRoleSmall}>عميل</Text>
           </View>
         </View>
       </View>
