@@ -409,7 +409,7 @@ test('technician account tab exposes Edit My Details and specialty edits are opt
 test('technician profile edit loads shared service categories before rendering specialty choices', () => {
   const screens = fs.readFileSync(path.join(root, 'src/screens/AppScreens.js'), 'utf8');
   const account = fs.readFileSync(path.join(root, 'src/screens/account/AccountScreens.js'), 'utf8');
-  assert.match(screens, /\['client', 'technician', 'admin', 'clientRegister', 'technicianRegister', 'profileEdit'\]\.includes\(screen\)/);
+  assert.match(screens, /\['client', 'technician', 'clientRegister', 'technicianRegister', 'profileEdit'\]\.includes\(screen\)/);
   assert.ok(account.includes('categories.map(category => { const chosenCount = (category.services || []).filter(service => profileEditForm.specialties.includes(service)).length;'));
 });
 
