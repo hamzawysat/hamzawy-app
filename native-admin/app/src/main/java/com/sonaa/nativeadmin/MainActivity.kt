@@ -1512,6 +1512,9 @@ private data class RowAction(val label:String,val method:String,val path:String,
     var notifyMode by remember(section){mutableStateOf("single")}
     var notifyPhone by remember(section){mutableStateOf("")}
     var notifyAudience by remember(section){mutableStateOf("all")}
+    var notifyRoleMenuExpanded by remember(section){mutableStateOf(false)}
+    var notifyModeMenuExpanded by remember(section){mutableStateOf(false)}
+    var notifyAudienceMenuExpanded by remember(section){mutableStateOf(false)}
     var selectedOrders by remember(section){mutableStateOf(setOf<String>())}
     var selectedBulk by remember(section){mutableStateOf(setOf<String>())}
     var offerStatusFilter by remember(section){mutableStateOf("all")}
@@ -1638,15 +1641,33 @@ private data class RowAction(val label:String,val method:String,val path:String,
         text={Column(verticalArrangement=Arrangement.spacedBy(8.dp)){
             OutlinedTextField(notifyTitle,{notifyTitle=it},label={Text("عنوان الإشعار")},singleLine=true)
             OutlinedTextField(notifyMessage,{notifyMessage=it},label={Text("نص الإشعار")},minLines=2)
-            OutlinedTextField(notifyRole,{notifyRole=it},label={Text("نوع الحساب: fanni أو client")},singleLine=true)
-            OutlinedTextField(notifyMode,{notifyMode=it},label={Text("النوع: single أو group")},singleLine=true)
+            Box {
+                OutlinedButton(onClick={notifyRoleMenuExpanded=true},modifier=Modifier.fillMaxWidth()){Text(if(notifyRole=="client")"نوع الحساب: العملاء" else "نوع الحساب: الفنيون")}
+                DropdownMenu(expanded=notifyRoleMenuExpanded,onDismissRequest={notifyRoleMenuExpanded=false}){
+                    listOf("fanni" to "الفنيون","client" to "العملاء").forEach{(value,label)->DropdownMenuItem(text={Text(label)},onClick={notifyRole=value;notifyRoleMenuExpanded=false;notifyAudience="all"})}
+                }
+            }
+            Box {
+                OutlinedButton(onClick={notifyModeMenuExpanded=true},modifier=Modifier.fillMaxWidth()){Text(if(notifyMode=="group")"إرسال جماعي لفئة" else "إرسال لفرد محدد")}
+                DropdownMenu(expanded=notifyModeMenuExpanded,onDismissRequest={notifyModeMenuExpanded=false}){
+                    listOf("single" to "إشعار لفرد محدد","group" to "إشعار جماعي لفئة").forEach{(value,label)->DropdownMenuItem(text={Text(label)},onClick={notifyMode=value;notifyModeMenuExpanded=false})}
+                }
+            }
             if(notifyMode=="single")OutlinedTextField(notifyPhone,{notifyPhone=it},label={Text("رقم هاتف المستلم")},singleLine=true)
-            else OutlinedTextField(notifyAudience,{notifyAudience=it},label={Text("الفئة: all / approved / active / disabled")},singleLine=true)
+            else {
+                val audienceOptions=if(notifyRole=="fanni")listOf("all" to "جميع الفنيين","approved" to "الفنيون المعتمدون","disabled" to "الفنيون المعطلون") else listOf("all" to "جميع العملاء","active" to "العملاء النشطون","disabled" to "العملاء المعطلون")
+                Box {
+                    OutlinedButton(onClick={notifyAudienceMenuExpanded=true},modifier=Modifier.fillMaxWidth()){Text(audienceOptions.firstOrNull{it.first==notifyAudience}?.second?: "اختر الفئة المستهدفة")}
+                    DropdownMenu(expanded=notifyAudienceMenuExpanded,onDismissRequest={notifyAudienceMenuExpanded=false}){
+                        audienceOptions.forEach{(value,label)->DropdownMenuItem(text={Text(label)},onClick={notifyAudience=value;notifyAudienceMenuExpanded=false})}
+                    }
+                }
+            }
         }},
         confirmButton={TextButton(onClick={
             val body=JsonObject().apply{addProperty("title",notifyTitle.trim());addProperty("message",notifyMessage.trim());addProperty("recipientRole",notifyRole.trim());addProperty("recipientMode",notifyMode.trim());if(notifyMode=="single")addProperty("phone",notifyPhone.trim())else addProperty("audience",notifyAudience.trim())}
             notifyOpen=false;onAction("POST","api/admin/notifications/direct",body)
-        },enabled=notifyTitle.trim().length>=2&&notifyMessage.trim().length>=2&&notifyRole in listOf("fanni","client")&&notifyMode in listOf("single","group")&&!(notifyRole=="fanni"&&notifyMode=="group"&&notifyAudience=="active")){Text("إرسال")}},
+        },enabled=notifyTitle.trim().length>=2&&notifyMessage.trim().length>=2&&notifyRole in listOf("fanni","client")&&notifyMode in listOf("single","group")&&(notifyMode=="single"||(if(notifyRole=="fanni")notifyAudience in listOf("all","approved","disabled") else notifyAudience in listOf("all","active","disabled")))){Text("إرسال")}},
         dismissButton={TextButton(onClick={notifyOpen=false}){Text("إلغاء")}}
     )
     if(bulkRegionEditOpen) AlertDialog(onDismissRequest={bulkRegionEditOpen=false},title={Text("تعديل أسماء المناطق المحددة")},text={Column(Modifier.heightIn(max=480.dp).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(8.dp)){bulkRegionNames.toList().forEach{(id,name)->OutlinedTextField(value=name,onValueChange={value->bulkRegionNames=bulkRegionNames.toMutableMap().apply{put(id,value)}},label={Text("الاسم الجديد — $name")},singleLine=true,modifier=Modifier.fillMaxWidth())}}},confirmButton={TextButton(onClick={val clean=bulkRegionNames.mapValues{it.value.trim().replace(Regex("\\s+")," ")};if(clean.values.any{it.length<2||it.length>100})return@TextButton;bulkRegionEditOpen=false;selectedBulk=emptySet();onBulkRenameRegions(clean)},enabled=bulkRegionNames.isNotEmpty()&&bulkRegionNames.values.all{it.trim().length in 2..100}){Text("حفظ الأسماء")}},dismissButton={TextButton(onClick={bulkRegionEditOpen=false}){Text("إلغاء")}})
