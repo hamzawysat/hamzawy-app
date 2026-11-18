@@ -326,7 +326,7 @@ class MainActivity : ComponentActivity() {
                 Text(state.error, color = MaterialTheme.colorScheme.error)
                 Button(onClick = vm::retry, modifier = Modifier.padding(top = 12.dp)) { Text("إعادة المحاولة") }
             }
-            state.section == AdminSection.DASHBOARD || state.section == AdminSection.STATS -> Dashboard(state.stats, state.section == AdminSection.STATS)
+            state.section == AdminSection.DASHBOARD || state.section == AdminSection.STATS -> Dashboard(state.stats, state.section == AdminSection.STATS, listOf(AdminSection.ORDERS, AdminSection.PENDING, AdminSection.STORE_PRODUCTS, AdminSection.CONTENT).filter { canReadSection(state.adminInfo, it) }) { section -> vm.open(section) }
             state.section == AdminSection.PAGE_VISITS -> PageVisitsScreen(state.payload, vm::filterPageVisits)
             state.section == AdminSection.REPORTS -> ReportEditor(state.payload) { method, path, body -> vm.mutate(method, path, body) }
             state.section == AdminSection.SETTINGS || state.section == AdminSection.PRICING || state.section == AdminSection.CONTENT -> ConfigEditor(state.section, state.payload,{path->canWriteApi(state.adminInfo,path)}) { method, path, body -> vm.mutate(method, path, body) }
@@ -1329,7 +1329,7 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
     )
 }
 
-@Composable private fun Dashboard(stats: JsonElement?, showMonthly:Boolean) {
+@Composable private fun Dashboard(stats: JsonElement?, showMonthly:Boolean, quickActions:List<AdminSection>, onOpenSection:(AdminSection)->Unit) {
     val root = stats?.takeIf { it.isJsonObject }?.asJsonObject
     val data = root?.get("counts")?.takeIf { it.isJsonObject }?.asJsonObject ?: root
     val orders = root?.get("dashboardOrders")?.takeIf { it.isJsonArray }?.asJsonArray?.toList().orEmpty()
@@ -1357,6 +1357,32 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
         Text("ملخص المنصة", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = DarkAccent)
         Spacer(Modifier.height(12.dp))
+        if (!showMonthly && quickActions.isNotEmpty()) {
+            Card(Modifier.fillMaxWidth().padding(bottom = 12.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
+                Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("إجراءات سريعة", fontWeight = FontWeight.Bold, color = DarkAccent)
+                    quickActions.chunked(2).forEach { pair ->
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            pair.forEach { target ->
+                                val label = when (target) {
+                                    AdminSection.ORDERS -> "طلبات العملاء الجديدة"
+                                    AdminSection.PENDING -> "فني جديد / اعتماد"
+                                    AdminSection.STORE_PRODUCTS -> "إضافة منتج"
+                                    AdminSection.CONTENT -> "إعلان جديد"
+                                    else -> target.title
+                                }
+                                Button(
+                                    onClick = { onOpenSection(target) },
+                                    modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+                                    shape = RoundedCornerShape(12.dp)
+                                ) { Text(label, maxLines = 2, textAlign = androidx.compose.ui.text.style.TextAlign.Center) }
+                            }
+                            if (pair.size == 1) Spacer(Modifier.weight(1f))
+                        }
+                    }
+                }
+            }
+        }
         cards.forEach { (label, value) -> Card(Modifier.fillMaxWidth().padding(bottom = 10.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
             Column(Modifier.padding(18.dp)) { Text(label, color = Color.Gray); Text(value, style = MaterialTheme.typography.headlineMedium, color = Accent, fontWeight = FontWeight.Bold) }
         } }
