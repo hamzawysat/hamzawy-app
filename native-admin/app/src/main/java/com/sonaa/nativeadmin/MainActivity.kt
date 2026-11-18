@@ -228,13 +228,13 @@ class MainActivity : ComponentActivity() {
     private fun isAllowedAdminUrl(uri: android.net.Uri): Boolean {
         val configuredPath = android.net.Uri.parse(configuredAdminPanelUrl).path
         val isAdminPanel = !configuredPath.isNullOrBlank() && uri.path == configuredPath
-        val isAdminRecovery = uri.path == "/password.html" &&
+        val isAdminPasswordSupport = uri.path == "/password.html" &&
             uri.getQueryParameter("role") == "admin" &&
-            uri.getQueryParameter("mode") in setOf("recovery", "support")
+            uri.getQueryParameter("mode") in setOf("recovery", "support", "account", "change")
         return uri.scheme.equals("https", ignoreCase = true) &&
             uri.host.equals(ADMIN_HOST, ignoreCase = true) &&
             (uri.port == -1 || uri.port == 443) &&
-            (isAdminPanel || isAdminRecovery)
+            (isAdminPanel || isAdminPasswordSupport)
     }
 
     private fun loadAdminTarget(sourceIntent: Intent?) {
