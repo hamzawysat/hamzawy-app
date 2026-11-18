@@ -506,8 +506,20 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
       setSession(nextSession);
       if (role === 'client') setClientTab('home');
       if (role === 'fanni') setTechData(current => ({ ...current, tab: 'home' }));
+      const loginPhone = identifier;
+      try { await SecureStore.setItemAsync(`sonaa.auth.lastPhone.v1.${role}`, loginPhone); } catch (_) {}
+      const loginPassword = password;
       setPassword('');
       setScreen(role === 'client' ? 'client' : 'technician');
+      Alert.alert('حفظ بيانات الدخول', 'تحب نحفظ كلمة المرور لهذا الرقم بأمان على الجهاز علشان تستخدمها المرة الجاية؟', [
+        { text: 'لا، شكرًا', style: 'cancel' },
+        { text: 'حفظ كلمة المرور', onPress: async () => {
+          try {
+            await SecureStore.setItemAsync(`sonaa.auth.password.v1.${role}.${normalizePhoneDigits(loginPhone)}`, loginPassword);
+            Alert.alert('تم الحفظ', 'هنقترح عليك استخدام كلمة المرور دي لما ترجع تسجل بنفس الرقم.');
+          } catch (_) { Alert.alert('تعذر الحفظ', 'ما قدرناش نحفظ كلمة المرور بأمان على الجهاز.'); }
+        } }
+      ]);
     } catch (err) {
       Alert.alert('تعذر تسجيل الدخول', err.message || 'راجع البيانات وحاول مرة أخرى.');
     } finally { setLoginLoading(false); }
@@ -1185,6 +1197,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     try {
       const role = session.role === 'client' ? 'client' : 'fanni';
       const result = await api('/password-recovery/change/' + role, { method: 'POST', token: session.token, body: { currentPassword, newPassword, confirmPassword } });
+      try { await SecureStore.deleteItemAsync(`sonaa.auth.password.v1.${role}.${normalizePhoneDigits(session.user?.phone)}`); } catch (_) {}
       setAccountPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '', loading: false, error: '' });
       Alert.alert('حسابي', result.message || 'تم تغيير كلمة المرور.');
     } catch (err) {
@@ -1294,7 +1307,23 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     ]);
   }
 
-  const goLogin = mode => { setAuthMode(mode); setUsername(''); setPassword(''); setScreen('login'); };
+  const goLogin = async mode => {
+    setAuthMode(mode);
+    setPassword('');
+    let lastPhone = '';
+    try { lastPhone = await SecureStore.getItemAsync(`sonaa.auth.lastPhone.v1.${mode}`) || ''; } catch (_) {}
+    setUsername(lastPhone);
+    setScreen('login');
+    if (lastPhone) {
+      try {
+        const savedPassword = await SecureStore.getItemAsync(`sonaa.auth.password.v1.${mode}.${normalizePhoneDigits(lastPhone)}`);
+        if (savedPassword) Alert.alert('تسجيل دخول أسرع', `هل تريد استخدام كلمة المرور المحفوظة للرقم ${lastPhone}؟`, [
+          { text: 'لا، هكتبها بنفسي', style: 'cancel' },
+          { text: 'استخدم كلمة المرور', onPress: () => setPassword(savedPassword) }
+        ]);
+      } catch (_) {}
+    }
+  };
   const toggleArray = (key, value) => updateForm(key, form[key].includes(value) ? form[key].filter(item => item !== value) : [...form[key], value]);
 
   const screenContext = { screen, setScreenState, screenHistoryRef, screenRef, pushTokenRef, setScreen, categories, setCategories, areas, setAreas, areaTechnicianCounts, setAreaTechnicianCounts, selected, setSelected, servicesLoading, setServicesLoading, servicesError, setServicesError, reloadKey, setReloadKey, session, setSession, authRestoring, setAuthRestoring, username, setUsername, password, setPassword, loginLoading, setLoginLoading, authMode, setAuthMode, form, setForm, registrationNameRef, registrationPhoneRef, registrationPasswordRef, registrationConfirmPasswordRef, clientAreaInputRef, clientAddressInputRef, clientDescriptionInputRef, clientBudgetInputRef, clientServiceDetailYRef, clientFormYRef, clientData, setClientData, techData, setTechData, walletTransferNumbers, setWalletTransferNumbers, assignedDetails, setAssignedDetails, technicianSearch, setTechnicianSearch, technicianServiceFilter, setTechnicianServiceFilter, guidelinesChecked, setGuidelinesChecked, guidelinesReachedEnd, setGuidelinesReachedEnd, guidelinesViewportHeight, setGuidelinesViewportHeight, topup, setTopup, clientTab, setClientTab, clientServiceSearch, setClientServiceSearch, servicePickerOpen, setServicePickerOpen, subservicePickerOpen, setSubservicePickerOpen, ratingPrompt, setRatingPrompt, dismissedRatings, setDismissedRatings, ratingDismissalsLoaded, setRatingDismissalsLoaded, ratingDismissalsLoadedFor, setRatingDismissalsLoadedFor, clientTrackSN, setClientTrackSN, clientTrackedOrder, setClientTrackedOrder, clientTrackError, setClientTrackError, clientTrackLoading, setClientTrackLoading, clientComplaint, setClientComplaint, clientComplaintTrack, setClientComplaintTrack, expandedClientOrders, setExpandedClientOrders, expandedTechnicianOrders, setExpandedTechnicianOrders, notificationsOpen, setNotificationsOpen, clientScrollRef, chatScrollRef, clientChatScrollRefs, clientChatAtBottomRef, ratingSubmittingRef, offerDraft, setOfferDraft, notifications, setNotifications, orderChats, setOrderChats, orderChatsRef, acceptedChatAutoOpenedRef, chatDrafts, setChatDrafts, priceDrafts, setPriceDrafts, ratingDrafts, setRatingDrafts, ratingSubmitting, setRatingSubmitting, dismissedRatingsRef, ratingHandledRef, ratingStatusSnapshotRef, supportCases, setSupportCases, supportCase, setSupportCase, supportDraft, setSupportDraft, supportSubject, setSupportSubject, supportLoading, setSupportLoading, supportError, setSupportError, accountPasswordForm, setAccountPasswordForm, profileEditForm, setProfileEditForm, profileEditOpenCategory, setProfileEditOpenCategory, recoveryForm, setRecoveryForm, services, updateForm, ratingAccountId, ratingStorageKey, previousRatingStorageKey, legacyRatingStorageKey, oldestRatingStorageKey, markNotificationRead, markAllNotificationsRead, handleLogin, registerClient, registerTechnician, createOrder, trackClientOrder, submitClientComplaint, trackClientComplaints, sendOffer, submitOffer, cancelClientOrder, acceptClientOffer, completeTechnicianOrder, getOrderSN, uniqueByOrderSN, orderToken, refreshVisibleData, refreshOrderChat, toggleOrderChat, sendOrderChat, requestOrderPriceChange, decideOrderPrice, setOrderRatingStars, renderRatingStars, submitOrderRating, saveRatingDismissal, renderRatingModal, acceptTechnicianGuidelines, submitTopup, loadSupportCases, startSupportCase, openSupportCase, sendSupportMessage, beginProfileEdit, toggleProfileEditSpecialty, saveProfileEdits, changeAccountPassword, startPasswordRecovery, refreshPasswordRecovery, sendRecoveryMessage, verifyRecoveryCode, resetRecoveredPassword, copyOrderCode, openWhatsAppSupport, performLogout, logout, goLogin, toggleArray };
