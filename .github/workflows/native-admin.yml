@@ -67,4 +67,7 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           working-directory: native-admin
-          script: gradle :app:connectedDebugAndroidTest
+          script: |
+            adb shell settings put global package_verifier_enable 0
+            adb shell settings put global verifier_verify_adb_installs 0
+            gradle :app:connectedDebugAndroidTest
