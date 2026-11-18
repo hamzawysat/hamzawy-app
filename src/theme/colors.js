@@ -61,10 +61,6 @@ export const PAGE_COLORS = {
     background: COLORS.background, surface: COLORS.white, primary: COLORS.navy,
     accent: COLORS.blue, text: COLORS.text, muted: COLORS.muted, border: COLORS.border,
   },
-  admin: {
-    background: COLORS.background, surface: COLORS.white, primary: COLORS.navy,
-    accent: COLORS.indigo700, text: COLORS.text, muted: COLORS.muted, border: COLORS.border,
-  },
   support: {
     background: COLORS.background, surface: COLORS.white, primary: COLORS.navy,
     accent: COLORS.teal, text: COLORS.text, muted: COLORS.muted, border: COLORS.border,
