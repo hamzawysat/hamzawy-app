@@ -838,7 +838,7 @@ test('client and technician referral cards load server-issued invite links and r
   assert.match(card, /Share\.share/);
   assert.match(card, /🎉 حمّل تطبيق حمزاوي سات واطلب الخدمة اللي محتاجها، واكسب 50 جنيه هدية بعد إكمال أول طلب ليك! 💰 سجّل دلوقتي واستمتع بخدمات حمزاوي سات\./);
   assert.match(card, /💰 انضم لفريق فنيين حمزاوي سات واكسب 150 جنيه مكافأة بعد إكمال أول 3 طلبات ليك! 🎉 سجّل دلوقتي وابدأ شغلك معانا\./);
-  assert.match(card, /invitationMessage \+ '\\\\n' \+ data\.url/);
+  assert.match(card, /invitationMessage \+ '\\n' \+ data\.url/);
   assert.match(card, /الفني يسجل من رابطك ويكمل أول 3 طلبات مكتملة/);
   assert.match(card, /مكافأة 150 جنيهًا بعد إكمال أول 3 طلبات مكتملة/);
   assert.match(client, /ادعُ صديقك واكسب 50 جنيه بعد إكمال أول طلب مكتمل/);
