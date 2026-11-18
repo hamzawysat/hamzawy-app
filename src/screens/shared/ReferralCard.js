@@ -38,7 +38,7 @@ export default function ReferralCard({ session, kind, cardRef, expanded = false,
       <Text style={{ textAlign: 'center', color: COLORS.navy, fontWeight: '900' }}>{expanded ? 'إخفاء تفاصيل الدعوة ▲' : 'عرض تفاصيل الدعوة ▼'}</Text>
     </TouchableOpacity> : null}
     {expanded ? <>
-    <Text style={styles.detail}>{isClient ? 'صديقك يسجل من رابطك ويكمل أول طلب مكتمل، فتحصلان على 50 جنيهًا لكل واحد.' : 'الفني يسجل من رابطك ويكمل 3 شغلانات مكتملة، فتحصلان على 150 جنيهًا لكل واحد.'}</Text>
+    <Text style={styles.detail}>{isClient ? 'صديقك يسجل من رابطك ويكمل أول طلب مكتمل، فتحصلان على 50 جنيهًا لكل واحد.' : 'الفني يسجل من رابطك ويكمل أول 3 طلبات مكتملة، فتحصلان على 150 جنيهًا لكل واحد.'}</Text>
     {loading ? <Text style={styles.detail}>جاري تحميل رابط الدعوة...</Text> : null}
     {error ? <Text style={styles.errorText}>{error}</Text> : null}
     {data?.enabled === false ? <Text style={styles.detail}>إنشاء دعوات جديدة متوقف حاليًا. الدعوات السابقة مستمرة في احتساب إنجازاتها.</Text> : null}
@@ -62,6 +62,6 @@ export default function ReferralCard({ session, kind, cardRef, expanded = false,
       </View>)}
     </View> : null}
     <TouchableOpacity onPress={load} disabled={loading} style={{ paddingVertical: 8 }}><Text style={{ textAlign: 'center', color: COLORS.teal, fontWeight: '900' }}>تحديث بيانات الدعوة</Text></TouchableOpacity>
-    </> : <Text style={[styles.detail, { marginTop: 8 }]}>{isClient ? 'شارك رابطك لتحصل أنت وصديقك على مكافأة 50 جنيهًا بعد إكمال أول طلب.' : 'شارك رابطك مع فني جديد لتحصل أنت وهو على مكافأة 150 جنيهًا بعد إكمال 3 شغلانات.'} {loading ? 'جاري تحميل البيانات...' : ''}</Text>}
+    </> : <Text style={[styles.detail, { marginTop: 8 }]}>{isClient ? 'شارك رابطك لتحصل أنت وصديقك على مكافأة 50 جنيهًا بعد إكمال أول طلب.' : 'شارك رابطك مع فني جديد لتحصل أنت وهو على مكافأة 150 جنيهًا بعد إكمال أول 3 طلبات مكتملة.'} {loading ? 'جاري تحميل البيانات...' : ''}</Text>}
   </View>;
 }
