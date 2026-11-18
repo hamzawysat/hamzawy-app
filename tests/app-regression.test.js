@@ -62,7 +62,7 @@ test('rating dismissal uses versioned encrypted storage and keeps migration keys
 
 test('rating prompt has no skip action and submits from a compact five-star row', () => {
   const modalStart = app.indexOf('function renderRatingModal(role)');
-  const modalEnd = app.indexOf('\n  async function sendAdminBroadcast', modalStart);
+  const modalEnd = app.indexOf('\n  async function acceptTechnicianGuidelines', modalStart);
   assert.notEqual(modalStart, -1, 'rating modal renderer should exist');
   const modalBody = app.slice(modalStart, modalEnd);
   assert.ok(modalBody.includes('renderRatingStars(order, stars, true)'), 'modal should use compact stars');
@@ -146,7 +146,7 @@ test('technician offer flow rejects missing order data before opening or submitt
 
 test('rating modal and rating submission safely handle missing technician order data', () => {
   const modalStart = app.indexOf('function renderRatingModal(role)');
-  const modalEnd = app.indexOf('\n  async function sendAdminBroadcast', modalStart);
+  const modalEnd = app.indexOf('\n  async function acceptTechnicianGuidelines', modalStart);
   assert.notEqual(modalStart, -1, 'rating modal renderer should exist');
   assert.notEqual(modalEnd, -1, 'rating modal renderer boundary should exist');
   const modalBody = app.slice(modalStart, modalEnd);
