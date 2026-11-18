@@ -6,6 +6,7 @@ import { COLORS } from '../../theme/colors';
 import { Button, Field } from '../../components/FormControls';
 import AreaPicker from '../../components/AreaPicker';
 import { normalizeAreaSearch } from '../../utils/area-helpers';
+import ReferralAdminScreen from './ReferralAdminScreen';
 
 export function AdminDashboard({
   session, adminData, setAdminData, adminExtras, adminRegionDraft, setAdminRegionDraft,
@@ -33,7 +34,7 @@ export function AdminDashboard({
     { key: 'orders', label: 'الطلبات' }, { key: 'fannis', label: 'الفنيون' },
     { key: 'clients', label: 'العملاء' }, { key: 'profileEdits', label: 'طلبات تعديل البيانات' }, { key: 'regions', label: 'المناطق' },
     { key: 'topups', label: 'الشحن' }, { key: 'complaints', label: 'الشكاوى' },
-    { key: 'support', label: 'الدعم' }
+    { key: 'support', label: 'الدعم' }, { key: 'referrals', label: 'الدعوات والمكافآت' }
   ];
   const toggleRegionSelection = id => setSelectedRegionIds(current =>
     current.includes(id) ? current.filter(value => value !== id) : [...current, id]
@@ -56,7 +57,7 @@ export function AdminDashboard({
       </TouchableOpacity>)}
     </ScrollView>
 
-    {tab === 'profileEdits' ? <FlatList
+    {tab === 'referrals' ? <ReferralAdminScreen session={session} /> : tab === 'profileEdits' ? <FlatList
       style={{ flex: 1 }}
       data={adminPendingProfileEdits}
       keyExtractor={(item, i) => String(item._id || item.id || i)}

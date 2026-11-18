@@ -709,7 +709,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     if (form.password !== form.confirmPassword) { Alert.alert('كلمة السر', 'كلمتا السر غير متطابقتين.'); return; }
     setLoginLoading(true);
     try {
-      const result = await api('/client/register', { method: 'POST', body: { name: form.name.trim(), phone: form.phone.trim(), password: form.password, confirmPassword: form.confirmPassword } });
+      const result = await api('/client/register', { method: 'POST', body: { name: form.name.trim(), phone: form.phone.trim(), password: form.password, confirmPassword: form.confirmPassword, referralCode: String(form.referralCode || '').trim() } });
       if (!result.token || !result.client) throw new Error('تم التسجيل لكن استجابة الخادم غير مكتملة.');
       const nextSession = { token: result.token, user: result.client, role: 'client' };
       await SecureStore.setItemAsync('sonaa.auth.session.v1', JSON.stringify(nextSession));
@@ -751,7 +751,8 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         areas: selectedAreas,
         guidelinesAccepted: true,
         identityCardFrontFileId: identityCardUploads.front.fileId,
-        identityCardBackFileId: identityCardUploads.back.fileId
+        identityCardBackFileId: identityCardUploads.back.fileId,
+        referralCode: String(form.referralCode || '').trim()
       } });
       Alert.alert('تم إرسال التسجيل', result.message || 'حسابك قيد مراجعة الإدارة.');
       setIdentityCardUploads({
@@ -1901,6 +1902,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
       <Field label="رقم الهاتف" value={form.phone} onChangeText={v => updateForm('phone', v)} keyboardType="phone-pad"
         inputRef={registrationPhoneRef} returnKeyType="next" returnKeyLabel="التالي"
         onSubmitEditing={() => registrationPasswordRef.current?.focus()} blurOnSubmit={false} />
+      <Field label="كود الدعوة (اختياري)" value={form.referralCode || ''} onChangeText={v => updateForm('referralCode', v.trim().slice(0, 50))} autoCapitalize="characters" placeholder="اكتب كود الدعوة لو معاك" />
       <Field label="كلمة السر" value={form.password} onChangeText={v => updateForm('password', v)} secureTextEntry
         inputRef={registrationPasswordRef} returnKeyType="next" returnKeyLabel="التالي"
         onSubmitEditing={() => registrationConfirmPasswordRef.current?.focus()} blurOnSubmit={false} />

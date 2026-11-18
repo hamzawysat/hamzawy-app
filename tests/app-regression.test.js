@@ -911,3 +911,44 @@ test('technician can pause new opportunities without affecting current orders or
   assert.ok(app.includes('Notifications.setNotificationHandler('), 'native notification delivery must remain enabled');
   assert.ok(app.includes('Notifications.addNotificationResponseReceivedListener'), 'notification tap handling must remain enabled');
 });
+
+
+test('client and technician referral cards load server-issued invite links and render QR codes', () => {
+  const card = fs.readFileSync(path.join(root, 'src/screens/shared/ReferralCard.js'), 'utf8');
+  const client = fs.readFileSync(path.join(root, 'src/screens/client/ClientDashboard.js'), 'utf8');
+  const technician = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianDashboard.js'), 'utf8');
+  assert.match(card, /\/referrals\/me\//);
+  assert.match(card, /react-native-qrcode-svg/);
+  assert.match(card, /QRCode value=\{data\.url\}/);
+  assert.match(card, /Clipboard\.setStringAsync/);
+  assert.match(card, /Share\.share/);
+  assert.match(card, /data\?\.referrals\) && data\.referrals\.length/);
+  assert.match(card, /data\?\.enabled !== false/);
+  assert.match(client, /<ReferralCard session=\{session\} kind="client"/);
+  assert.match(technician, /<ReferralCard session=\{session\} kind="fanni"/);
+  assert.equal(packageJson.dependencies['react-native-qrcode-svg'], '^6.3.15');
+});
+
+test('mobile registration forwards referral codes and existing wallet screens label referral rewards', () => {
+  const screens = fs.readFileSync(path.join(root, 'src/screens/AppScreens.js'), 'utf8');
+  const clientWallet = fs.readFileSync(path.join(root, 'src/screens/client/ClientWalletScreen.js'), 'utf8');
+  const technicianWallet = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianWalletScreen.js'), 'utf8');
+  assert.match(screens, /referralCode: String\(form\.referralCode \|\| ''\)\.trim\(\)/);
+  assert.match(clientWallet, /referral_reward: 'مكافأة دعوة'/);
+  assert.match(technicianWallet, /referral_reward: 'مكافأة دعوة'/);
+  assert.match(clientWallet, /item\.referralNumber/);
+  assert.match(technicianWallet, /item\.referralNumber/);
+});
+
+test('mobile admin dashboard exposes referral administration with audit-safe rejection flow', () => {
+  const admin = fs.readFileSync(path.join(root, 'src/screens/admin/AdminDashboard.js'), 'utf8');
+  const screen = fs.readFileSync(path.join(root, 'src/screens/admin/ReferralAdminScreen.js'), 'utf8');
+  assert.match(admin, /key: 'referrals', label: 'الدعوات والمكافآت'/);
+  assert.match(admin, /<ReferralAdminScreen session=\{session\}/);
+  assert.match(screen, /\/referrals\/admin\/summary/);
+  assert.match(screen, /\/referrals\/admin\/settings/);
+  assert.match(screen, /\/reject/);
+  assert.match(screen, /سببًا واضحًا لا يقل عن 3 أحرف/);
+  assert.match(screen, /achievementLog/);
+  assert.match(screen, /حركات المحفظة/);
+});
