@@ -9,6 +9,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import com.google.firebase.FirebaseApp
+import com.google.firebase.FirebaseOptions
+import com.google.firebase.messaging.FirebaseMessaging
 class MainActivity : ComponentActivity() {
     private lateinit var adminWebView: android.webkit.WebView
     private var configuredAdminPanelUrl: String = ""
