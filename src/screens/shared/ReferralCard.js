@@ -38,7 +38,7 @@ export default function ReferralCard({ session, kind }) {
     {loading ? <Text style={styles.detail}>جاري تحميل رابط الدعوة...</Text> : null}
     {error ? <Text style={styles.errorText}>{error}</Text> : null}
     {data?.enabled === false ? <Text style={styles.detail}>إنشاء دعوات جديدة متوقف حاليًا. الدعوات السابقة مستمرة في احتساب إنجازاتها.</Text> : null}
-    {data?.code ? <View style={{ padding: 10, borderRadius: 10, backgroundColor: '#F1F5F9', marginTop: 8 }}>
+    {data?.code && data?.enabled !== false ? <View style={{ padding: 10, borderRadius: 10, backgroundColor: '#F1F5F9', marginTop: 8 }}>
       <Text style={styles.detailSmall}>كود دعوتك</Text>
       <Text selectable style={[styles.cardTitlePremium, { textAlign: 'center', letterSpacing: 1 }]}>{data.code}</Text>
       <TouchableOpacity onPress={() => copy(data.code)} style={{ padding: 10, borderRadius: 9, backgroundColor: COLORS.white, marginTop: 6 }}><Text style={{ textAlign: 'center', color: COLORS.navy, fontWeight: '900' }}>نسخ الكود</Text></TouchableOpacity>
