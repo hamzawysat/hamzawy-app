@@ -60,10 +60,6 @@ class MainActivity : ComponentActivity() {
         val tokenFilter = android.content.IntentFilter(SonaaMessagingService.ACTION_TOKEN_REFRESHED)
         if (Build.VERSION.SDK_INT >= 33) {
             registerReceiver(fcmTokenReceiver, tokenFilter, android.content.Context.RECEIVER_NOT_EXPORTED)
-        } else {
-            @Suppress("DEPRECATION")
-            registerReceiver(fcmTokenReceiver, tokenFilter)
-        }
         fcmReceiverRegistered = true
 
         SonaaMessagingService.createChannels(getSystemService(NotificationManager::class.java))
