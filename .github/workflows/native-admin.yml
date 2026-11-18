@@ -29,6 +29,15 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.7"
+      - name: Check admin panel URL configuration
+        env:
+          ADMIN_PANEL_URL: ${{ secrets.ADMIN_PANEL_URL }}
+        run: |
+          if [ -n "$ADMIN_PANEL_URL" ]; then
+            echo "Admin panel URL supplied securely for this build."
+          else
+            echo "::notice::ADMIN_PANEL_URL secret is not set; the app will request the private URL once on first launch."
+          fi
       - name: Build native-admin only
         env:
           ADMIN_PANEL_URL: ${{ secrets.ADMIN_PANEL_URL }}
