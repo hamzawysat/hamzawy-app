@@ -4,9 +4,11 @@ on:
   push:
     paths:
       - "native-admin/**"
+      - ".github/workflows/native-admin.yml"
   pull_request:
     paths:
       - "native-admin/**"
+      - ".github/workflows/native-admin.yml"
 
 # Keep only the newest build for a branch. Push and pull_request events
 # for the same PR branch share one concurrency group, avoiding duplicate APK builds.
@@ -61,5 +63,8 @@ jobs:
           target: google_apis
           arch: x86_64
           profile: pixel_6
+          emulator-boot-timeout: 600
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           working-directory: native-admin
           script: gradle :app:connectedDebugAndroidTest
