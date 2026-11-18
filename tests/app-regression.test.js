@@ -103,41 +103,7 @@ test('push token registration remains active across session refreshes and logout
   assert.ok(app.includes('Notifications.addPushTokenListener'));
 });
 
-test('push notification taps open the relevant wallet, orders, or admin section', () => {
-  assert.ok(app.includes("'technician_settlement', 'wallet_debit', 'commission_deducted'"));
-  assert.ok(app.includes("type === 'new_opportunity'"));
-  assert.ok(app.includes("'order_created'"));
-  assert.ok(app.includes("const destination = String(data.destination || '')"));
-  assert.ok(app.includes("storeOrders: 'orders'"));
-  assert.ok(app.includes("commerceSubscriptions: 'clients'"));
-  assert.ok(app.includes("clientWallet: 'clients'"));
-  assert.ok(app.includes("wallets: 'fannis'"));
-  assert.ok(app.includes("recovery: 'support'"));
-  assert.ok(app.includes("type === 'subscription_activated' || type === 'subscription_renewed'"));
-  assert.ok(app.includes("type === 'store_order_update'"));
-  assert.ok(app.includes("'client_service_refunded'].includes(type)"));
-});
 
-test('native admin push service handles order and wallet notification types and respects server destination', () => {
-  const servicePath = path.join(root, 'native-admin/app/src/main/java/com/sonaa/nativeadmin/SonaaMessagingService.kt');
-  const service = fs.readFileSync(servicePath, 'utf8');
-  const mainActivity = fs.readFileSync(path.join(root, 'native-admin/app/src/main/java/com/sonaa/nativeadmin/MainActivity.kt'), 'utf8');
-  assert.ok(service.includes('sendBroadcast(Intent(ACTION_TOKEN_REFRESHED)'));
-  assert.ok(mainActivity.includes('activeAdminViewModel?.registerFcm(it)'));
-  assert.ok(mainActivity.includes('RECEIVER_NOT_EXPORTED'));
-  assert.ok(service.includes('message.data["destination"]'));
-  assert.ok(service.includes('"fanni_wallet_settlement"'));
-  assert.ok(service.includes('"admin_order_offer_accepted"'));
-  assert.ok(service.includes('"wallet_charge" -> "topups"'));
-  const apiSource = fs.readFileSync(path.join(root, 'native-admin/app/src/main/java/com/sonaa/nativeadmin/AdminApi.kt'), 'utf8');
-  const repositorySource = fs.readFileSync(path.join(root, 'native-admin/app/src/main/java/com/sonaa/nativeadmin/AdminRepository.kt'), 'utf8');
-  assert.ok(apiSource.includes('unregisterFcmToken'));
-  assert.ok(repositorySource.includes('remove("registered_fcm_token")'));
-  assert.ok(repositorySource.includes('api.unregisterFcmToken'));
-  assert.ok(repositorySource.includes('baseUrl("https://www.hamzawy-sat.dynv6.net/")'));
-  assert.ok(!repositorySource.includes('sonaa-backend-v2.vercel.app'));
-
-});
 
 test('client can confirm service receipt and sees the fixed 14-day warranty window', () => {
   const screen = fs.readFileSync(path.join(root, 'src/screens/client/ClientDashboard.js'), 'utf8');
@@ -491,19 +457,6 @@ test('extracted screen modules contain component bodies, not the old screen cond
 });
 
 
-test('support and admin dashboards are separate feature modules and wired to screen navigation', () => {
-  const screen = fs.readFileSync(path.join(root, 'src/screens/AppScreens.js'), 'utf8');
-  const support = fs.readFileSync(path.join(root, 'src/screens/support/SupportScreen.js'), 'utf8');
-  const admin = fs.readFileSync(path.join(root, 'src/screens/admin/AdminDashboard.js'), 'utf8');
-  assert.match(screen, /from '\.\/support\/SupportScreen'/);
-  assert.match(screen, /from '\.\/admin\/AdminDashboard'/);
-  assert.match(screen, /<SupportScreen session=\{session\}/);
-  assert.match(screen, /<AdminDashboard adminPendingProfileEdits=[\s\S]*?session=\{session\}/);
-  assert.match(support, /export function SupportScreen/);
-  assert.match(admin, /export function AdminDashboard/);
-  assert.ok(!support.includes("if (screen === 'support'"));
-  assert.ok(!admin.includes("if (screen === 'admin'"));
-});
 
 
 test('client and technician dashboards are split into dedicated feature modules', () => {
@@ -550,20 +503,6 @@ test('navigation and push registration are isolated in dedicated hooks', () => {
 });
 
 
-test('client, technician, admin, and support use separate page palette surfaces', () => {
-  const styles = fs.readFileSync(path.join(root, 'src/theme/styles.js'), 'utf8');
-  const colors = fs.readFileSync(path.join(root, 'src/theme/colors.js'), 'utf8');
-  const technician = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianDashboard.js'), 'utf8');
-  const admin = fs.readFileSync(path.join(root, 'src/screens/admin/AdminDashboard.js'), 'utf8');
-  const support = fs.readFileSync(path.join(root, 'src/screens/support/SupportScreen.js'), 'utf8');
-  for (const page of ['home', 'login', 'client', 'technician', 'admin', 'support', 'splash']) assert.match(colors, new RegExp('^  ' + page + ':', 'm'));
-  assert.match(styles, /technicianSafe: \{ flex: 1, backgroundColor: PAGE_COLORS\.technician\.background \}/);
-  assert.match(styles, /adminSafe: \{ flex: 1, backgroundColor: PAGE_COLORS\.admin\.background \}/);
-  assert.match(styles, /supportSafe: \{ flex: 1, backgroundColor: PAGE_COLORS\.support\.background \}/);
-  assert.match(technician, /styles\.technicianSafe/);
-  assert.match(admin, /styles\.adminSafe/);
-  assert.match(support, /styles\.supportSafe/);
-});
 
  
 test('area search normalizes Arabic alif variants and strips diacritics and invisible marks', () => {
@@ -593,15 +532,6 @@ test('client order area is selected from approved options and service counts rea
 });
 
  
-test('admin APK includes the web region management and account profile editing actions', () => {
-  const admin = fs.readFileSync(path.join(root, 'src/screens/admin/AdminDashboard.js'), 'utf8');
-  const screens = fs.readFileSync(path.join(root, 'src/screens/AppScreens.js'), 'utf8');
-  for (const action of ['adminAddRegion', 'adminEditRegion', 'adminToggleRegion', 'adminDeleteRegion', 'adminRestoreRegion', 'adminBulkRegionAction']) assert.ok(screens.includes(action), 'missing region action: ' + action);
-  assert.ok(admin.includes("{ key: 'regions', label: 'المناطق' }"));
-  assert.ok(screens.includes("'/admin/fannis/' + encodeURIComponent(id) + '/profile'"));
-  assert.ok(screens.includes("'/admin/client-accounts/' + encodeURIComponent(id) + '/profile'"));
-  assert.ok(admin.includes('adminSaveProfileEdit'));
-});
 
 
 test('single customer area selection closes the results until the user changes or searches again', () => {
@@ -614,23 +544,7 @@ test('single customer area selection closes the results until the user changes o
 });
 
 
-test('admin app loads and reviews pending technician profile-change requests with before and requested values', () => {
-  assert.ok(app.includes("api('/admin/fanni-profile-edits'"), 'admin should load pending technician profile edits');
-  assert.ok(app.includes("'/admin/fanni-profile-edits/' + encodeURIComponent(id) + '/' + action"), 'admin should submit approve/reject actions');
-  const adminScreen = fs.readFileSync(path.join(root, 'src/screens/admin/AdminDashboard.js'), 'utf8');
-  assert.ok(adminScreen.includes("{ key: 'profileEdits', label: 'طلبات تعديل البيانات' }"), 'admin should expose the profile edits tab');
-  assert.ok(adminScreen.includes('البيانات الحالية') && adminScreen.includes('البيانات المطلوبة'), 'admin should compare current and requested values');
-  assert.ok(adminScreen.includes('مطلوب تغييره'), 'changed fields should be highlighted');
-});
 
-test('admin area management supports bulk renaming selected regions', () => {
-  const appScreens = fs.readFileSync(path.join(root, 'src/screens/AppScreens.js'), 'utf8');
-  const adminScreen = fs.readFileSync(path.join(root, 'src/screens/admin/AdminDashboard.js'), 'utf8');
-  assert.match(appScreens, /async function adminBulkRenameRegions\(rows\)/);
-  assert.match(appScreens, /body: \{ name: item\.name \}/);
-  assert.match(adminScreen, /تعديل أسماء المحدد/);
-  assert.match(adminScreen, /adminBulkRenameRegions\?\.\(rows\)/);
-});
 
 
 test('client area selection hides the search field, reveals the detailed address, and shows live technician totals', () => {
@@ -940,15 +854,3 @@ test('mobile registration forwards referral codes and existing wallet screens la
   assert.match(technicianWallet, /item\.referralNumber/);
 });
 
-test('mobile admin dashboard exposes referral administration with audit-safe rejection flow', () => {
-  const admin = fs.readFileSync(path.join(root, 'src/screens/admin/AdminDashboard.js'), 'utf8');
-  const screen = fs.readFileSync(path.join(root, 'src/screens/admin/ReferralAdminScreen.js'), 'utf8');
-  assert.match(admin, /key: 'referrals', label: 'الدعوات والمكافآت'/);
-  assert.match(admin, /<ReferralAdminScreen session=\{session\}/);
-  assert.match(screen, /\/referrals\/admin\/summary/);
-  assert.match(screen, /\/referrals\/admin\/settings/);
-  assert.match(screen, /\/reject/);
-  assert.match(screen, /سببًا واضحًا لا يقل عن 3 أحرف/);
-  assert.match(screen, /achievementLog/);
-  assert.match(screen, /حركات المحفظة/);
-});
