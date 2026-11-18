@@ -283,6 +283,40 @@ class MainActivity : ComponentActivity() {
         val script = """
             (function () {
               window.__HAMZAWY_FCM_TOKEN = $tokenLiteral;
+              if (!window.__HAMZAWY_STORAGE_HOOKED) {
+                window.__HAMZAWY_STORAGE_HOOKED = true;
+                var unregisterCurrentAdminDevice = function (adminToken) {
+                  var fcmToken = window.__HAMZAWY_FCM_TOKEN || '';
+                  if (!adminToken || !fcmToken) return;
+                  try {
+                    fetch('/api/notifications/admin/push-token', {
+                      method: 'DELETE',
+                      keepalive: true,
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + adminToken
+                      },
+                      body: JSON.stringify({ token: fcmToken })
+                    }).catch(function () {});
+                  } catch (_) {}
+                };
+                var originalClear = Storage.prototype.clear;
+                Storage.prototype.clear = function () {
+                  if (this === window.localStorage) {
+                    unregisterCurrentAdminDevice(
+                      this.getItem('admin_token_v3') || this.getItem('admin_token') || ''
+                    );
+                  }
+                  return originalClear.apply(this, arguments);
+                };
+                var originalRemoveItem = Storage.prototype.removeItem;
+                Storage.prototype.removeItem = function (key) {
+                  if (this === window.localStorage && (key === 'admin_token_v3' || key === 'admin_token')) {
+                    unregisterCurrentAdminDevice(this.getItem(key) || '');
+                  }
+                  return originalRemoveItem.apply(this, arguments);
+                };
+              }
               if (window.__HAMZAWY_FCM_SYNC_STARTED) return;
               window.__HAMZAWY_FCM_SYNC_STARTED = true;
               window.__HAMZAWY_FCM_SYNC_TIMER = window.setInterval(async function () {
