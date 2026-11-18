@@ -1489,6 +1489,7 @@ private data class RowAction(val label:String,val method:String,val path:String,
     var deleteClientOrdersPhone by remember(section){mutableStateOf("")}
     var statusFilter by remember(section) { mutableStateOf("") }
     var clientStatusFilter by remember(section) { mutableStateOf("all") }
+    var availabilityFilter by remember(section) { mutableStateOf("all") }
     var regionFilter by remember(section) { mutableStateOf("") }
     var dateFilter by remember(section) { mutableStateOf("") }
     var datePickerOpen by remember(section){mutableStateOf(false)}
@@ -1550,7 +1551,7 @@ private data class RowAction(val label:String,val method:String,val path:String,
             technician?.get("role")?.takeIf{!it.isJsonNull}?.asString=="fanni"&&(technician?.get("status")?.takeIf{!it.isJsonNull}?.asString.orEmpty() in listOf("approved","معتمد")||technician?.get("isApproved")?.asBoolean==true)&&technician?.get("adminRole")?.takeIf{!it.isJsonNull}?.asString.orEmpty().isBlank()
         }.orEmpty()
     }
-    val filtered = remember(items, query, statusFilter, clientStatusFilter, regionFilter, dateFilter, offerStatusFilter) {
+    val filtered = remember(items, query, statusFilter, clientStatusFilter, availabilityFilter, regionFilter, dateFilter, offerStatusFilter) {
         items.filter { item ->
             val raw = item.toString()
             val obj = item.takeIf { it.isJsonObject }?.asJsonObject
@@ -1565,10 +1566,14 @@ private data class RowAction(val label:String,val method:String,val path:String,
                 val suspended=obj?.get("status")?.takeIf{!it.isJsonNull}?.asString=="معلق"
                 if(clientStatusFilter=="suspended")registered&&suspended else registered&&!suspended
             }
+            val availabilityMatches=if(section !in listOf(AdminSection.TECHNICIANS,AdminSection.PENDING,AdminSection.DISABLED)||availabilityFilter=="all")true else {
+                val accepting=obj?.get("acceptingOrders")?.takeIf{!it.isJsonNull}?.asBoolean!=false
+                if(availabilityFilter=="paused")!accepting else accepting
+            }
             (query.isBlank() || raw.contains(query.trim(), true)) &&
             (statusFilter.isBlank() || status.contains(statusFilter.trim(), true)) &&
             (regionFilter.isBlank() || region.contains(regionFilter.trim(), true)) &&
-            (dateFilter.isBlank() || date.contains(dateFilter.trim(), true)) && offerMatches && clientStatusMatches
+            (dateFilter.isBlank() || date.contains(dateFilter.trim(), true)) && offerMatches && clientStatusMatches && availabilityMatches
         }
     }
     val statusOptions=remember(items){items.mapNotNull{item->item.takeIf{it.isJsonObject}?.asJsonObject?.let{o->listOf("status","actualStatus").firstNotNullOfOrNull{k->o.get(k)?.takeIf{it.isJsonPrimitive&&!it.isJsonNull}?.asString}}}.filter{it.isNotBlank()}.distinct().sorted()}
@@ -1825,6 +1830,16 @@ private data class RowAction(val label:String,val method:String,val path:String,
             }
         }
         Column(Modifier.fillMaxWidth(),verticalArrangement=Arrangement.spacedBy(6.dp)){
+            if(section in listOf(AdminSection.TECHNICIANS,AdminSection.PENDING,AdminSection.DISABLED)&&items.any{it.isJsonObject&&it.asJsonObject.has("acceptingOrders")}){
+                Text("استقبال الطلبات الجديدة",style=MaterialTheme.typography.labelSmall,color=Color.Gray)
+                Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(6.dp)){
+                    val acceptingCount=items.count{it.isJsonObject&&it.asJsonObject.get("acceptingOrders")?.asBoolean!=false}
+                    val pausedCount=items.count{it.isJsonObject&&it.asJsonObject.get("acceptingOrders")?.asBoolean==false}
+                    FilterChip(selected=availabilityFilter=="all",onClick={availabilityFilter="all"},label={Text("الكل (${items.size})")})
+                    FilterChip(selected=availabilityFilter=="accepting",onClick={availabilityFilter="accepting"},label={Text("يستقبل طلبات (${acceptingCount})")})
+                    FilterChip(selected=availabilityFilter=="paused",onClick={availabilityFilter="paused"},label={Text("موقف الاستقبال (${pausedCount})")})
+                }
+            }
             if(section==AdminSection.CLIENTS){
                 Text("حالة حساب العميل",style=MaterialTheme.typography.labelSmall,color=Color.Gray)
                 Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(6.dp)){
@@ -1864,7 +1879,7 @@ private data class RowAction(val label:String,val method:String,val path:String,
             Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(6.dp)){
                 OutlinedTextField(dateFilter,{dateFilter=it},modifier=Modifier.weight(1f),label={Text("التاريخ YYYY-MM-DD")},singleLine=true)
                 TextButton(onClick={datePickerOpen=true}){Text("التقويم")}
-                TextButton(onClick={statusFilter="";clientStatusFilter="all";offerStatusFilter="all";regionFilter="";dateFilter=""}){Text("مسح")}
+                TextButton(onClick={statusFilter="";clientStatusFilter="all";availabilityFilter="all";offerStatusFilter="all";regionFilter="";dateFilter=""}){Text("مسح")}
             }
         }
         if(datePickerOpen)DatePickerDialog(
@@ -1915,6 +1930,12 @@ private data class RowAction(val label:String,val method:String,val path:String,
                         Text(primary(item,section), fontWeight = FontWeight.Bold, color = DarkAccent)
                         val detail = secondary(item, section)
                         if (detail.isNotBlank()) Text(detail, color = Color.DarkGray, modifier = Modifier.padding(top = 5.dp))
+                        if(section in listOf(AdminSection.TECHNICIANS,AdminSection.PENDING,AdminSection.DISABLED)&&item.isJsonObject&&item.asJsonObject.has("acceptingOrders")){
+                            val accepting=item.asJsonObject.get("acceptingOrders")?.asBoolean!=false
+                            Surface(shape=RoundedCornerShape(10.dp),color=if(accepting)Color(0xFFE8F5EC) else Color(0xFFFFF4E5),modifier=Modifier.padding(top=6.dp)){
+                                Text(if(accepting)"يستقبل طلبات جديدة" else "موقف استقبال الطلبات",modifier=Modifier.padding(horizontal=9.dp,vertical=5.dp),color=if(accepting)Color(0xFF176B45) else Color(0xFF8A5A00),style=MaterialTheme.typography.labelSmall,fontWeight=FontWeight.Bold)
+                            }
+                        }
                         if(section==AdminSection.ORDERS&&item.isJsonObject){
                             val order=item.asJsonObject
                             fun orderValue(key:String):String=order.get(key)?.takeIf{!it.isJsonNull}?.toString()?.trim('"').orEmpty()
