@@ -2,7 +2,7 @@
 <resources>
     <style name="Theme.HamzawyAdmin" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">#FFFFFF</item>
-        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/hamzawy_logo</item>
         <item name="windowSplashScreenAnimationDuration">900</item>
         <item name="postSplashScreenTheme">@style/Theme.HamzawyAdmin.PostSplash</item>
     </style>
