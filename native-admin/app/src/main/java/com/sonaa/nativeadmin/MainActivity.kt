@@ -213,10 +213,15 @@ class MainActivity : ComponentActivity() {
     private fun handleWebViewNavigation(uri: android.net.Uri): Boolean {
         if (isAllowedAdminUrl(uri)) return false
 
-        // Keep the admin WebView restricted, but hand WhatsApp contact links
-        // to Android so the installed app or browser can open them.
+        val scheme = uri.scheme?.lowercase()
         val host = uri.host?.lowercase()
-        val isWhatsAppLink = uri.scheme.equals("https", ignoreCase = true) &&
+        if (scheme == "tel") {
+            runCatching { startActivity(Intent(Intent.ACTION_DIAL, uri)) }
+            return true
+        }
+
+        // Open WhatsApp links outside the restricted admin WebView.
+        val isWhatsAppLink = scheme == "https" &&
             host in setOf("wa.me", "api.whatsapp.com", "web.whatsapp.com")
         if (isWhatsAppLink) {
             runCatching { startActivity(Intent(Intent.ACTION_VIEW, uri)) }
