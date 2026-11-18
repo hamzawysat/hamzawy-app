@@ -30,7 +30,7 @@ export function usePushNotifications(session, onNotificationResponse) {
     let projectIdForRefresh = '';
     void Notifications.getLastNotificationResponseAsync?.().then(handleResponse).catch(() => {});
     async function registerPushToken() {
-      if (!session || !['client', 'fanni', 'admin'].includes(session.role) || !Device.isDevice) return;
+      if (!session || !['client', 'fanni'].includes(session.role) || !Device.isDevice) return;
       try {
         const permission = await Notifications.getPermissionsAsync();
         let status = permission.status;
