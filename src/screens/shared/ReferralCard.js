@@ -6,7 +6,7 @@ import { api } from '../../services/api';
 import { COLORS } from '../../theme/colors';
 import { styles } from '../../theme/styles';
 
-export default function ReferralCard({ session, kind, cardRef, expanded = false, onExpandedChange }) {
+export default function ReferralCard({ session, kind, cardRef, expanded = false, onExpandedChange, showToggle = true }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -34,9 +34,9 @@ export default function ReferralCard({ session, kind, cardRef, expanded = false,
   };
   return <View ref={cardRef} collapsable={false} style={[styles.dataCard, { borderWidth: 1, borderColor: COLORS.teal, marginTop: 12 }]}>
     <Text style={styles.cardTitlePremium}>{title}</Text>
-    <TouchableOpacity onPress={() => onExpandedChange?.(!expanded)} accessibilityRole="button" style={{ paddingVertical: 10, paddingHorizontal: 12, borderRadius: 10, backgroundColor: COLORS.indigo50, marginTop: 6 }}>
+    {showToggle ? <TouchableOpacity onPress={() => onExpandedChange?.(!expanded)} accessibilityRole="button" style={{ paddingVertical: 10, paddingHorizontal: 12, borderRadius: 10, backgroundColor: COLORS.indigo50, marginTop: 6 }}>
       <Text style={{ textAlign: 'center', color: COLORS.navy, fontWeight: '900' }}>{expanded ? 'إخفاء تفاصيل الدعوة ▲' : 'عرض تفاصيل الدعوة ▼'}</Text>
-    </TouchableOpacity>
+    </TouchableOpacity> : null}
     {expanded ? <>
     <Text style={styles.detail}>{isClient ? 'صديقك يسجل من رابطك ويكمل أول طلب مكتمل، فتحصلان على 50 جنيهًا لكل واحد.' : 'الفني يسجل من رابطك ويكمل 3 شغلانات مكتملة، فتحصلان على 50 جنيهًا لكل واحد.'}</Text>
     {loading ? <Text style={styles.detail}>جاري تحميل رابط الدعوة...</Text> : null}
