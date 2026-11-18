@@ -1164,7 +1164,7 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
       Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){
        TextButton(onClick={faqIndex=index;question=faq.asJsonObject.get("question")?.asString.orEmpty();answer=faq.asJsonObject.get("answer")?.asString.orEmpty();faqAudience=faq.asJsonObject.get("audience")?.asString?.takeIf{it in listOf("client","fanni","both")}?: "client"}){Text("تعديل")}
        TextButton(onClick={
-        val body=JsonObject().apply{addProperty("announcement",announcement.trim());val array=com.google.gson.JsonArray();faqs?.forEachIndexed{idx,entry->val copy=entry.asJsonObject.deepCopy();if(idx==index)copy.addProperty("active",copy.get("active")?.asBoolean==false);array.add(copy)};add("faqs",array)}
+        val body=JsonObject().apply{addProperty("announcement",announcement.trim());addProperty("announcementAudience",announcementAudience);val array=com.google.gson.JsonArray();faqs?.forEachIndexed{idx,entry->val copy=entry.asJsonObject.deepCopy();if(idx==index)copy.addProperty("active",copy.get("active")?.asBoolean==false);array.add(copy)};add("faqs",array)}
         onSave("PUT","api/admin/content",body)
        },enabled=canWrite("api/admin/content")){Text(if(faq.asJsonObject.get("active")?.asBoolean==false)"تفعيل" else "إيقاف")}
        TextButton(onClick={faqDeleteIndex=index},enabled=canWrite("api/admin/content/faqs/$index")){Text("حذف",color=Color(0xFFB3261E))}
