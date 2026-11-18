@@ -233,13 +233,23 @@ class MainActivity : ComponentActivity() {
     private fun isAllowedAdminUrl(uri: android.net.Uri): Boolean {
         val configuredPath = android.net.Uri.parse(configuredAdminPanelUrl).path
         val isAdminPanel = !configuredPath.isNullOrBlank() && uri.path == configuredPath
+        val passwordMode = uri.getQueryParameter("mode")
         val isAdminPasswordSupport = uri.path == "/password.html" &&
             uri.getQueryParameter("role") == "admin" &&
-            uri.getQueryParameter("mode") in setOf("recovery", "support", "account", "change")
+            passwordMode in setOf("recovery", "support", "account", "change")
+        // The admin client list opens this protected profile editor using
+        // /password.html?role=admin&mode=admin-edit&targetRole=client&targetId=...
+        val targetRole = uri.getQueryParameter("targetRole")
+        val targetId = uri.getQueryParameter("targetId").orEmpty()
+        val isAdminClientProfileEdit = uri.path == "/password.html" &&
+            uri.getQueryParameter("role") == "admin" &&
+            passwordMode == "admin-edit" &&
+            targetRole == "client" &&
+            targetId.matches(Regex("[A-Za-z0-9_-]{1,128}"))
         return uri.scheme.equals("https", ignoreCase = true) &&
             uri.host.equals(ADMIN_HOST, ignoreCase = true) &&
             (uri.port == -1 || uri.port == 443) &&
-            (isAdminPanel || isAdminPasswordSupport)
+            (isAdminPanel || isAdminPasswordSupport || isAdminClientProfileEdit)
     }
 
     private fun loadAdminTarget(sourceIntent: Intent?) {
