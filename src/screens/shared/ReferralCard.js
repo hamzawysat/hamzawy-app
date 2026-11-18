@@ -51,6 +51,12 @@ export default function ReferralCard({ session, kind }) {
       </View>
     </View> : null}
     <Text style={[styles.detailSmall, { marginTop: 8 }]}>دعواتك: {Number(data?.totals?.count || 0)} • المكتملة: {Number(data?.totals?.completed || 0)}</Text>
+    {Array.isArray(data?.referrals) && data.referrals.length ? <View style={{ marginTop: 8, gap: 7 }}>
+      {data.referrals.map(item => <View key={String(item._id || item.number)} style={{ padding: 9, borderRadius: 9, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.white }}>
+        <Text style={styles.detailBold}>{item.number || 'دعوة'} • {({ pending: 'معلقة', in_progress: 'قيد التقدم', eligible: 'مستحقة', completed: 'مكتملة', rejected: 'مرفوضة' })[item.status] || item.status || '—'}</Text>
+        <Text style={styles.detailSmall}>الإنجاز: {Number(item.completedCount || 0)} / {Number(item.requiredCount || (isClient ? 1 : 3))} • مكافأتك: {item.inviterReward?.paidAt ? 'تم الصرف' : 'لم تصرف'} • مكافأة المدعو: {item.inviteeReward?.paidAt ? 'تم الصرف' : 'لم تصرف'}</Text>
+      </View>)}
+    </View> : null}
     <TouchableOpacity onPress={load} disabled={loading} style={{ paddingVertical: 8 }}><Text style={{ textAlign: 'center', color: COLORS.teal, fontWeight: '900' }}>تحديث بيانات الدعوة</Text></TouchableOpacity>
   </View>;
 }
