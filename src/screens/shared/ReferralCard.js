@@ -1,0 +1,54 @@
+import React, { useCallback, useEffect, useState } from 'react';
+import { Alert, Share, Text, TouchableOpacity, View } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
+import { api } from '../../services/api';
+import { COLORS } from '../../theme/colors';
+import { styles } from '../../theme/styles';
+
+export default function ReferralCard({ session, kind }) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const isClient = kind === 'client';
+  const title = isClient ? 'ادعُ صديقك واكسب 50 جنيهًا' : 'ادعُ فنيًا واكسب 50 جنيهًا';
+  const load = useCallback(async () => {
+    if (!session?.token) return;
+    setLoading(true); setError('');
+    try {
+      const result = await api('/referrals/me/' + (isClient ? 'client' : 'fanni'), { token: session.token });
+      setData(result);
+    } catch (e) { setError(e.message || 'تعذر تحميل رابط الدعوة.'); }
+    finally { setLoading(false); }
+  }, [session?.token, isClient]);
+  useEffect(() => { load(); }, [load]);
+  const copy = async value => {
+    if (!value) return;
+    try { await Clipboard.setStringAsync(String(value)); Alert.alert('تم النسخ', 'تم نسخ بيانات الدعوة.'); }
+    catch (_) { Alert.alert('تعذر النسخ', String(value)); }
+  };
+  const share = async () => {
+    if (!data?.url) return;
+    try { await Share.share({ message: title + '\n' + data.url }); }
+    catch (e) { Alert.alert('تعذر المشاركة', e.message || 'حاول مرة أخرى.'); }
+  };
+  return <View style={[styles.dataCard, { borderWidth: 1, borderColor: COLORS.teal, marginTop: 12 }]}>
+    <Text style={styles.cardTitlePremium}>{title}</Text>
+    <Text style={styles.detail}>{isClient ? 'صديقك يسجل من رابطك ويكمل أول طلب مكتمل، فتحصلان على 50 جنيهًا لكل واحد.' : 'الفني يسجل من رابطك ويكمل 3 شغلانات مكتملة، فتحصلان على 50 جنيهًا لكل واحد.'}</Text>
+    {loading ? <Text style={styles.detail}>جاري تحميل رابط الدعوة...</Text> : null}
+    {error ? <Text style={styles.errorText}>{error}</Text> : null}
+    {data?.enabled === false ? <Text style={styles.detail}>إنشاء دعوات جديدة متوقف حاليًا. الدعوات السابقة مستمرة في احتساب إنجازاتها.</Text> : null}
+    {data?.code ? <View style={{ padding: 10, borderRadius: 10, backgroundColor: '#F1F5F9', marginTop: 8 }}>
+      <Text style={styles.detailSmall}>كود دعوتك</Text>
+      <Text selectable style={[styles.cardTitlePremium, { textAlign: 'center', letterSpacing: 1 }]}>{data.code}</Text>
+      <TouchableOpacity onPress={() => copy(data.code)} style={{ padding: 10, borderRadius: 9, backgroundColor: COLORS.white, marginTop: 6 }}><Text style={{ textAlign: 'center', color: COLORS.navy, fontWeight: '900' }}>نسخ الكود</Text></TouchableOpacity>
+      <Text style={[styles.detailSmall, { marginTop: 10 }]}>رابط الدعوة</Text>
+      <Text selectable style={styles.detail}>{data.url}</Text>
+      <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+        <TouchableOpacity onPress={() => copy(data.url)} style={{ flex: 1, padding: 11, borderRadius: 9, backgroundColor: COLORS.white }}><Text style={{ textAlign: 'center', color: COLORS.navy, fontWeight: '900' }}>نسخ الرابط</Text></TouchableOpacity>
+        <TouchableOpacity onPress={share} style={{ flex: 1, padding: 11, borderRadius: 9, backgroundColor: COLORS.navy }}><Text style={{ textAlign: 'center', color: COLORS.white, fontWeight: '900' }}>مشاركة</Text></TouchableOpacity>
+      </View>
+    </View> : null}
+    <Text style={[styles.detailSmall, { marginTop: 8 }]}>دعواتك: {Number(data?.totals?.count || 0)} • المكتملة: {Number(data?.totals?.completed || 0)}</Text>
+    <TouchableOpacity onPress={load} disabled={loading} style={{ paddingVertical: 8 }}><Text style={{ textAlign: 'center', color: COLORS.teal, fontWeight: '900' }}>تحديث بيانات الدعوة</Text></TouchableOpacity>
+  </View>;
+}
