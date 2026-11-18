@@ -1,7 +1,6 @@
 package com.sonaa.nativeadmin
 import android.Manifest
 import android.content.Intent
-import android.net.Uri
 import android.app.NotificationManager
 import android.content.pm.PackageManager
 import android.os.Build
@@ -10,13 +9,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import com.google.firebase.FirebaseApp
-import com.google.firebase.FirebaseOptions
-import com.google.firebase.messaging.FirebaseMessaging
-private val Accent = Color(0xFF087F9C)
-private val DarkAccent = Color(0xFF07566B)
-private val Background = Color(0xFFF4F8FA)
-private fun storeImageSource(value:String):String = if(value.startsWith("/")) "https://www.hamzawy-sat.dynv6.net"+value else value
 class MainActivity : ComponentActivity() {
     private lateinit var adminWebView: android.webkit.WebView
     private var configuredAdminPanelUrl: String = ""
@@ -60,6 +52,10 @@ class MainActivity : ComponentActivity() {
         val tokenFilter = android.content.IntentFilter(SonaaMessagingService.ACTION_TOKEN_REFRESHED)
         if (Build.VERSION.SDK_INT >= 33) {
             registerReceiver(fcmTokenReceiver, tokenFilter, android.content.Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            @Suppress("DEPRECATION")
+            registerReceiver(fcmTokenReceiver, tokenFilter)
+        }
         fcmReceiverRegistered = true
 
         SonaaMessagingService.createChannels(getSystemService(NotificationManager::class.java))
