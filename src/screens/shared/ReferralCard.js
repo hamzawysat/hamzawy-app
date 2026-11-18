@@ -6,7 +6,7 @@ import { api } from '../../services/api';
 import { COLORS } from '../../theme/colors';
 import { styles } from '../../theme/styles';
 
-export default function ReferralCard({ session, kind }) {
+export default function ReferralCard({ session, kind, cardRef }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -33,7 +33,7 @@ export default function ReferralCard({ session, kind }) {
     try { await Share.share({ message: title + '\n' + data.url }); }
     catch (e) { Alert.alert('تعذر المشاركة', e.message || 'حاول مرة أخرى.'); }
   };
-  return <View style={[styles.dataCard, { borderWidth: 1, borderColor: COLORS.teal, marginTop: 12 }]}>
+  return <View ref={cardRef} collapsable={false} style={[styles.dataCard, { borderWidth: 1, borderColor: COLORS.teal, marginTop: 12 }]}>
     <Text style={styles.cardTitlePremium}>{title}</Text>
     <TouchableOpacity onPress={() => setExpanded(value => !value)} accessibilityRole="button" style={{ paddingVertical: 10, paddingHorizontal: 12, borderRadius: 10, backgroundColor: COLORS.indigo50, marginTop: 6 }}>
       <Text style={{ textAlign: 'center', color: COLORS.navy, fontWeight: '900' }}>{expanded ? 'إخفاء تفاصيل الدعوة ▲' : 'عرض تفاصيل الدعوة ▼'}</Text>
