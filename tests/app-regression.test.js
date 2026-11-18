@@ -839,10 +839,10 @@ test('client and technician referral cards load server-issued invite links and r
   assert.match(card, /🎉 حمّل تطبيق حمزاوي سات واطلب الخدمة اللي محتاجها، واكسب 50 جنيه هدية بعد إكمال أول طلب ليك! 💰 سجّل دلوقتي واستمتع بخدمات حمزاوي سات\./);
   assert.match(card, /💰 انضم لفريق فنيين حمزاوي سات واكسب 150 جنيه مكافأة بعد إكمال أول 3 طلبات ليك! 🎉 سجّل دلوقتي وابدأ شغلك معانا\./);
   assert.match(card, /invitationMessage \+ '\\n' \+ data\.url/);
-  assert.match(card, /الفني يسجل من رابطك ويكمل أول 3 طلبات مكتملة/);
-  assert.match(card, /مكافأة 150 جنيهًا بعد إكمال أول 3 طلبات مكتملة/);
-  assert.match(client, /ادعُ صديقك واكسب 50 جنيه بعد إكمال أول طلب مكتمل/);
-  assert.match(technician, /ادعُ فنيًا واكسب 150 جنيه بعد إكمال أول 3 طلبات مكتملة/);
+  assert.match(card, /عن كل فني جديد يسجل من رابط دعوتك ويكمل 3 طلبات، تحصل أنت وهو على 150 جنيهًا مكافأة/);
+  assert.match(card, /كل فني جديد يسجل من رابطك ويكمل 3 طلبات يمنحك ويمنحه 150 جنيهًا مكافأة/);
+  assert.match(client, /ادعُ صديقك واكسب 50 جنيهًا/);
+  assert.match(technician, /ادعُ صديقك لتحصل على 150 جنيه مكافأة/);
   assert.match(card, /data\?\.referrals\) && data\.referrals\.length/);
   assert.match(card, /data\?\.enabled !== false/);
   assert.match(client, /<ReferralCard session=\{session\} kind="client"/);
