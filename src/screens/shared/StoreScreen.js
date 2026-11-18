@@ -96,6 +96,7 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
   const [submitting, setSubmitting] = useState(false);
   const [previousOrdersOpen, setPreviousOrdersOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [expandedProductDetails, setExpandedProductDetails] = useState({});
 
   const load = useCallback(async (silent = false) => {
     if (!session?.token) return;
@@ -248,13 +249,29 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
                   <StoreImage value={item.imageUrl} style={{ width: 96, height: 96, borderRadius: 12 }} />
                   <View style={{ flex: 1 }}>
                     <Text style={styles.cardTitleSmall}>{item.name || 'منتج'}</Text>
-                    <Text style={[styles.detail, { color: COLORS.teal, fontWeight: '900' }]}>{item.type === 'subscription' ? 'اشتراك / تجديد اشتراك' : 'منتج وبضاعة'}{item.subscriptionDuration ? ' • ' + item.subscriptionDuration : ''}</Text>
-                    {item.description ? <Text style={styles.detail}>{item.description}</Text> : null}
-                    {item.details ? <Text style={styles.detail}>{item.details}</Text> : null}
-                    <Text style={[styles.detail, { fontWeight: '900', color: COLORS.navy }]}>{money(item.price)}</Text>
-                    {item.originalPrice != null && Number(item.originalPrice) > Number(item.price) ? <Text style={[styles.detail, { textDecorationLine: 'line-through' }]}>بدلًا من {money(item.originalPrice)}</Text> : null}
-                    {item.offerText ? <Text style={[styles.detail, { color: COLORS.greenDark }]}>{item.offerText}</Text> : null}
-                    <Button title="اطلب المنتج" onPress={() => openPurchase(item)} />
+                    <Text style={[styles.detail, { fontWeight: '900', color: COLORS.navy, marginTop: 6 }]}>{money(item.price)}</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 10 }}>
+                      <TouchableOpacity
+                        accessibilityRole="button"
+                        accessibilityState={{ expanded: Boolean(expandedProductDetails[String(item._id || index)]) }}
+                        onPress={() => setExpandedProductDetails(current => ({ ...current, [String(item._id || index)]: !current[String(item._id || index)] }))}
+                        style={{ paddingVertical: 6 }}
+                      >
+                        <Text style={{ color: COLORS.teal, fontSize: 11, fontWeight: '900' }}>
+                          تفاصيل المنتج {expandedProductDetails[String(item._id || index)] ? '⌃' : '⌄'}
+                        </Text>
+                      </TouchableOpacity>
+                      <Button title="اطلب المنتج" onPress={() => openPurchase(item)} />
+                    </View>
+                    {expandedProductDetails[String(item._id || index)] ? (
+                      <View style={{ marginTop: 8, padding: 10, borderRadius: 10, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: COLORS.border, gap: 6 }}>
+                        <Text style={styles.detail}>النوع: {item.type === 'subscription' ? 'اشتراك / تجديد اشتراك' : 'منتج وبضاعة'}{item.subscriptionDuration ? ' • ' + item.subscriptionDuration : ''}</Text>
+                        <Text style={styles.detail}>الوصف: {String(item.description || '').trim() || 'لا يوجد وصف'}</Text>
+                        {String(item.details || '').trim() ? <Text style={styles.detail}>المواصفات: {item.details}</Text> : null}
+                        {item.originalPrice != null && Number(item.originalPrice) > Number(item.price) ? <Text style={[styles.detail, { textDecorationLine: 'line-through' }]}>السعر السابق: {money(item.originalPrice)}</Text> : null}
+                        {item.offerText ? <Text style={[styles.detail, { color: COLORS.greenDark }]}>{item.offerText}</Text> : null}
+                      </View>
+                    ) : null}
                   </View>
                 </View>
               ))}
