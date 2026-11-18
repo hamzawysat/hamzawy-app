@@ -134,7 +134,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
       [side]: { fileId: '', previewUri: '', uploading: false, status: 'تم إزالة الصورة. اختار صورة بديلة.' }
     }));
   }
-  const { categories, setCategories, areas, setAreas, areaTechnicianCounts, setAreaTechnicianCounts, adminProfileEdit, setAdminProfileEdit, adminPendingProfileEdits, setAdminPendingProfileEdits, selected, setSelected, servicesLoading, setServicesLoading, servicesError, setServicesError, reloadKey, setReloadKey, session, setSession, authRestoring, setAuthRestoring, username, setUsername, password, setPassword, loginLoading, setLoginLoading, authMode, setAuthMode, form, setForm, clientData, setClientData, techData, setTechData, walletTransferNumbers, setWalletTransferNumbers, assignedDetails, setAssignedDetails, technicianSearch, setTechnicianSearch, technicianServiceFilter, setTechnicianServiceFilter, guidelinesChecked, setGuidelinesChecked, guidelinesReachedEnd, setGuidelinesReachedEnd, guidelinesViewportHeight, setGuidelinesViewportHeight, adminData, setAdminData, topup, setTopup, clientTab, setClientTab, clientServiceSearch, setClientServiceSearch, servicePickerOpen, setServicePickerOpen, subservicePickerOpen, setSubservicePickerOpen, ratingPrompt, setRatingPrompt, dismissedRatings, setDismissedRatings, ratingDismissalsLoaded, setRatingDismissalsLoaded, ratingDismissalsLoadedFor, setRatingDismissalsLoadedFor, clientTrackSN, setClientTrackSN, clientTrackedOrder, setClientTrackedOrder, clientTrackError, setClientTrackError, clientTrackLoading, setClientTrackLoading, clientComplaint, setClientComplaint, clientComplaintTrack, setClientComplaintTrack, expandedClientOrders, setExpandedClientOrders, expandedTechnicianOrders, setExpandedTechnicianOrders, notificationsOpen, setNotificationsOpen, offerDraft, setOfferDraft, notifications, setNotifications, orderChats, setOrderChats, chatDrafts, setChatDrafts, priceDrafts, setPriceDrafts, ratingDrafts, setRatingDrafts, ratingSubmitting, setRatingSubmitting, adminUsers, setAdminUsers, adminExtras, setAdminExtras, adminServiceDraft, setAdminServiceDraft, adminServiceEdit, setAdminServiceEdit, adminRegionDraft, setAdminRegionDraft, adminAnnouncementDraft, setAdminAnnouncementDraft, adminFaqDraft, setAdminFaqDraft, adminReportFilters, setAdminReportFilters, adminWallet, setAdminWallet, adminUsersLoading, setAdminUsersLoading, broadcast, setBroadcast, supportCases, setSupportCases, supportCase, setSupportCase, supportDraft, setSupportDraft, supportSubject, setSupportSubject, supportLoading, setSupportLoading, supportError, setSupportError, accountPasswordForm, setAccountPasswordForm, profileEditForm, setProfileEditForm, profileEditOpenCategory, setProfileEditOpenCategory, recoveryForm, setRecoveryForm, adminSupportCases, setAdminSupportCases, adminSupportSelected, setAdminSupportSelected, adminSupportDraft, setAdminSupportDraft, adminRecoveryCases, setAdminRecoveryCases, adminRecoverySelected, setAdminRecoverySelected, adminRecoveryCode, setAdminRecoveryCode, adminRecoveryDraft, setAdminRecoveryDraft, registrationNameRef, registrationPhoneRef, registrationPasswordRef, registrationConfirmPasswordRef, clientAreaInputRef, clientAddressInputRef, clientDescriptionInputRef, clientBudgetInputRef, clientServiceDetailYRef, clientFormYRef, clientScrollRef, chatScrollRef, clientChatScrollRefs, clientChatAtBottomRef, ratingSubmittingRef, orderChatsRef, acceptedChatAutoOpenedRef, dismissedRatingsRef, ratingHandledRef, ratingStatusSnapshotRef, services, updateForm } = appState;
+  const { categories, setCategories, areas, setAreas, areaTechnicianCounts, setAreaTechnicianCounts, selected, setSelected, servicesLoading, setServicesLoading, servicesError, setServicesError, reloadKey, setReloadKey, session, setSession, authRestoring, setAuthRestoring, username, setUsername, password, setPassword, loginLoading, setLoginLoading, authMode, setAuthMode, form, setForm, clientData, setClientData, techData, setTechData, walletTransferNumbers, setWalletTransferNumbers, assignedDetails, setAssignedDetails, technicianSearch, setTechnicianSearch, technicianServiceFilter, setTechnicianServiceFilter, guidelinesChecked, setGuidelinesChecked, guidelinesReachedEnd, setGuidelinesReachedEnd, guidelinesViewportHeight, setGuidelinesViewportHeight, topup, setTopup, clientTab, setClientTab, clientServiceSearch, setClientServiceSearch, servicePickerOpen, setServicePickerOpen, subservicePickerOpen, setSubservicePickerOpen, ratingPrompt, setRatingPrompt, dismissedRatings, setDismissedRatings, ratingDismissalsLoaded, setRatingDismissalsLoaded, ratingDismissalsLoadedFor, setRatingDismissalsLoadedFor, clientTrackSN, setClientTrackSN, clientTrackedOrder, setClientTrackedOrder, clientTrackError, setClientTrackError, clientTrackLoading, setClientTrackLoading, clientComplaint, setClientComplaint, clientComplaintTrack, setClientComplaintTrack, expandedClientOrders, setExpandedClientOrders, expandedTechnicianOrders, setExpandedTechnicianOrders, notificationsOpen, setNotificationsOpen, offerDraft, setOfferDraft, notifications, setNotifications, orderChats, setOrderChats, chatDrafts, setChatDrafts, priceDrafts, setPriceDrafts, ratingDrafts, setRatingDrafts, ratingSubmitting, setRatingSubmitting, supportCases, setSupportCases, supportCase, setSupportCase, supportDraft, setSupportDraft, supportSubject, setSupportSubject, supportLoading, setSupportLoading, supportError, setSupportError, accountPasswordForm, setAccountPasswordForm, profileEditForm, setProfileEditForm, profileEditOpenCategory, setProfileEditOpenCategory, recoveryForm, setRecoveryForm, registrationNameRef, registrationPhoneRef, registrationPasswordRef, registrationConfirmPasswordRef, clientAreaInputRef, clientAddressInputRef, clientDescriptionInputRef, clientBudgetInputRef, clientServiceDetailYRef, clientFormYRef, clientScrollRef, chatScrollRef, clientChatScrollRefs, clientChatAtBottomRef, ratingSubmittingRef, orderChatsRef, acceptedChatAutoOpenedRef, dismissedRatingsRef, ratingHandledRef, ratingStatusSnapshotRef, services, updateForm } = appState;
   const handlePushNotificationResponse = response => {
     const data = response?.notification?.request?.content?.data || {};
     const type = String(data.type || '');
@@ -326,7 +326,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         return true;
       }
       const rootScreen = session
-        ? (session.role === 'client' ? 'client' : session.role === 'admin' ? 'admin' : 'technician')
+        ? (session.role === 'client' ? 'client' : 'technician')
         : 'home';
       if (screen !== rootScreen) {
         screenHistoryRef.current = [];
@@ -386,86 +386,6 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     const timer = setInterval(refreshSupport, 3000);
     return () => { active = false; clearInterval(timer); };
   }, [screen, session?.token, supportCase?._id]);
-
-  useEffect(() => {
-    if (screen !== 'admin' || adminData.tab !== 'support' || !session || session.role !== 'admin') return;
-    let active = true, busy = false;
-    const supportId = adminSupportSelected?._id;
-    const recoveryId = adminRecoverySelected?.id || adminRecoverySelected?._id;
-    const refreshAllSupportChats = async () => {
-      if (!active || busy || screenRef.current !== 'admin') return;
-      busy = true;
-      try {
-        await loadAdminSupportCases();
-        if (supportId) {
-          try {
-            const result = await api('/support/admin/' + encodeURIComponent(supportId), { token: session.token });
-            if (active && result.supportCase) setAdminSupportSelected(result.supportCase);
-          } catch (_) {}
-        }
-        if (recoveryId) {
-          try {
-            const result = await api('/password-recovery/admin/requests/' + encodeURIComponent(recoveryId), { token: session.token });
-            if (active && result.recovery) setAdminRecoverySelected(result.recovery);
-          } catch (_) {}
-        }
-      } finally { busy = false; }
-    };
-    refreshAllSupportChats();
-    const timer = setInterval(refreshAllSupportChats, 3000);
-    return () => { active = false; clearInterval(timer); };
-  }, [screen, adminData.tab, session?.token, adminSupportSelected?._id, adminRecoverySelected?.id, adminRecoverySelected?._id]);
-
-  useEffect(() => {
-    if (!session || screen !== 'admin' || session.role !== 'admin' || session.user?.role !== 'admin') return;
-    let mounted = true;
-    async function loadAdminUsers() {
-      setAdminUsersLoading(true);
-      try {
-        const result = await api('/admin/admin-users', { token: session.token });
-        if (mounted) setAdminUsers(toList(result, ['users', 'items']));
-      } catch (err) {
-        if (mounted) setAdminUsers([]);
-      } finally { if (mounted) setAdminUsersLoading(false); }
-    }
-    loadAdminUsers();
-    return () => { mounted = false; };
-  }, [session, screen, reloadKey]);
-
-  useEffect(() => {
-    if (!session || screen !== 'admin' || session.role !== 'admin') return;
-    let mounted = true;
-    async function loadAdmin() {
-      setAdminData(current => ({ ...current, loading: true, error: '' }));
-      const results = await Promise.allSettled([
-        api('/admin/orders?limit=100', { token: session.token }),
-        api('/admin/fannis?limit=100', { token: session.token }),
-        api('/admin/clients?limit=100', { token: session.token }),
-        api('/admin/topup-requests?limit=100', { token: session.token }),
-        api('/admin/complaints?limit=100', { token: session.token }),
-        api('/support/admin?needsHuman=true', { token: session.token }),
-        api('/admin/regions', { token: session.token }),
-        api('/admin/fanni-profile-edits', { token: session.token }),
-      ]);
-      if (!mounted) return;
-      const failed = results.find(item => item.status === 'rejected');
-      setAdminSupportCases(results[5]?.status === 'fulfilled' ? toList(results[5].value, ['supportCases', 'items']) : []);
-      setAdminExtras(current => ({ ...current, regions: results[6]?.status === 'fulfilled' ? toList(results[6].value, ['regions', 'items']) : current.regions }));
-      setAdminPendingProfileEdits(results[7]?.status === 'fulfilled' ? toList(results[7].value, ['requests', 'items', 'fannis']) : []);
-      setAdminData({
-        orders: results[0].status === 'fulfilled' ? toList(results[0].value, ['orders', 'items']) : [],
-        fannis: results[1].status === 'fulfilled' ? toList(results[1].value, ['fannis', 'items']) : [],
-        clients: results[2].status === 'fulfilled' ? toList(results[2].value, ['clients', 'items']) : [],
-        topups: results[3].status === 'fulfilled' ? toList(results[3].value, ['requests', 'items', 'data']) : [],
-        complaints: results[4].status === 'fulfilled' ? toList(results[4].value, ['complaints', 'items', 'data']) : [],
-        loading: false,
-        error: failed ? failed.reason?.message || 'تعذر تحميل بعض بيانات الإدارة' : '',
-        tab: adminData.tab || 'orders',
-      });
-    }
-    loadAdmin();
-    return () => { mounted = false; };
-  }, [session, screen, reloadKey]);
 
   useEffect(() => {
     if (!session || screen !== 'technician' || session.role !== 'fanni') return;
@@ -561,91 +481,6 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
       await api(`/notifications/${role}/read-all`, { method: 'PATCH', token: session.token });
       setNotifications(current => ({ ...current, items: current.items.map(n => ({ ...n, read: true, readAt: n.readAt || new Date().toISOString() })), unread: 0 }));
     } catch (err) { Alert.alert('الإشعارات', err.message || 'تعذر تحديث الإشعارات.'); }
-  }
-
-  async function updateProfessionalLevel(fanni) {
-    const levels = ['مبتدئ', 'ممارس', 'محترف', 'خبير مبتدئ', 'خبير', 'خبير أول', 'استشاري فني', 'نخبة', 'أسطوري'];
-    const current = fanni.level || 'مبتدئ';
-    const index = levels.indexOf(current);
-    const next = levels[Math.min((index < 0 ? 0 : index) + 1, levels.length - 1)];
-    if (next === current) { Alert.alert('المستوى المهني', 'الفني وصل إلى أعلى مستوى.'); return; }
-    Alert.alert('تأكيد الترقية', `ترقية ${fanni.name || 'الفني'} من ${current} إلى ${next}؟`, [
-      { text: 'إلغاء', style: 'cancel' },
-      { text: 'ترقية', onPress: async () => {
-        try {
-          await api(`/admin/fannis/${encodeURIComponent(fanni._id || fanni.id)}/level`, { method: 'PATCH', token: session.token, body: { level: next, reason: 'ترقية من تطبيق صُنّاع' } });
-          setReloadKey(v => v + 1);
-          Alert.alert('تمت الترقية', `المستوى الجديد: ${next}`);
-        } catch (err) { Alert.alert('تعذر الترقية', err.message || 'راجع صلاحيات الحساب.'); }
-      } },
-    ]);
-  }
-
-  async function changeAdminRoleForFanni(fanni, role) {
-    try {
-      await api('/admin/admin-users', { method: 'POST', token: session.token, body: { fanniId: fanni._id || fanni.id, role } });
-      setReloadKey(v => v + 1);
-      Alert.alert('تم تحديث المنصب', `المنصب الإداري: ${role}`);
-    } catch (err) { Alert.alert('تعذر تحديث المنصب', err.message || 'قد لا يمتلك حسابك صلاحية المدير العام.'); }
-  }
-
-  async function revokeAdminRoleForUser(user) {
-    Alert.alert('سحب المنصب الإداري', `هل تريد سحب صلاحية ${user.name || 'هذا المستخدم'}؟`, [
-      { text: 'إلغاء', style: 'cancel' },
-      { text: 'سحب الصلاحية', style: 'destructive', onPress: async () => {
-        try {
-          await api(`/admin/admin-users/${encodeURIComponent(user.id || user._id)}`, { method: 'DELETE', token: session.token });
-          setReloadKey(v => v + 1);
-          Alert.alert('تم', 'تم سحب الصلاحية الإدارية مع الاحتفاظ بحساب الفني.');
-        } catch (err) { Alert.alert('تعذر سحب الصلاحية', err.message || 'راجع صلاحيات الحساب.'); }
-      } },
-    ]);
-  }
-
-  async function moderateTechnician(fanni, action) {
-    const id = fanni?._id || fanni?.id;
-    if (!id) return;
-    const labels = { approve: 'اعتماد الفني', reject: 'رفض الفني', disable: 'تعليق الفني', enable: 'إعادة تفعيل الفني' };
-    Alert.alert('تأكيد الإجراء', `هل تريد ${labels[action] || 'تنفيذ الإجراء'}: ${fanni.name || 'الفني'}؟`, [
-      { text: 'إلغاء', style: 'cancel' },
-      { text: 'تأكيد', style: action === 'reject' || action === 'disable' ? 'destructive' : 'default', onPress: async () => {
-        try { const result = await api(`/admin/fannis/${encodeURIComponent(id)}/${action}`, { method: 'POST', token: session.token, body: action === 'reject' || action === 'disable' ? { reason: 'إجراء من تطبيق صُنّاع' } : {} }); Alert.alert('تم', result.message || 'تم تحديث حالة الفني.'); setReloadKey(v => v + 1); }
-        catch (err) { Alert.alert('تعذر تنفيذ الإجراء', err.message || 'راجع صلاحيات الحساب.'); }
-      } },
-    ]);
-  }
-
-  async function publishOrder(order) {
-    if (session?.user?.role !== 'admin') { Alert.alert('غير مسموح', 'نشر الطلبات متاح للمدير العام فقط.'); return; }
-    const sn = order?.sn;
-    if (!sn) return;
-    Alert.alert('نشر الطلب', `نشر الطلب ${sn} وإتاحته للفنيين المطابقين؟`, [
-      { text: 'إلغاء', style: 'cancel' },
-      { text: 'نشر', onPress: async () => {
-        try { const result = await api(`/orders/admin/${encodeURIComponent(sn)}/publish`, { method: 'POST', token: session.token, body: {} }); Alert.alert('تم النشر', result.message || 'أصبح الطلب متاحًا للفنيين.'); setReloadKey(v => v + 1); }
-        catch (err) { Alert.alert('تعذر نشر الطلب', err.message || 'راجع حالة الطلب وصلاحيات الحساب.'); }
-      } },
-    ]);
-  }
-
-  async function reviewTopup(request, action) {
-    const id = request?._id || request?.id;
-    if (!id) return;
-    const approve = action === 'approve';
-    Alert.alert(approve ? 'اعتماد الشحن' : 'رفض الشحن', `${approve ? 'إضافة' : 'رفض'} مبلغ ${request.amount || 0} جنيه ${approve ? 'إلى محفظة الفني' : 'في طلب الشحن'}؟`, [
-      { text: 'إلغاء', style: 'cancel' },
-      { text: approve ? 'اعتماد وإضافة الرصيد' : 'رفض الطلب', style: approve ? 'default' : 'destructive', onPress: async () => {
-        try { const result = await api(`/admin/topup-requests/${encodeURIComponent(id)}/${action}`, { method: 'POST', token: session.token, body: approve ? {} : { reason: 'رفض من تطبيق صُنّاع' } }); Alert.alert('تم', result.message || 'تمت معالجة طلب الشحن.'); setReloadKey(v => v + 1); }
-        catch (err) { Alert.alert('تعذر معالجة الشحن', err.message || 'ربما تمت معالجة الطلب من قبل.'); }
-      } },
-    ]);
-  }
-
-  async function setComplaintStatus(complaint, status) {
-    const id = complaint?._id || complaint?.id;
-    if (!id) return;
-    try { const result = await api(`/admin/complaints/${encodeURIComponent(id)}`, { method: 'PATCH', token: session.token, body: { status } }); Alert.alert('تم تحديث الشكوى', result.message || status); setReloadKey(v => v + 1); }
-    catch (err) { Alert.alert('تعذر تحديث الشكوى', err.message || 'راجع صلاحيات الحساب.'); }
   }
 
   async function handleLogin() {
@@ -1222,18 +1057,6 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     </Modal>;
   }
 
-  async function sendAdminBroadcast() {
-    const title = broadcast.title.trim(), message = broadcast.message.trim();
-    if (title.length < 2 || title.length > 100 || message.length < 2 || message.length > 300) { Alert.alert('راجع الإشعار', 'العنوان من حرفين إلى 100 حرف، والرسالة من حرفين إلى 300 حرف.'); return; }
-    Alert.alert('تأكيد إرسال الإشعار', `إرسال الإشعار إلى: ${broadcast.audience === 'all' ? 'الجميع' : broadcast.audience === 'clients' ? 'العملاء' : broadcast.audience === 'fannis' ? 'الفنيين' : 'فنيي القاهرة'}؟`, [
-      { text: 'إلغاء', style: 'cancel' },
-      { text: 'إرسال', onPress: async () => {
-        try { const result = await api('/admin/notifications/broadcast', { method: 'POST', token: session.token, body: { title, message, audience: broadcast.audience } }); Alert.alert('تم إرسال الإشعار', `${result.message || 'تم الإرسال'} — العدد: ${Number(result.sent || 0)}`); setBroadcast(current => ({ ...current, title: '', message: '' })); }
-        catch (err) { Alert.alert('تعذر إرسال الإشعار', err.message || 'راجع صلاحيات حساب الإدارة.'); }
-      } },
-    ]);
-  }
-
   async function acceptTechnicianGuidelines() {
     try {
       const result = await api('/fanni/guidelines/accept', {
@@ -1316,139 +1139,6 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     finally { setSupportLoading(false); }
   }
 
-  useEffect(() => {
-    if (!session || screen !== 'admin' || session.role !== 'admin') return;
-    let active = true;
-    async function loadAdminExtras() {
-      setAdminExtras(current => ({ ...current, loading: true, error: '' }));
-      const results = await Promise.allSettled([
-        api('/admin/services', { token: session.token }),
-        api('/admin/regions', { token: session.token }),
-        api('/admin/pricing', { token: session.token }),
-        api('/admin/settings', { token: session.token }),
-        api('/admin/content', { token: session.token }),
-        api('/admin/audit-logs', { token: session.token }),
-      ]);
-      if (!active) return;
-      const pick = (i, keys) => results[i].status === 'fulfilled' ? results[i].value : null;
-      const serviceData = pick(0, []);
-      const regionData = pick(1, []);
-      const pricingData = pick(2, []);
-      const settingsData = pick(3, []);
-      const contentData = pick(4, []);
-      const auditData = pick(5, []);
-      const failed = results.some(item => item.status === 'rejected');
-      const pricing = pricingData?.pricing || {};
-      const settings = settingsData?.settings || {};
-      const content = contentData?.content || {};
-      setAdminExtras(current => ({
-        ...current,
-        services: toList(serviceData, ['categories', 'items']),
-        regions: toList(regionData, ['regions', 'items']),
-        pricing: { check: Number(pricing.check ?? current.pricing.check), commission: Number(pricing.commission ?? current.pricing.commission), minOffer: Number(pricing.minOffer ?? current.pricing.minOffer), maxOffer: Number(pricing.maxOffer ?? current.pricing.maxOffer) },
-        pricingHistory: toList(pricingData, ['history']),
-        settings: { siteName: settings.siteName || current.settings.siteName, maintenance: Boolean(settings.maintenance), maintenanceMessage: settings.maintenanceMessage || '', maxFanniSignupAttempts: Number(settings.maxFanniSignupAttempts || current.settings.maxFanniSignupAttempts) },
-        content: { announcement: content.announcement || '', faqs: Array.isArray(content.faqs) ? content.faqs : [] },
-        auditLogs: toList(auditData, ['logs', 'items']),
-        loading: false,
-        error: failed ? 'تعذر تحميل بعض أقسام الإدارة؛ راجع صلاحيات الحساب واتصال الخادم.' : ''
-      }));
-      if (contentData?.content) setAdminAnnouncementDraft(contentData.content.announcement || '');
-    }
-    loadAdminExtras();
-    return () => { active = false; };
-  }, [session, screen, reloadKey]);
-
-  async function loadAdminSupportCases() {
-    if (!session || session.role !== 'admin') return;
-    try {
-      const result = await api('/support/admin', { token: session.token });
-      setAdminSupportCases(toList(result, ['supportCases', 'items']));
-      await loadAdminRecoveryCases();
-    } catch (err) { Alert.alert('تعذر تحميل الدعم', err.message || 'راجع صلاحيات الإدارة.'); }
-  }
-
-  async function loadAdminRecoveryCases() {
-    if (!session || session.role !== 'admin') return;
-    try {
-      const result = await api('/password-recovery/admin/requests', { token: session.token });
-      setAdminRecoveryCases(toList(result, ['recoveries', 'items']));
-    } catch (err) { setAdminRecoveryCases([]); }
-  }
-
-  async function openAdminRecovery(item) {
-    try {
-      const result = await api('/password-recovery/admin/requests/' + encodeURIComponent(item.id || item._id), { token: session.token });
-      setAdminRecoverySelected(result.recovery || item);
-      setAdminRecoveryCode('');
-      setAdminRecoveryDraft('');
-    } catch (err) { Alert.alert('طلب الاستعادة', err.message || 'تعذر فتح الطلب.'); }
-  }
-
-  async function issueAdminRecoveryCode() {
-    if (!adminRecoverySelected) return;
-    Alert.alert('تأكيد التحقق', 'لا تصدر الرمز إلا بعد التأكد من ملكية الحساب عبر أسئلة الدعم.', [
-      { text: 'إلغاء', style: 'cancel' },
-      { text: 'تم التحقق', onPress: async () => {
-        try {
-          const result = await api('/password-recovery/admin/requests/' + encodeURIComponent(adminRecoverySelected.id || adminRecoverySelected._id) + '/issue-code', { method: 'POST', token: session.token, body: {} });
-          setAdminRecoverySelected(result.recovery);
-          setAdminRecoveryCode(String(result.code || ''));
-          await loadAdminRecoveryCases();
-        } catch (err) { Alert.alert('تعذر إصدار الرمز', err.message || 'حاول مرة أخرى.'); }
-      } }
-    ]);
-  }
-
-  async function replyAdminRecovery() {
-    const text = adminRecoveryDraft.trim();
-    if (!adminRecoverySelected || !text) { Alert.alert('رد الدعم', 'اكتب الرد أولًا.'); return; }
-    try {
-      const result = await api('/password-recovery/admin/requests/' + encodeURIComponent(adminRecoverySelected.id || adminRecoverySelected._id) + '/reply', { method: 'POST', token: session.token, body: { text } });
-      setAdminRecoverySelected(result.recovery);
-      setAdminRecoveryDraft('');
-      setAdminRecoveryCode('');
-      await loadAdminRecoveryCases();
-      Alert.alert('تم إرسال الرد', 'تم إرسال الرسالة داخل محادثة استعادة الحساب.');
-    } catch (err) { Alert.alert('تعذر إرسال الرد', err.message || 'حاول مرة أخرى.'); }
-  }
-
-  async function replyAdminSupport(item) {
-    const text = adminSupportDraft.trim();
-    if (!item?._id || !text) { Alert.alert('رد الدعم', 'اكتب الرد الأول.'); return; }
-    try {
-      const result = await api('/support/admin/' + encodeURIComponent(item._id) + '/reply', {
-        method: 'POST', token: session.token, body: { text }
-      });
-      const updated = result.supportCase;
-      setAdminSupportSelected(updated);
-      setAdminSupportCases(current => [updated, ...current.filter(x => String(x._id) !== String(updated._id))]);
-      setAdminSupportDraft('');
-      Alert.alert('تم إرسال الرد', 'تم حفظ ردك داخل محادثة الدعم.');
-    } catch (err) { Alert.alert('تعذر إرسال الرد', err.message || 'حاول مرة أخرى.'); }
-  }
-
-  useEffect(() => {
-    if (screen !== 'admin' || adminData.tab !== 'support' || !session || session.role !== 'admin') return;
-    const timer = setInterval(async () => {
-      if (screenRef.current !== 'admin') return;
-      if (adminSupportSelected?._id) {
-        try {
-          const result = await api('/support/admin/' + encodeURIComponent(adminSupportSelected._id), { token: session.token });
-          if (result.supportCase) setAdminSupportSelected(result.supportCase);
-        } catch (_) {}
-      }
-      if (adminRecoverySelected?.id || adminRecoverySelected?._id) {
-        try {
-          const id = adminRecoverySelected.id || adminRecoverySelected._id;
-          const result = await api('/password-recovery/admin/requests/' + encodeURIComponent(id), { token: session.token });
-          if (result.recovery) setAdminRecoverySelected(result.recovery);
-        } catch (_) {}
-      }
-    }, 3000);
-    return () => clearInterval(timer);
-  }, [screen, adminData.tab, session?.token, adminSupportSelected?._id, adminRecoverySelected?.id, adminRecoverySelected?._id]);
-
   function beginProfileEdit() {
     const user = session?.role === 'fanni' ? (techData.profile || session.user || {}) : (session?.user || {});
     setProfileEditForm({ name: String(user.name || ''), phone: String(user.phone || ''), areas: Array.isArray(user.areas) ? user.areas.filter(area => !isReservedAreaLabel(area) && (!areas.length || areas.includes(area))) : [], specialties: Array.isArray(user.specialties) ? [...user.specialties] : [], loading: false, error: '', message: user.pendingProfileChange?.requestedAt ? 'لديك طلب تعديل بيانات قيد مراجعة الإدارة.' : '' });
@@ -1493,7 +1183,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     }
     setAccountPasswordForm(v => ({ ...v, loading: true, error: '' }));
     try {
-      const role = session.role === 'client' ? 'client' : ((session.user?.role === 'admin' || session.user?.adminRole) ? 'admin' : 'fanni');
+      const role = session.role === 'client' ? 'client' : 'fanni';
       const result = await api('/password-recovery/change/' + role, { method: 'POST', token: session.token, body: { currentPassword, newPassword, confirmPassword } });
       setAccountPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '', loading: false, error: '' });
       Alert.alert('حسابي', result.message || 'تم تغيير كلمة المرور.');
@@ -1556,244 +1246,6 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     return () => clearInterval(timer);
   }, [screen, recoveryForm.id, recoveryForm.token]);
 
-  async function adminRefreshExtras() { setReloadKey(v => v + 1); }
-  async function adminAddService() {
-    const name = adminServiceDraft.name.trim(), category = adminServiceDraft.category.trim();
-    if (name.length < 2 || name.length > 100 || category.length < 2 || category.length > 100) { Alert.alert('بيانات الخدمة', 'اكتب اسم الخدمة والقسم بشكل صحيح.'); return; }
-    try { const result = await api('/admin/services', { method: 'POST', token: session.token, body: { name, category, emoji: adminServiceDraft.emoji || '🔧' } }); Alert.alert('تمت الإضافة', result.message || 'تمت إضافة الخدمة.'); setAdminServiceDraft(v => ({ ...v, name: '' })); setReloadKey(v => v + 1); }
-    catch (err) { Alert.alert('تعذر إضافة الخدمة', err.message || 'حاول مرة أخرى.'); }
-  }
-  function adminBeginServiceEdit(category, service) { setAdminServiceEdit({ category, oldName: service, name: service }); }
-  async function adminSaveServiceEdit() {
-    const { category, oldName, name } = adminServiceEdit, next = String(name || '').trim();
-    if (!category || !oldName || next.length < 2 || next.length > 100) { Alert.alert('تعديل الخدمة', 'اكتب اسمًا من حرفين إلى 100 حرف.'); return; }
-    try { const result = await api('/admin/services/' + encodeURIComponent(oldName) + '?category=' + encodeURIComponent(category), { method: 'PATCH', token: session.token, body: { name: next, category } }); Alert.alert('تم التعديل', result.message || 'تم تحديث اسم الخدمة.'); setAdminServiceEdit({ category: '', oldName: '', name: '' }); setReloadKey(v => v + 1); }
-    catch (err) { Alert.alert('تعذر التعديل', err.message || 'حاول مرة أخرى.'); }
-  }
-  async function adminMoveCategory(index, direction) {
-    const list = adminExtras.services.slice(), next = index + direction;
-    if (next < 0 || next >= list.length) return;
-    [list[index], list[next]] = [list[next], list[index]];
-    try { await api('/admin/services/categories/order', { method: 'PATCH', token: session.token, body: { categories: list.map(item => String(item.label || item.name)) } }); setReloadKey(v => v + 1); }
-    catch (err) { Alert.alert('تعذر ترتيب الأقسام', err.message || 'حاول مرة أخرى.'); }
-  }
-  async function adminMoveService(category, serviceName, direction) {
-    const categoryItem = adminExtras.services.find(item => String(item.label || item.name) === category);
-    const list = (categoryItem?._detailed || (categoryItem?.services || []).map(name => ({ name }))).map(item => ({ name: item.name, sortOrder: 0, emoji: item.emoji || categoryItem?.emoji || '🔧', isActive: item.isActive !== false }));
-    const index = list.findIndex(item => item.name === serviceName), next = index + direction;
-    if (index < 0 || next < 0 || next >= list.length) return;
-    [list[index], list[next]] = [list[next], list[index]]; list.forEach((item, i) => { item.sortOrder = (i + 1) * 10; });
-    try { await api('/admin/services/order', { method: 'PATCH', token: session.token, body: { category, items: list } }); setReloadKey(v => v + 1); }
-    catch (err) { Alert.alert('تعذر ترتيب الخدمات', err.message || 'حاول مرة أخرى.'); }
-  }
-  async function adminToggleService(category, service, active) {
-    const action = active ? 'إظهار' : 'إخفاء';
-    Alert.alert(action + ' الخدمة', 'هل تريد ' + action + ' «' + service + '»؟', [{ text: 'إلغاء', style: 'cancel' }, { text: 'تأكيد', onPress: async () => { try { await api('/admin/services/' + encodeURIComponent(service) + '/' + (active ? 'show' : 'hide') + '?category=' + encodeURIComponent(category), { method: 'POST', token: session.token, body: { category } }); setReloadKey(v => v + 1); } catch (err) { Alert.alert('تعذر ' + action + ' الخدمة', err.message || 'حاول مرة أخرى.'); } } }]);
-  }
-  async function adminDeleteService(category, service) {
-    Alert.alert('حذف الخدمة', 'حذف «' + service + '» من قسم «' + category + '»؟ الطلبات القديمة تظل محفوظة.', [{ text: 'إلغاء', style: 'cancel' }, { text: 'حذف', style: 'destructive', onPress: async () => { try { await api('/admin/services/' + encodeURIComponent(service) + '?category=' + encodeURIComponent(category), { method: 'DELETE', token: session.token }); setReloadKey(v => v + 1); } catch (err) { Alert.alert('تعذر الحذف', err.message || 'حاول مرة أخرى.'); } } }]);
-  }
-  async function adminSavePricing() {
-    const p = adminExtras.pricing;
-    if (![p.check,p.commission,p.minOffer,p.maxOffer].every(v => Number.isFinite(Number(v))) || p.check < 0 || p.commission < 0 || p.commission > 100 || p.minOffer < 1 || p.maxOffer < p.minOffer) { Alert.alert('راجع الأسعار', 'تأكد من الرسوم والعمولة والحدود السعرية.'); return; }
-    try { const result = await api('/admin/pricing', { method: 'PUT', token: session.token, body: { check: Number(p.check), commission: Number(p.commission), minOffer: Number(p.minOffer), maxOffer: Number(p.maxOffer) } }); Alert.alert('تم الحفظ', result.message || 'تم حفظ الأسعار والعمولات.'); setReloadKey(v => v + 1); }
-    catch (err) { Alert.alert('تعذر حفظ الأسعار', err.message || 'حاول مرة أخرى.'); }
-  }
-  async function adminLoadRegions() {
-    try { const result = await api('/admin/regions', { token: session.token }); setAdminExtras(current => ({ ...current, regions: toList(result, ['regions', 'items']) })); }
-    catch (err) { Alert.alert('تعذر تحميل المناطق', err.message || 'حاول مرة أخرى.'); }
-  }
-  async function adminAddRegion() {
-    const name = adminRegionDraft.trim().replace(/\s+/g, ' ');
-    if (name.length < 2 || name.length > 100) { Alert.alert('اسم المنطقة', 'اكتب اسمًا من حرفين إلى 100 حرف.'); return; }
-    try { const result = await api('/admin/regions', { method: 'POST', token: session.token, body: { name } }); Alert.alert('تمت الإضافة', result.message || 'تمت إضافة المنطقة.'); setAdminRegionDraft(''); await adminLoadRegions(); setReloadKey(v => v + 1); }
-    catch (err) { Alert.alert('تعذر إضافة المنطقة', err.message || 'قد تكون المنطقة موجودة بالفعل.'); }
-  }
-  async function adminEditRegion(id, name) {
-    const clean = String(name || '').trim().replace(/\s+/g, ' ');
-    if (clean.length < 2 || clean.length > 100) { Alert.alert('اسم المنطقة', 'اكتب اسمًا من حرفين إلى 100 حرف.'); return; }
-    try { const result = await api('/admin/regions/' + encodeURIComponent(id), { method: 'PATCH', token: session.token, body: { name: clean } }); Alert.alert('تم التعديل', result.message || 'تم تحديث المنطقة.'); await adminLoadRegions(); }
-    catch (err) { Alert.alert('تعذر تعديل المنطقة', err.message || 'حاول مرة أخرى.'); }
-  }
-  async function adminToggleRegion(region) {
-    try { const result = await api('/admin/regions/' + encodeURIComponent(region._id || region.id), { method: 'PATCH', token: session.token, body: { isActive: region.isActive === false } }); Alert.alert('تم التحديث', result.message || 'تم تحديث حالة المنطقة.'); await adminLoadRegions(); }
-    catch (err) { Alert.alert('تعذر تحديث المنطقة', err.message || 'حاول مرة أخرى.'); }
-  }
-  async function adminDeleteRegion(region) {
-    Alert.alert('حذف المنطقة', 'سيتم حذفها من الاختيارات الجديدة مع الاحتفاظ بالطلبات القديمة. هل تريد المتابعة؟', [{ text: 'إلغاء', style: 'cancel' }, { text: 'حذف', style: 'destructive', onPress: async () => { try { const result = await api('/admin/regions/' + encodeURIComponent(region._id || region.id), { method: 'DELETE', token: session.token }); Alert.alert('تم الحذف', result.message || 'تم حذف المنطقة.'); await adminLoadRegions(); } catch (err) { Alert.alert('تعذر حذف المنطقة', err.message || 'حاول مرة أخرى.'); } } }]);
-  }
-  async function adminRestoreRegion(region) {
-    try { const result = await api('/admin/regions/' + encodeURIComponent(region._id || region.id), { method: 'PATCH', token: session.token, body: { isDeleted: false } }); Alert.alert('تمت الاستعادة', result.message || 'تمت استعادة المنطقة.'); await adminLoadRegions(); }
-    catch (err) { Alert.alert('تعذر استعادة المنطقة', err.message || 'حاول مرة أخرى.'); }
-  }
-  async function adminBulkRegionAction(ids, action) {
-    const selectedIds = [...new Set((ids || []).map(String).filter(Boolean))];
-    const currentRegions = Array.isArray(adminExtras.regions) ? adminExtras.regions : [];
-    const eligibleIds = selectedIds.filter(id => {
-      const region = currentRegions.find(item => String(item._id || item.id) === id);
-      if (!region) return false;
-      if (action === 'show') return region.isDeleted !== true && region.isActive === false;
-      if (action === 'hide') return region.isDeleted !== true && region.isActive !== false;
-      if (action === 'restore') return region.isDeleted === true;
-      if (action === 'delete') return region.isDeleted !== true;
-      return false;
-    });
-    if (!eligibleIds.length) { Alert.alert('إدارة المناطق', 'لا توجد مناطق محددة تحتاج إلى هذا الإجراء.'); return; }
-    const config = { show: { method: 'PATCH', body: { isActive: true } }, hide: { method: 'PATCH', body: { isActive: false } }, restore: { method: 'PATCH', body: { isDeleted: false } }, delete: { method: 'DELETE', body: {} } }[action];
-    if (!config) return;
-    let succeeded = 0, failed = 0;
-    for (const id of eligibleIds) { try { await api('/admin/regions/' + encodeURIComponent(id), { method: config.method, token: session.token, body: config.body }); succeeded++; } catch (_) { failed++; } }
-    await adminLoadRegions();
-    Alert.alert('إدارة المناطق', 'تم تنفيذ ' + succeeded + ' عملية' + (failed ? '، وفشل ' + failed : '') + '.');
-  }
-  async function adminBulkRenameRegions(rows) {
-    const changes = [...new Map((Array.isArray(rows) ? rows : []).map(item => [
-      String(item?.id || ''),
-      { id: String(item?.id || ''), name: String(item?.name || '').trim().replace(/\s+/g, ' ') }
-    ]).values())].filter(item => item.id);
-    if (!changes.length || changes.some(item => item.name.length < 2 || item.name.length > 100)) {
-      Alert.alert('تعديل أسماء المناطق', 'راجع الأسماء؛ كل اسم يجب أن يكون من حرفين إلى 100 حرف.');
-      return false;
-    }
-    let succeeded = 0, failed = 0;
-    for (const item of changes) {
-      try {
-        await api('/admin/regions/' + encodeURIComponent(item.id), {
-          method: 'PATCH', token: session.token, body: { name: item.name }
-        });
-        succeeded++;
-      } catch (_) { failed++; }
-    }
-    await adminLoadRegions();
-    setReloadKey(value => value + 1);
-    Alert.alert('تعديل أسماء المناطق', 'تم تعديل ' + succeeded + ' منطقة' + (failed ? '، وتعذر تعديل ' + failed : '') + '.');
-    return failed === 0;
-  }
-  async function adminSaveSettings() {
-    const value = adminExtras.settings;
-    if (value.siteName.trim().length < 2 || !Number.isInteger(Number(value.maxFanniSignupAttempts)) || value.maxFanniSignupAttempts < 1 || value.maxFanniSignupAttempts > 100) { Alert.alert('راجع الإعدادات', 'اسم المنصة مطلوب وحد المحاولات من 1 إلى 100.'); return; }
-    try { const result = await api('/admin/settings', { method: 'PUT', token: session.token, body: { ...value, maxFanniSignupAttempts: Number(value.maxFanniSignupAttempts) } }); Alert.alert('تم الحفظ', result.message || 'تم حفظ الإعدادات.'); setReloadKey(v => v + 1); }
-    catch (err) { Alert.alert('تعذر حفظ الإعدادات', err.message || 'حاول مرة أخرى.'); }
-  }
-  function adminAddFaqDraft() {
-    const question = adminFaqDraft.question.trim(), answer = adminFaqDraft.answer.trim();
-    if (question.length < 2 || question.length > 250 || answer.length < 2 || answer.length > 1000) { Alert.alert('الأسئلة الشائعة', 'السؤال من 2 إلى 250 حرفًا والإجابة من 2 إلى 1000 حرف.'); return; }
-    setAdminExtras(c => ({ ...c, content: { ...c.content, faqs: [...c.content.faqs, { question, answer, active: true }] } }));
-    setAdminFaqDraft({ question: '', answer: '' });
-  }
-  async function adminSaveContent() {
-    const announcement = String(adminAnnouncementDraft || '').trim(), faqs = adminExtras.content.faqs;
-    if (announcement.length > 1000 || faqs.length > 100) { Alert.alert('محتوى المنصة', 'الإعلان حتى 1000 حرف والأسئلة حتى 100 سؤال.'); return; }
-    try { const result = await api('/admin/content', { method: 'PUT', token: session.token, body: { announcement, faqs } }); Alert.alert('تم الحفظ', result.message || 'تم حفظ محتوى المنصة.'); setReloadKey(v => v + 1); }
-    catch (err) { Alert.alert('تعذر حفظ المحتوى', err.message || 'حاول مرة أخرى.'); }
-  }
-  async function adminGenerateReport() {
-    const filters = adminReportFilters;
-    if (filters.startDate && filters.endDate && filters.startDate > filters.endDate) { Alert.alert('فلاتر التقرير', 'تاريخ البداية لا يمكن أن يكون بعد تاريخ النهاية.'); return; }
-    try { const result = await api('/admin/reports', { method: 'POST', token: session.token, body: filters }); setAdminExtras(c => ({ ...c, report: result })); }
-    catch (err) { Alert.alert('تعذر إنشاء التقرير', err.message || 'حاول مرة أخرى.'); }
-  }
-  async function adminOrderAction(order, action) {
-    const sn = String(order?.sn || order?.orderSn || '').trim().toUpperCase();
-    if (!/^SN\d{6}$/.test(sn)) { Alert.alert('كود الطلب', 'كود الطلب غير صالح.'); return; }
-    const label = action === 'cancel' ? 'إلغاء' : 'أرشفة';
-    Alert.alert(label + ' الطلب ' + sn, 'هل تؤكد ' + label + ' الطلب؟ سيتم تسجيل الإجراء في سجل الإدارة.', [{ text: 'رجوع', style: 'cancel' }, { text: 'تأكيد', style: 'destructive', onPress: async () => { try { const result = await api('/admin/orders/' + encodeURIComponent(sn) + '/' + action, { method: 'POST', token: session.token, body: { reason: 'إجراء إداري من تطبيق صُنّاع' } }); Alert.alert('تم الإجراء', result.message || 'تم تحديث الطلب.'); setReloadKey(v => v + 1); } catch (err) { Alert.alert('تعذر ' + label + ' الطلب', err.message || 'راجع حالة الطلب.'); } } }]);
-  }
-  async function refreshAdminProfileEdits() {
-    try {
-      const result = await api('/admin/fanni-profile-edits', { token: session.token });
-      setAdminPendingProfileEdits(toList(result, ['requests', 'items', 'fannis']));
-    } catch (err) {
-      Alert.alert('تعذر تحميل طلبات تعديل البيانات', err.message || 'حاول مرة أخرى.');
-    }
-  }
-
-  async function reviewAdminProfileEdit(item, action) {
-    const id = String(item?._id || item?.id || '');
-    if (!id || !['approve', 'reject'].includes(action)) return;
-    const label = action === 'approve' ? 'اعتماد البيانات الجديدة لهذا الفني؟' : 'رفض الطلب والإبقاء على البيانات الحالية؟';
-    Alert.alert('مراجعة طلب تعديل البيانات', label, [
-      { text: 'إلغاء', style: 'cancel' },
-      { text: action === 'approve' ? 'موافقة' : 'رفض', style: action === 'reject' ? 'destructive' : 'default', onPress: async () => {
-        try {
-          const result = await api('/admin/fanni-profile-edits/' + encodeURIComponent(id) + '/' + action, { method: 'POST', token: session.token, body: { reason: action === 'reject' ? 'مراجعة الطلب من تطبيق صُنّاع' : '' } });
-          Alert.alert('تمت المراجعة', result.message || 'تم تحديث حالة الطلب.');
-          const refreshed = await api('/admin/fanni-profile-edits', { token: session.token });
-          setAdminPendingProfileEdits(toList(refreshed, ['requests', 'items', 'fannis']));
-          setReloadKey(v => v + 1);
-        } catch (err) { Alert.alert('تعذرت مراجعة الطلب', err.message || 'حاول مرة أخرى.'); }
-      } }
-    ]);
-  }
-
-  async function adminBeginProfileEdit(item, role) {
-    const id = String(role === 'fanni' ? (item?._id || item?.id || '') : (item?.id || item?._id || ''));
-    if (!id) { Alert.alert('تعديل الحساب', 'معرّف الحساب غير متاح.'); return; }
-    setAdminProfileEdit({ open: true, role, id, name: String(item?.name || ''), phone: String(item?.phone || ''), specialties: Array.isArray(item?.specialties) ? [...item.specialties] : [], areas: Array.isArray(item?.areas) ? item.areas.filter(area => !isReservedAreaLabel(area)) : [], loading: true, error: '', message: '' });
-    try {
-      const result = await api(role === 'fanni' ? '/admin/fannis/' + encodeURIComponent(id) + '/profile' : '/admin/client-accounts/' + encodeURIComponent(id) + '/profile', { token: session.token });
-      const user = role === 'fanni' ? result.fanni : result.client;
-      setAdminProfileEdit(current => ({ ...current, name: String(user?.name || current.name), phone: String(user?.phone || current.phone), specialties: Array.isArray(user?.specialties) ? user.specialties : current.specialties, areas: Array.isArray(user?.areas) ? user.areas.filter(area => !isReservedAreaLabel(area)) : current.areas, loading: false }));
-    } catch (err) { setAdminProfileEdit(current => ({ ...current, loading: false, error: err.message || 'تعذر تحميل بيانات الحساب.' })); }
-  }
-  function toggleAdminProfileSpecialty(specialty) {
-    setAdminProfileEdit(current => ({ ...current, specialties: current.specialties.includes(specialty) ? current.specialties.filter(item => item !== specialty) : current.specialties.length >= 20 ? current.specialties : [...current.specialties, specialty], error: '' }));
-  }
-  async function adminSaveProfileEdit() {
-    if (!adminProfileEdit.id || adminProfileEdit.loading) return;
-    const phone = String(adminProfileEdit.phone || '').replace(/[^0-9]/g, '');
-    if (!/^01[0125][0-9]{8}$/.test(phone)) { setAdminProfileEdit(current => ({ ...current, error: 'رقم الهاتف لازم يكون 11 رقمًا ويبدأ بـ 01.' })); return; }
-    setAdminProfileEdit(current => ({ ...current, loading: true, error: '', message: '' }));
-    try {
-      let result;
-      if (adminProfileEdit.role === 'client') {
-        const name = String(adminProfileEdit.name || '').trim();
-        if (name.length < 2 || name.length > 50) throw new Error('اكتب اسم العميل بشكل صحيح.');
-        result = await api('/admin/client-accounts/' + encodeURIComponent(adminProfileEdit.id) + '/profile', { method: 'PATCH', token: session.token, body: { name, phone } });
-        setAdminData(current => ({ ...current, clients: current.clients.map(item => String(item.id || item._id) === adminProfileEdit.id ? { ...item, name, phone } : item) }));
-      } else {
-        const specialties = [...new Set(adminProfileEdit.specialties.map(value => String(value).trim()).filter(Boolean))];
-        const selectedAreas = [...new Set(adminProfileEdit.areas.map(value => String(value).trim()).filter(value => areas.includes(value) && !isReservedAreaLabel(value)))];
-        if (!specialties.length || specialties.length > 20) throw new Error('اختار تخصصًا واحدًا على الأقل، وبحد أقصى 20 تخصصًا.');
-        if (!selectedAreas.length || selectedAreas.length > 30) throw new Error('اختار منطقة عمل واحدة على الأقل من القائمة المعتمدة.');
-        result = await api('/admin/fannis/' + encodeURIComponent(adminProfileEdit.id) + '/profile', { method: 'PATCH', token: session.token, body: { phone, specialties, areas: selectedAreas } });
-        setAdminData(current => ({ ...current, fannis: current.fannis.map(item => String(item._id || item.id) === adminProfileEdit.id ? { ...item, phone, specialties, areas: selectedAreas } : item) }));
-      }
-      setAdminProfileEdit(current => ({ ...current, loading: false, message: result.message || 'تم حفظ البيانات بنجاح.' }));
-    } catch (err) { setAdminProfileEdit(current => ({ ...current, loading: false, error: err.message || 'تعذر حفظ البيانات.' })); }
-  }
-  async function adminClientAction(phone, action) {
-    if (!phone) return Alert.alert('بيانات العميل', 'رقم الهاتف غير متاح.');
-    const labels = { block: 'تعليق الحساب', unblock: 'إعادة تفعيل الحساب', account: 'حذف الحساب' };
-    Alert.alert(labels[action], 'هل تريد ' + labels[action] + ' للعميل ' + phone + '؟', [{ text: 'إلغاء', style: 'cancel' }, { text: 'تأكيد', style: 'destructive', onPress: async () => { try { const method = action === 'account' ? 'DELETE' : 'POST'; const result = await api('/admin/clients/' + encodeURIComponent(phone) + (action === 'account' ? '/account' : '/' + action), { method, token: session.token, body: { ...(action === 'block' ? { reason: 'تعليق إداري من تطبيق صُنّاع' } : {}) } }); Alert.alert('تم الإجراء', result.message || 'تم تحديث حساب العميل.'); setReloadKey(v => v + 1); } catch (err) { Alert.alert('تعذر تنفيذ الإجراء', err.message || 'راجع حالة حساب العميل والطلبات النشطة.'); } } }]);
-  }
-  async function adminSetTechnicianLevel(fanni, level) {
-    const id = fanni?._id || fanni?.id; if (!id) return;
-    try { const result = await api('/admin/fannis/' + encodeURIComponent(id) + '/level', { method: 'PATCH', token: session.token, body: { level, reason: 'تحديث المستوى من تطبيق الإدارة' } }); Alert.alert('تم تحديث المستوى', result.message || level); setReloadKey(v => v + 1); }
-    catch (err) { Alert.alert('تعذر تحديث المستوى', err.message || 'حاول مرة أخرى.'); }
-  }
-
-  async function adminLoadWalletTransactions() {
-    if (!adminWallet.fanniId) { Alert.alert('كشف المحفظة', 'اختار الفني أولًا.'); return; }
-    setAdminWallet(c => ({ ...c, loading: true, transactions: [] }));
-    try { const result = await api('/admin/wallet/transactions/' + encodeURIComponent(adminWallet.fanniId), { token: session.token }); setAdminWallet(c => ({ ...c, loading: false, transactions: toList(result, ['transactions','items','data']) })); }
-    catch (err) { setAdminWallet(c => ({ ...c, loading: false })); Alert.alert('تعذر تحميل كشف المحفظة', err.message || 'حاول مرة أخرى.'); }
-  }
-  async function adminWalletAction(action) {
-    const id = adminWallet.fanniId, fanni = adminData.fannis.find(item => String(item._id || item.id) === String(id));
-    if (!id || !fanni) { Alert.alert('محفظة الفني', 'اختار الفني أولًا.'); return; }
-    const reason = adminWallet.reason.trim();
-    if (reason.length < 2) { Alert.alert('سبب الإجراء', 'اكتب سببًا واضحًا من حرفين على الأقل.'); return; }
-    const amount = Number(adminWallet.amount);
-    if (action === 'balance' && (adminWallet.amount.trim() === '' || !Number.isFinite(amount) || amount < 0)) { Alert.alert('الرصيد', 'اكتب رصيدًا صحيحًا غير سالب.'); return; }
-    Alert.alert('تأكيد إجراء المحفظة', action === 'balance' ? 'تعيين الرصيد إلى ' + amount + ' جنيه؟' : action === 'freeze' ? 'تجميد محفظة الفني؟' : 'إلغاء تجميد محفظة الفني؟', [{ text: 'إلغاء', style: 'cancel' }, { text: 'تأكيد', style: 'destructive', onPress: async () => { try { let result; if (action === 'balance') result = await api('/admin/fannis/' + encodeURIComponent(id) + '/set-balance', { method: 'POST', token: session.token, body: { amount, reason } }); else result = await api('/admin/wallet/freeze/' + encodeURIComponent(id), { method: 'POST', token: session.token, body: { action, reason } }); Alert.alert('تم الإجراء', result.message || 'تم تحديث المحفظة.'); setAdminWallet(c => ({ ...c, reason: '' })); setReloadKey(v => v + 1); await adminLoadWalletTransactions(); } catch (err) { Alert.alert('تعذر إجراء المحفظة', err.message || 'حاول مرة أخرى.'); } } }]);
-  }
-
-  async function adminLoadAuditLogs() {
-    try { const result = await api('/admin/audit-logs', { token: session.token }); setAdminExtras(c => ({ ...c, auditLogs: toList(result, ['logs','items']) })); }
-    catch (err) { Alert.alert('تعذر تحميل سجل التدقيق', err.message || 'حاول مرة أخرى.'); }
-  }
-
   async function copyOrderCode(code) {
     try { await Clipboard.setStringAsync(String(code || '')); Alert.alert('تم النسخ', 'تم نسخ كود الطلب.'); }
     catch { Alert.alert('تعذر النسخ', 'اضغط مطولًا على الكود لنسخه يدويًا.'); }
@@ -1816,7 +1268,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
       } catch (_) {}
     }
     const pushToken = pushTokenRef.current;
-    if (activeSession && pushToken && ['client', 'fanni', 'admin'].includes(activeSession.role)) {
+    if (activeSession && pushToken && ['client', 'fanni'].includes(activeSession.role)) {
       try {
         await api('/notifications/' + activeSession.role + '/push-token', {
           method: 'DELETE', token: activeSession.token, body: { token: pushToken }
@@ -1832,9 +1284,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     setSession(null); setUsername(''); setPassword('');
     setClientData({ orders: [], loading: false, error: '', sn: '', clientToken: '' });
     setTechData({ profile: null, orders: [], offers: [], wallet: [], loading: false, error: '', tab: 'home' });
-    setAdminData({ orders: [], fannis: [], clients: [], topups: [], complaints: [], loading: false, error: '', tab: 'orders' });
     setNotifications({ items: [], unread: 0, loading: false, error: '' });
-    setAdminUsers([]);
   }
 
   function logout() {
@@ -1847,7 +1297,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
   const goLogin = mode => { setAuthMode(mode); setUsername(''); setPassword(''); setScreen('login'); };
   const toggleArray = (key, value) => updateForm(key, form[key].includes(value) ? form[key].filter(item => item !== value) : [...form[key], value]);
 
-  const screenContext = { screen, setScreenState, screenHistoryRef, screenRef, pushTokenRef, setScreen, categories, setCategories, areas, setAreas, areaTechnicianCounts, setAreaTechnicianCounts, adminProfileEdit, setAdminProfileEdit, selected, setSelected, servicesLoading, setServicesLoading, servicesError, setServicesError, reloadKey, setReloadKey, session, setSession, authRestoring, setAuthRestoring, username, setUsername, password, setPassword, loginLoading, setLoginLoading, authMode, setAuthMode, form, setForm, registrationNameRef, registrationPhoneRef, registrationPasswordRef, registrationConfirmPasswordRef, clientAreaInputRef, clientAddressInputRef, clientDescriptionInputRef, clientBudgetInputRef, clientServiceDetailYRef, clientFormYRef, clientData, setClientData, techData, setTechData, walletTransferNumbers, setWalletTransferNumbers, assignedDetails, setAssignedDetails, technicianSearch, setTechnicianSearch, technicianServiceFilter, setTechnicianServiceFilter, guidelinesChecked, setGuidelinesChecked, guidelinesReachedEnd, setGuidelinesReachedEnd, guidelinesViewportHeight, setGuidelinesViewportHeight, adminData, setAdminData, topup, setTopup, clientTab, setClientTab, clientServiceSearch, setClientServiceSearch, servicePickerOpen, setServicePickerOpen, subservicePickerOpen, setSubservicePickerOpen, ratingPrompt, setRatingPrompt, dismissedRatings, setDismissedRatings, ratingDismissalsLoaded, setRatingDismissalsLoaded, ratingDismissalsLoadedFor, setRatingDismissalsLoadedFor, clientTrackSN, setClientTrackSN, clientTrackedOrder, setClientTrackedOrder, clientTrackError, setClientTrackError, clientTrackLoading, setClientTrackLoading, clientComplaint, setClientComplaint, clientComplaintTrack, setClientComplaintTrack, expandedClientOrders, setExpandedClientOrders, expandedTechnicianOrders, setExpandedTechnicianOrders, notificationsOpen, setNotificationsOpen, clientScrollRef, chatScrollRef, clientChatScrollRefs, clientChatAtBottomRef, ratingSubmittingRef, offerDraft, setOfferDraft, notifications, setNotifications, orderChats, setOrderChats, orderChatsRef, acceptedChatAutoOpenedRef, chatDrafts, setChatDrafts, priceDrafts, setPriceDrafts, ratingDrafts, setRatingDrafts, ratingSubmitting, setRatingSubmitting, dismissedRatingsRef, ratingHandledRef, ratingStatusSnapshotRef, adminUsers, setAdminUsers, adminExtras, setAdminExtras, adminServiceDraft, setAdminServiceDraft, adminServiceEdit, setAdminServiceEdit, adminRegionDraft, setAdminRegionDraft, adminAnnouncementDraft, setAdminAnnouncementDraft, adminFaqDraft, setAdminFaqDraft, adminReportFilters, setAdminReportFilters, adminWallet, setAdminWallet, adminUsersLoading, setAdminUsersLoading, broadcast, setBroadcast, supportCases, setSupportCases, supportCase, setSupportCase, supportDraft, setSupportDraft, supportSubject, setSupportSubject, supportLoading, setSupportLoading, supportError, setSupportError, accountPasswordForm, setAccountPasswordForm, profileEditForm, setProfileEditForm, profileEditOpenCategory, setProfileEditOpenCategory, recoveryForm, setRecoveryForm, adminSupportCases, setAdminSupportCases, adminSupportSelected, setAdminSupportSelected, adminSupportDraft, setAdminSupportDraft, adminRecoveryCases, setAdminRecoveryCases, adminRecoverySelected, setAdminRecoverySelected, adminRecoveryCode, setAdminRecoveryCode, adminRecoveryDraft, setAdminRecoveryDraft, services, updateForm, ratingAccountId, ratingStorageKey, previousRatingStorageKey, legacyRatingStorageKey, oldestRatingStorageKey, markNotificationRead, markAllNotificationsRead, updateProfessionalLevel, changeAdminRoleForFanni, revokeAdminRoleForUser, moderateTechnician, publishOrder, reviewTopup, setComplaintStatus, handleLogin, registerClient, registerTechnician, createOrder, trackClientOrder, submitClientComplaint, trackClientComplaints, sendOffer, submitOffer, cancelClientOrder, acceptClientOffer, completeTechnicianOrder, getOrderSN, uniqueByOrderSN, orderToken, refreshVisibleData, refreshOrderChat, toggleOrderChat, sendOrderChat, requestOrderPriceChange, decideOrderPrice, setOrderRatingStars, renderRatingStars, submitOrderRating, saveRatingDismissal, renderRatingModal, sendAdminBroadcast, acceptTechnicianGuidelines, submitTopup, loadSupportCases, startSupportCase, openSupportCase, sendSupportMessage, loadAdminSupportCases, loadAdminRecoveryCases, openAdminRecovery, issueAdminRecoveryCode, replyAdminRecovery, replyAdminSupport, beginProfileEdit, toggleProfileEditSpecialty, saveProfileEdits, changeAccountPassword, startPasswordRecovery, refreshPasswordRecovery, sendRecoveryMessage, verifyRecoveryCode, resetRecoveredPassword, adminRefreshExtras, adminLoadRegions, adminAddRegion, adminEditRegion, adminToggleRegion, adminDeleteRegion, adminRestoreRegion, adminBulkRegionAction, adminBeginProfileEdit, toggleAdminProfileSpecialty, adminSaveProfileEdit, adminAddService, adminBeginServiceEdit, adminSaveServiceEdit, adminMoveCategory, adminMoveService, adminToggleService, adminDeleteService, adminSavePricing, adminSaveSettings, adminAddFaqDraft, adminSaveContent, adminGenerateReport, adminOrderAction, adminClientAction, adminSetTechnicianLevel, adminLoadWalletTransactions, adminWalletAction, adminLoadAuditLogs, copyOrderCode, openWhatsAppSupport, performLogout, logout, goLogin, toggleArray };
+  const screenContext = { screen, setScreenState, screenHistoryRef, screenRef, pushTokenRef, setScreen, categories, setCategories, areas, setAreas, areaTechnicianCounts, setAreaTechnicianCounts, selected, setSelected, servicesLoading, setServicesLoading, servicesError, setServicesError, reloadKey, setReloadKey, session, setSession, authRestoring, setAuthRestoring, username, setUsername, password, setPassword, loginLoading, setLoginLoading, authMode, setAuthMode, form, setForm, registrationNameRef, registrationPhoneRef, registrationPasswordRef, registrationConfirmPasswordRef, clientAreaInputRef, clientAddressInputRef, clientDescriptionInputRef, clientBudgetInputRef, clientServiceDetailYRef, clientFormYRef, clientData, setClientData, techData, setTechData, walletTransferNumbers, setWalletTransferNumbers, assignedDetails, setAssignedDetails, technicianSearch, setTechnicianSearch, technicianServiceFilter, setTechnicianServiceFilter, guidelinesChecked, setGuidelinesChecked, guidelinesReachedEnd, setGuidelinesReachedEnd, guidelinesViewportHeight, setGuidelinesViewportHeight, topup, setTopup, clientTab, setClientTab, clientServiceSearch, setClientServiceSearch, servicePickerOpen, setServicePickerOpen, subservicePickerOpen, setSubservicePickerOpen, ratingPrompt, setRatingPrompt, dismissedRatings, setDismissedRatings, ratingDismissalsLoaded, setRatingDismissalsLoaded, ratingDismissalsLoadedFor, setRatingDismissalsLoadedFor, clientTrackSN, setClientTrackSN, clientTrackedOrder, setClientTrackedOrder, clientTrackError, setClientTrackError, clientTrackLoading, setClientTrackLoading, clientComplaint, setClientComplaint, clientComplaintTrack, setClientComplaintTrack, expandedClientOrders, setExpandedClientOrders, expandedTechnicianOrders, setExpandedTechnicianOrders, notificationsOpen, setNotificationsOpen, clientScrollRef, chatScrollRef, clientChatScrollRefs, clientChatAtBottomRef, ratingSubmittingRef, offerDraft, setOfferDraft, notifications, setNotifications, orderChats, setOrderChats, orderChatsRef, acceptedChatAutoOpenedRef, chatDrafts, setChatDrafts, priceDrafts, setPriceDrafts, ratingDrafts, setRatingDrafts, ratingSubmitting, setRatingSubmitting, dismissedRatingsRef, ratingHandledRef, ratingStatusSnapshotRef, broadcast, setBroadcast, supportCases, setSupportCases, supportCase, setSupportCase, supportDraft, setSupportDraft, supportSubject, setSupportSubject, supportLoading, setSupportLoading, supportError, setSupportError, accountPasswordForm, setAccountPasswordForm, profileEditForm, setProfileEditForm, profileEditOpenCategory, setProfileEditOpenCategory, recoveryForm, setRecoveryForm, services, updateForm, ratingAccountId, ratingStorageKey, previousRatingStorageKey, legacyRatingStorageKey, oldestRatingStorageKey, markNotificationRead, markAllNotificationsRead, updateProfessionalLevel, changeAdminRoleForFanni, revokeAdminRoleForUser, moderateTechnician, publishOrder, reviewTopup, setComplaintStatus, handleLogin, registerClient, registerTechnician, createOrder, trackClientOrder, submitClientComplaint, trackClientComplaints, sendOffer, submitOffer, cancelClientOrder, acceptClientOffer, completeTechnicianOrder, getOrderSN, uniqueByOrderSN, orderToken, refreshVisibleData, refreshOrderChat, toggleOrderChat, sendOrderChat, requestOrderPriceChange, decideOrderPrice, setOrderRatingStars, renderRatingStars, submitOrderRating, saveRatingDismissal, renderRatingModal, sendAdminBroadcast, acceptTechnicianGuidelines, submitTopup, loadSupportCases, startSupportCase, openSupportCase, sendSupportMessage, loadAdminSupportCases, loadAdminRecoveryCases, openAdminRecovery, issueAdminRecoveryCode, replyAdminRecovery, replyAdminSupport, beginProfileEdit, toggleProfileEditSpecialty, saveProfileEdits, changeAccountPassword, startPasswordRecovery, refreshPasswordRecovery, sendRecoveryMessage, verifyRecoveryCode, resetRecoveredPassword, toggleAdminProfileSpecialty, copyOrderCode, openWhatsAppSupport, performLogout, logout, goLogin, toggleArray };
 
   if (authRestoring) return <SafeAreaView style={styles.safe}><View style={styles.center}><ActivityIndicator size="large" color={COLORS.blue} /><Text style={styles.statusText}>جاري استعادة حسابك...</Text></View></SafeAreaView>;
 
