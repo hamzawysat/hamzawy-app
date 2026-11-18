@@ -7,7 +7,7 @@ import { styles } from '../../theme/styles';
 import { Button, Field } from '../../components/FormControls';
 
 function transactionLabel(type) {
-  return ({ technician_settlement: 'مستحقات تنفيذ طلب', commission: 'عمولة المنصة', topup: 'شحن محفظة', admin_adjustment: 'تسوية إدارية', refund: 'استرداد' })[type] || 'حركة مالية';
+  return ({ technician_settlement: 'مستحقات تنفيذ طلب', commission: 'عمولة المنصة', topup: 'شحن محفظة', admin_adjustment: 'تسوية إدارية', refund: 'استرداد', referral_reward: 'مكافأة دعوة' })[type] || 'حركة مالية';
 }
 
 const METHODS = [
