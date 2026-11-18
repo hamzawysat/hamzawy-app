@@ -123,7 +123,9 @@ test('native admin push service handles order and wallet notification types and 
   const service = fs.readFileSync(servicePath, 'utf8');
   const mainActivity = fs.readFileSync(path.join(root, 'native-admin/app/src/main/java/com/sonaa/nativeadmin/MainActivity.kt'), 'utf8');
   assert.ok(service.includes('sendBroadcast(Intent(ACTION_TOKEN_REFRESHED)'));
-  assert.ok(mainActivity.includes('activeAdminViewModel?.registerFcm(it)'));
+  assert.ok(mainActivity.includes('syncFcmTokenIntoWebView()'));
+  assert.ok(mainActivity.includes('window.__HAMZAWY_FCM_TOKEN'));
+  assert.ok(mainActivity.includes("fetch('/api/notifications/admin/push-token'"));
   assert.ok(mainActivity.includes('RECEIVER_NOT_EXPORTED'));
   assert.ok(service.includes('message.data["destination"]'));
   assert.ok(service.includes('"fanni_wallet_settlement"'));
