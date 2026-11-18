@@ -3,6 +3,11 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("com.google.gms.google-services")
 }
+val adminPanelUrl = providers.gradleProperty("ADMIN_PANEL_URL")
+    .orElse(providers.environmentVariable("ADMIN_PANEL_URL"))
+    .getOrElse("")
+val escapedAdminPanelUrl = adminPanelUrl.replace("\\", "\\\\").replace("\"", "\\\"")
+
 android {
     namespace = "com.sonaa.nativeadmin"
     compileSdk = 35
@@ -17,6 +22,7 @@ android {
         buildConfigField("String", "FIREBASE_SENDER_ID", "\"228718138416\"")
         buildConfigField("String", "FIREBASE_APP_ID", "\"1:228718138416:android:c49c85878c948fcbb809f5\"")
         buildConfigField("String", "FIREBASE_API_KEY", "\"AIzaSyDOBGJCHuevDX1utn0M9VqDknmB15XJdj4\"")
+        buildConfigField("String", "ADMIN_PANEL_URL", "\"$escapedAdminPanelUrl\"")
     }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
     buildFeatures { compose = true; buildConfig = true }
