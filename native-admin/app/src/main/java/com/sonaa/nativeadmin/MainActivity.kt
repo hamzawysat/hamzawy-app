@@ -314,7 +314,10 @@ class MainActivity : ComponentActivity() {
                 var originalRemoveItem = Storage.prototype.removeItem;
                 Storage.prototype.removeItem = function (key) {
                   if (this === window.localStorage && (key === 'admin_token_v3' || key === 'admin_token')) {
-                    unregisterCurrentAdminDevice(this.getItem(key) || '');
+                    var otherAdminToken = key === 'admin_token'
+                      ? this.getItem('admin_token_v3')
+                      : this.getItem('admin_token');
+                    if (!otherAdminToken) unregisterCurrentAdminDevice(this.getItem(key) || '');
                   }
                   return originalRemoveItem.apply(this, arguments);
                 };
