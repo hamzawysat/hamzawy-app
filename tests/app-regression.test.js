@@ -922,6 +922,8 @@ test('client and technician referral cards load server-issued invite links and r
   assert.match(card, /QRCode value=\{data\.url\}/);
   assert.match(card, /Clipboard\.setStringAsync/);
   assert.match(card, /Share\.share/);
+  assert.match(card, /data\?\.referrals\) && data\.referrals\.length/);
+  assert.match(card, /data\?\.enabled !== false/);
   assert.match(client, /<ReferralCard session=\{session\} kind="client"/);
   assert.match(technician, /<ReferralCard session=\{session\} kind="fanni"/);
   assert.equal(packageJson.dependencies['react-native-qrcode-svg'], '^6.3.15');
