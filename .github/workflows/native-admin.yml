@@ -75,3 +75,5 @@ jobs:
             gradle :app:connectedDebugAndroidTest
 
 # Build requested for a fresh hands-on test APK.
+
+# Rebuild after launcher icon fallback adjustment.
