@@ -106,7 +106,7 @@ export default function TechnicianWalletScreen({ session, user, transferNumbers,
         <Text style={styles.cardTitlePremium}>سجل الحركات المالية</Text>
         {transactions.length ? transactions.map((item, index) => <View key={String(item._id || index)} style={{ paddingVertical: 10, borderTopWidth: index ? 1 : 0, borderColor: COLORS.border }}>
           <Text style={styles.detailBold}>{transactionLabel(item.type)} • <Text style={{ color: Number(item.amount) >= 0 ? COLORS.greenDark : COLORS.red }}>{Number(item.amount || 0) > 0 ? '+' : ''}{item.amount ?? '—'} ج</Text></Text>
-          <Text style={styles.detail}>{item.description || ''}</Text>
+          <Text style={styles.detail}>{item.description || ''}</Text>{item.referralNumber ? <Text style={styles.detailSmall}>رقم الدعوة: {item.referralNumber}</Text> : null}
           {item.createdAt ? <Text style={styles.detailSmall}>{new Date(item.createdAt).toLocaleString('ar-EG')}</Text> : null}
         </View>) : <Text style={styles.emptyText}>لا توجد حركات مالية مسجلة حتى الآن.</Text>}
       </View> : null}
