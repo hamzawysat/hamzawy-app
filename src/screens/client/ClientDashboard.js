@@ -24,6 +24,7 @@ import VoicePlayback from '../../components/VoicePlayback';
 import AreaPicker from '../../components/AreaPicker';
 import StoreScreen, { StoreAdBanner } from '../shared/StoreScreen';
 import ClientWalletScreen from './ClientWalletScreen';
+import ReferralCard from '../shared/ReferralCard';
 import ClientSubscriptionsScreen from './ClientSubscriptionsScreen';
 import PublicContentBanner from '../shared/PublicContentBanner';
 import { AccountScreen } from '../account/AccountScreens';
@@ -134,6 +135,7 @@ export function ClientDashboard({ context }) {
         <Button title="⚠️ الشكاوى" secondary onPress={() => setClientTab('complaint')} />
         <Button title="🎧 الدعم الفني" secondary onPress={() => setScreen('support')} />
       </View> : null}
+      {clientTab === 'home' ? <ReferralCard session={session} kind="client" /> : null}
       {clientTab === 'new' && !clientNewRequestChoice ? <View style={styles.formCard}><Text style={styles.cardTitlePremium}>طلب جديد</Text><Text style={styles.detail}>تحب تطلب خدمة ولا تشتري منتج من المتجر؟</Text><Button title="🛠️ عايز صنايعي" onPress={() => setClientNewRequestChoice('technician')} /><Button title="🛍️ عايز أشتري من المتجر" secondary onPress={() => setClientTab('store')} /></View> : null}
       {clientTab === 'new' && clientNewRequestChoice === 'technician' ? <><Button title="رجوع لاختيار نوع الطلب" secondary onPress={() => setClientNewRequestChoice('')} /><View style={styles.welcomeCard}><Text style={styles.welcomeTitle}>اطلب خدمتك الآن 🚀</Text><Text style={styles.welcomeSub}>اختار المهنة والخدمة والفني المناسب هيجيلك</Text></View>
       {servicesLoading ? <ActivityIndicator color={COLORS.teal} /> : <>
