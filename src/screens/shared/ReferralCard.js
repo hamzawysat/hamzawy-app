@@ -65,6 +65,6 @@ export default function ReferralCard({ session, kind, cardRef, expanded = false,
       </View>)}
     </View> : null}
     <TouchableOpacity onPress={load} disabled={loading} style={{ paddingVertical: 8 }}><Text style={{ textAlign: 'center', color: COLORS.teal, fontWeight: '900' }}>تحديث بيانات الدعوة</Text></TouchableOpacity>
-    </> : <Text style={[styles.detail, { marginTop: 8, fontSize: 14, lineHeight: 22, fontWeight: '700', color: COLORS.navy }]}>{isClient ? 'كل صديق جديد يسجل من رابطك ويكمل أول طلب يمنحك ويمنحه 50 جنيهًا مكافأة.' : 'كل فني جديد يسجل من رابطك ويكمل 3 طلبات يمنحك ويمنحه 150 جنيهًا مكافأة.'} {loading ? 'جاري تحميل البيانات...' : ''}</Text>}
+    </> : <Text style={[styles.detail, { marginTop: 8, fontSize: 14, lineHeight: 22, fontWeight: '700', color: COLORS.navy }]}>{isClient ? 'عن كل صديق جديد يسجل من رابط دعوتك ويكمل أول طلب، تحصل أنت وهو على 50 جنيهًا مكافأة.' : 'كل فني جديد يسجل من رابطك ويكمل 3 طلبات يمنحك ويمنحه 150 جنيهًا مكافأة.'} {loading ? 'جاري تحميل البيانات...' : ''}</Text>}
   </View>;
 }
