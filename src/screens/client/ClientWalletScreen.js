@@ -24,7 +24,8 @@ function transactionLabel(type) {
     client_refund: 'استرداد مبلغ',
     client_escrow_hold: 'حجز مبلغ لطلب',
     client_escrow_release: 'تحرير مبلغ',
-    technician_settlement: 'تسوية مستحقات'
+    technician_settlement: 'تسوية مستحقات',
+    referral_reward: 'مكافأة دعوة'
   })[type] || 'حركة مالية';
 }
 
