@@ -17,11 +17,9 @@ export const styles = StyleSheet.create({
 
   safe: { flex: 1, backgroundColor: PAGE_COLORS.client.background },
   technicianSafe: { flex: 1, backgroundColor: PAGE_COLORS.technician.background },
-  adminSafe: { flex: 1, backgroundColor: PAGE_COLORS.admin.background },
   supportSafe: { flex: 1, backgroundColor: PAGE_COLORS.support.background },
   page: { padding: 14, paddingBottom: 28, gap: 10, backgroundColor: PAGE_COLORS.client.background },
   technicianPage: { padding: 14, paddingBottom: 28, gap: 10, backgroundColor: PAGE_COLORS.technician.background },
-  adminPage: { padding: 14, paddingBottom: 28, gap: 10, backgroundColor: PAGE_COLORS.admin.background },
   supportPage: { padding: 14, paddingBottom: 28, gap: 10, backgroundColor: PAGE_COLORS.support.background },
   flex: { flex: 1 },
   
