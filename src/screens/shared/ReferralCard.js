@@ -6,11 +6,10 @@ import { api } from '../../services/api';
 import { COLORS } from '../../theme/colors';
 import { styles } from '../../theme/styles';
 
-export default function ReferralCard({ session, kind, cardRef }) {
+export default function ReferralCard({ session, kind, cardRef, expanded = false, onExpandedChange }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [expanded, setExpanded] = useState(false);
   const isClient = kind === 'client';
   const title = isClient ? 'ادعُ صديقك واكسب 50 جنيهًا' : 'ادعُ فنيًا واكسب 50 جنيهًا';
   const load = useCallback(async () => {
@@ -35,7 +34,7 @@ export default function ReferralCard({ session, kind, cardRef }) {
   };
   return <View ref={cardRef} collapsable={false} style={[styles.dataCard, { borderWidth: 1, borderColor: COLORS.teal, marginTop: 12 }]}>
     <Text style={styles.cardTitlePremium}>{title}</Text>
-    <TouchableOpacity onPress={() => setExpanded(value => !value)} accessibilityRole="button" style={{ paddingVertical: 10, paddingHorizontal: 12, borderRadius: 10, backgroundColor: COLORS.indigo50, marginTop: 6 }}>
+    <TouchableOpacity onPress={() => onExpandedChange?.(!expanded)} accessibilityRole="button" style={{ paddingVertical: 10, paddingHorizontal: 12, borderRadius: 10, backgroundColor: COLORS.indigo50, marginTop: 6 }}>
       <Text style={{ textAlign: 'center', color: COLORS.navy, fontWeight: '900' }}>{expanded ? 'إخفاء تفاصيل الدعوة ▲' : 'عرض تفاصيل الدعوة ▼'}</Text>
     </TouchableOpacity>
     {expanded ? <>
