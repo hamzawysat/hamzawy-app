@@ -65,7 +65,10 @@ export default function ReferralAdminScreen({ session }) {
   const stat = (label, value) => <View style={{ flex: 1, minWidth: '30%', padding: 10, backgroundColor: '#F1F5F9', borderRadius: 10 }}><Text style={styles.detailSmall}>{label}</Text><Text style={styles.cardTitlePremium}>{Number(value || 0).toLocaleString('ar-EG')}</Text></View>;
   const statusCounts = summary?.statuses || {};
   const rewards = summary?.rewards || [];
-  const rewardTotal = rewards.reduce((sum, x) => sum + Number(x.inviterPaid || 0) + Number(x.inviteePaid || 0), 0);
+  const paidFor = type => { const row = rewards.find(x => x._id === type) || {}; return Number(row.inviterPaid || 0) + Number(row.inviteePaid || 0); };
+  const paidClient = paidFor('client');
+  const paidFanni = paidFor('fanni');
+  const rewardTotal = paidClient + paidFanni;
   const dueTotal = rewards.reduce((sum, x) => sum + Number(x.inviterDue || 0) + Number(x.inviteeDue || 0), 0);
   return <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.listPremium} keyboardShouldPersistTaps="handled">
     <View style={styles.dataCard}>
@@ -84,7 +87,9 @@ export default function ReferralAdminScreen({ session }) {
         {stat('مستحقة', statusCounts.eligible)}
         {stat('مكتملة', statusCounts.completed)}
         {stat('مرفوضة', statusCounts.rejected)}
-        {stat('المكافآت المصروفة', rewardTotal)}
+        {stat('مكافآت العملاء المصروفة', paidClient)}
+        {stat('مكافآت الفنيين المصروفة', paidFanni)}
+        {stat('إجمالي المكافآت المصروفة', rewardTotal)}
         {stat('المكافآت المستحقة', dueTotal)}
       </View>
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
