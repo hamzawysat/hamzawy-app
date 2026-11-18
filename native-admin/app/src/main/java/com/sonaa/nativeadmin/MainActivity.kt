@@ -67,6 +67,7 @@ private fun storeImageSource(value:String):String = if(value.startsWith("/")) "h
 class MainActivity : ComponentActivity() {
     private lateinit var adminWebView: android.webkit.WebView
     private var configuredAdminPanelUrl: String = ""
+    private var pendingSetupIntent: Intent? = null
     private var fcmReceiverRegistered = false
     private var latestFcmToken: String? = null
     private var pendingFileCallback: android.webkit.ValueCallback<Array<android.net.Uri>>? = null
@@ -224,6 +225,7 @@ class MainActivity : ComponentActivity() {
     private fun loadAdminTarget(sourceIntent: Intent?) {
         configuredAdminPanelUrl = resolveAdminPanelUrl()
         if (!isValidAdminPanelUrl(configuredAdminPanelUrl)) {
+            pendingSetupIntent = sourceIntent
             showAdminUrlSetup()
             return
         }
@@ -470,8 +472,9 @@ class MainActivity : ComponentActivity() {
                     getSharedPreferences("sonaa_admin_session", MODE_PRIVATE)
                         .edit().putString("admin_panel_url", value).apply()
                     configuredAdminPanelUrl = value
-                    setContentView(adminWebView)
-                    adminWebView.loadUrl(value)
+                    val pendingIntent = pendingSetupIntent
+                    pendingSetupIntent = null
+                    loadAdminTarget(pendingIntent)
                 }
             }
         }
