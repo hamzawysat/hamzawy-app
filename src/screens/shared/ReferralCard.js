@@ -10,6 +10,7 @@ export default function ReferralCard({ session, kind }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [expanded, setExpanded] = useState(false);
   const isClient = kind === 'client';
   const title = isClient ? 'ادعُ صديقك واكسب 50 جنيهًا' : 'ادعُ فنيًا واكسب 50 جنيهًا';
   const load = useCallback(async () => {
@@ -34,6 +35,10 @@ export default function ReferralCard({ session, kind }) {
   };
   return <View style={[styles.dataCard, { borderWidth: 1, borderColor: COLORS.teal, marginTop: 12 }]}>
     <Text style={styles.cardTitlePremium}>{title}</Text>
+    <TouchableOpacity onPress={() => setExpanded(value => !value)} accessibilityRole="button" style={{ paddingVertical: 10, paddingHorizontal: 12, borderRadius: 10, backgroundColor: COLORS.indigo50, marginTop: 6 }}>
+      <Text style={{ textAlign: 'center', color: COLORS.navy, fontWeight: '900' }}>{expanded ? 'إخفاء تفاصيل الدعوة ▲' : 'عرض تفاصيل الدعوة ▼'}</Text>
+    </TouchableOpacity>
+    {expanded ? <>
     <Text style={styles.detail}>{isClient ? 'صديقك يسجل من رابطك ويكمل أول طلب مكتمل، فتحصلان على 50 جنيهًا لكل واحد.' : 'الفني يسجل من رابطك ويكمل 3 شغلانات مكتملة، فتحصلان على 50 جنيهًا لكل واحد.'}</Text>
     {loading ? <Text style={styles.detail}>جاري تحميل رابط الدعوة...</Text> : null}
     {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -58,5 +63,6 @@ export default function ReferralCard({ session, kind }) {
       </View>)}
     </View> : null}
     <TouchableOpacity onPress={load} disabled={loading} style={{ paddingVertical: 8 }}><Text style={{ textAlign: 'center', color: COLORS.teal, fontWeight: '900' }}>تحديث بيانات الدعوة</Text></TouchableOpacity>
+    </> : <Text style={[styles.detail, { marginTop: 8 }]}>{isClient ? 'شارك رابطك لتحصل أنت وصديقك على مكافأة 50 جنيهًا بعد إكمال أول طلب.' : 'شارك رابطك مع فني جديد لتحصل أنت وهو على مكافأة 50 جنيهًا بعد إكمال 3 شغلانات.'} {loading ? 'جاري تحميل البيانات...' : ''}</Text>}
   </View>;
 }
