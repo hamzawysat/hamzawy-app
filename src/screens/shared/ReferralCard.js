@@ -29,7 +29,10 @@ export default function ReferralCard({ session, kind, cardRef, expanded = false,
   };
   const share = async () => {
     if (!data?.url) return;
-    try { await Share.share({ message: title + '\n' + data.url }); }
+    const invitationMessage = isClient
+      ? '🎉 حمّل تطبيق حمزاوي سات واطلب الخدمة اللي محتاجها، واكسب 50 جنيه هدية بعد إكمال أول طلب ليك! 💰 سجّل دلوقتي واستمتع بخدمات حمزاوي سات.'
+      : '💰 انضم لفريق فنيين حمزاوي سات واكسب 150 جنيه مكافأة بعد إكمال أول 3 طلبات ليك! 🎉 سجّل دلوقتي وابدأ شغلك معانا.';
+    try { await Share.share({ message: invitationMessage + '\n' + data.url }); }
     catch (e) { Alert.alert('تعذر المشاركة', e.message || 'حاول مرة أخرى.'); }
   };
   return <View ref={cardRef} collapsable={false} style={[styles.dataCard, { borderWidth: 1, borderColor: COLORS.teal, marginTop: 12 }]}>
