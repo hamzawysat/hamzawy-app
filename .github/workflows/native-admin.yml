@@ -70,12 +70,6 @@ jobs:
           working-directory: native-admin
           script: |
             adb wait-for-device
-            for attempt in $(seq 1 30); do
-              if adb shell getprop sys.boot_completed 2>/dev/null | grep -q '^1$'; then
-                break
-              fi
-              sleep 5
-            done
             adb shell settings put global package_verifier_enable 0
             adb shell settings put global verifier_verify_adb_installs 0
             gradle :app:connectedDebugAndroidTest
