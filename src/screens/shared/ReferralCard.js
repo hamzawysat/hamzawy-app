@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, Share, Text, TouchableOpacity, View } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
+import QRCode from 'react-native-qrcode-svg';
 import { api } from '../../services/api';
 import { COLORS } from '../../theme/colors';
 import { styles } from '../../theme/styles';
@@ -41,6 +42,7 @@ export default function ReferralCard({ session, kind }) {
       <Text style={styles.detailSmall}>كود دعوتك</Text>
       <Text selectable style={[styles.cardTitlePremium, { textAlign: 'center', letterSpacing: 1 }]}>{data.code}</Text>
       <TouchableOpacity onPress={() => copy(data.code)} style={{ padding: 10, borderRadius: 9, backgroundColor: COLORS.white, marginTop: 6 }}><Text style={{ textAlign: 'center', color: COLORS.navy, fontWeight: '900' }}>نسخ الكود</Text></TouchableOpacity>
+      <View style={{ alignItems: 'center', paddingVertical: 12, backgroundColor: COLORS.white, borderRadius: 10, marginTop: 10 }}><QRCode value={data.url} size={164} backgroundColor="#FFFFFF" color="#0B1B3A" /><Text style={[styles.detailSmall, { marginTop: 8 }]}>امسح الباركود لفتح رابط الدعوة</Text></View>
       <Text style={[styles.detailSmall, { marginTop: 10 }]}>رابط الدعوة</Text>
       <Text selectable style={styles.detail}>{data.url}</Text>
       <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
