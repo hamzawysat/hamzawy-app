@@ -23,7 +23,6 @@ import VoicePlayback from '../components/VoicePlayback';
 import { LoginScreen, ChangePasswordScreen, PasswordRecoveryScreen } from './auth/AuthScreens';
 import { AccountScreen, ProfileEditScreen } from './account/AccountScreens';
 import { SupportScreen } from './support/SupportScreen';
-import { AdminDashboard } from './admin/AdminDashboard';
 import { ClientDashboard } from './client/ClientDashboard';
 import { TechnicianDashboard } from './technician/TechnicianDashboard';
 import { useAppState } from '../hooks/useAppState';
@@ -156,25 +155,6 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
       else if (type === 'store_order_update') setClientTab('store');
       else if (['order_created', 'new_offer', 'offer_accepted', 'order_cancelled', 'order_completed', 'order_rated'].includes(type)) setClientTab('orders');
       setScreen('client');
-    } else if (session?.role === 'admin') {
-      const destination = String(data.destination || '');
-      const tab = ({
-        orders: 'orders',
-        storeOrders: 'orders',
-        technicians: 'fannis',
-        wallets: 'fannis',
-        clients: 'clients',
-        clientWallet: 'clients',
-        wallet: 'clients',
-        commerceSubscriptions: 'clients',
-        recovery: 'support',
-        password_reset: 'support',
-        topups: 'topups',
-        complaints: 'complaints',
-        support: 'support'
-      })[destination];
-      if (tab) setAdminData(current => ({ ...current, tab }));
-      setScreen('admin');
     }
   };
   const pushTokenRef = usePushNotifications(session, handlePushNotificationResponse);
@@ -366,7 +346,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
   }, [screen, offerDraft, notificationsOpen, session, clientTab, setClientTab]);
 
   useEffect(() => {
-    if (!['client', 'technician', 'admin', 'clientRegister', 'technicianRegister', 'profileEdit'].includes(screen)) return;
+    if (!['client', 'technician', 'clientRegister', 'technicianRegister', 'profileEdit'].includes(screen)) return;
     let mounted = true;
     async function loadPublicData() {
       setServicesLoading(true); setServicesError('');
@@ -671,18 +651,11 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
   async function handleLogin() {
     const raw = username.trim();
     if (!raw || !password) { Alert.alert('بيانات ناقصة', 'اكتب رقم الهاتف أو الإيميل وكلمة السر.'); return; }
-    const isAdmin = raw.startsWith('#');
-    const identifier = isAdmin ? raw.slice(1).trim() : raw;
-    if (!identifier) { Alert.alert('بيانات ناقصة', 'اكتب الإيميل أو رقم الهاتف بعد علامة #.'); return; }
+    const identifier = raw;
     setLoginLoading(true);
     try {
       let result, role, user;
-      if (isAdmin) {
-        const identity = identifier.includes('@') ? { email: identifier } : { phone: identifier };
-        result = await api('/admin/login', { method: 'POST', body: { ...identity, password } });
-        if (!result.token || !result.user) throw new Error('استجابة تسجيل دخول الإدارة غير مكتملة.');
-        role = 'admin'; user = result.user;
-      } else if (authMode === 'client') {
+      if (authMode === 'client') {
         result = await api('/client/login', { method: 'POST', body: { phone: identifier, password } });
         if (!result.token || !result.client) throw new Error('استجابة تسجيل دخول العميل غير مكتملة.');
         role = 'client'; user = result.client;
@@ -699,7 +672,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
       if (role === 'client') setClientTab('home');
       if (role === 'fanni') setTechData(current => ({ ...current, tab: 'home' }));
       setPassword('');
-      setScreen(role === 'admin' ? 'admin' : role === 'client' ? 'client' : 'technician');
+      setScreen(role === 'client' ? 'client' : 'technician');
     } catch (err) {
       Alert.alert('تعذر تسجيل الدخول', err.message || 'راجع البيانات وحاول مرة أخرى.');
     } finally { setLoginLoading(false); }
@@ -2022,8 +1995,6 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
   if (screen === 'technician' && session?.role === 'fanni') return <TechnicianDashboard context={screenContext} />;
 
   if (screen === 'support' && session && ['client', 'fanni'].includes(session.role)) return <SupportScreen session={session} screenHistoryRef={screenHistoryRef} screenRef={screenRef} setScreenState={setScreenState} setSupportCase={setSupportCase} supportSubject={supportSubject} setSupportSubject={setSupportSubject} supportDraft={supportDraft} setSupportDraft={setSupportDraft} startSupportCase={startSupportCase} supportCases={supportCases} openSupportCase={openSupportCase} supportCase={supportCase} dateLabel={dateLabel} sendSupportMessage={sendSupportMessage} supportLoading={supportLoading} />;
-
-  if (screen === 'admin' && session?.role === 'admin') return <AdminDashboard adminPendingProfileEdits={adminPendingProfileEdits} reviewAdminProfileEdit={reviewAdminProfileEdit} refreshAdminProfileEdits={refreshAdminProfileEdits} session={session} adminData={adminData} setAdminData={setAdminData} adminExtras={adminExtras} adminRegionDraft={adminRegionDraft} setAdminRegionDraft={setAdminRegionDraft} adminLoadRegions={adminLoadRegions} adminAddRegion={adminAddRegion} adminEditRegion={adminEditRegion} adminToggleRegion={adminToggleRegion} adminDeleteRegion={adminDeleteRegion} adminRestoreRegion={adminRestoreRegion} adminBulkRegionAction={adminBulkRegionAction} adminBulkRenameRegions={adminBulkRenameRegions} categories={categories} areas={areas} adminProfileEdit={adminProfileEdit} setAdminProfileEdit={setAdminProfileEdit} adminBeginProfileEdit={adminBeginProfileEdit} toggleAdminProfileSpecialty={toggleAdminProfileSpecialty} adminSaveProfileEdit={adminSaveProfileEdit} loadAdminSupportCases={loadAdminSupportCases} setScreen={setScreen} logout={logout} publishOrder={publishOrder} moderateTechnician={moderateTechnician} />;
 
   return <SafeAreaView style={styles.safe}>
     <ScrollView contentContainerStyle={styles.homePage} showsVerticalScrollIndicator={false}>
