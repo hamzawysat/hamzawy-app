@@ -144,10 +144,6 @@ class MainActivity : ComponentActivity() {
                     view: android.webkit.WebView?,
                     request: android.webkit.WebResourceRequest
                 ): Boolean {
-                    if (!request.isForMainFrame) {
-                        return !request.url.scheme.equals("https", ignoreCase = true) ||
-                            !request.url.host.equals(ADMIN_HOST, ignoreCase = true)
-                    }
                     return !isAllowedAdminUrl(request.url)
                 }
 
