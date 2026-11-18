@@ -1644,8 +1644,8 @@ private data class RowAction(val label:String,val method:String,val path:String,
         onDismissRequest={notifyOpen=false},
         title={Text("إرسال إشعار مباشر")},
         text={Column(verticalArrangement=Arrangement.spacedBy(8.dp)){
-            OutlinedTextField(notifyTitle,{notifyTitle=it},label={Text("عنوان الإشعار")},singleLine=true)
-            OutlinedTextField(notifyMessage,{notifyMessage=it},label={Text("نص الإشعار")},minLines=2)
+            OutlinedTextField(notifyTitle,{notifyTitle=it.take(100)},label={Text("عنوان الإشعار")},singleLine=true)
+            OutlinedTextField(notifyMessage,{notifyMessage=it.take(300)},label={Text("نص الإشعار")},minLines=2)
             Box {
                 OutlinedButton(onClick={notifyRoleMenuExpanded=true},modifier=Modifier.fillMaxWidth()){Text(if(notifyRole=="client")"نوع الحساب: العملاء" else "نوع الحساب: الفنيون")}
                 DropdownMenu(expanded=notifyRoleMenuExpanded,onDismissRequest={notifyRoleMenuExpanded=false}){
@@ -1658,7 +1658,7 @@ private data class RowAction(val label:String,val method:String,val path:String,
                     listOf("single" to "إشعار لفرد محدد","group" to "إشعار جماعي لفئة").forEach{(value,label)->DropdownMenuItem(text={Text(label)},onClick={notifyMode=value;notifyModeMenuExpanded=false})}
                 }
             }
-            if(notifyMode=="single")OutlinedTextField(notifyPhone,{notifyPhone=it},label={Text("رقم هاتف المستلم")},singleLine=true)
+            if(notifyMode=="single")OutlinedTextField(notifyPhone,{notifyPhone=it.take(20)},label={Text("رقم هاتف المستلم")},singleLine=true)
             else {
                 val audienceOptions=if(notifyRole=="fanni")listOf("all" to "جميع الفنيين","approved" to "الفنيون المعتمدون","disabled" to "الفنيون المعطلون") else listOf("all" to "جميع العملاء","active" to "العملاء النشطون","disabled" to "العملاء المعطلون")
                 Box {
@@ -1672,7 +1672,7 @@ private data class RowAction(val label:String,val method:String,val path:String,
         confirmButton={TextButton(onClick={
             val body=JsonObject().apply{addProperty("title",notifyTitle.trim());addProperty("message",notifyMessage.trim());addProperty("recipientRole",notifyRole.trim());addProperty("recipientMode",notifyMode.trim());if(notifyMode=="single")addProperty("phone",notifyPhone.trim())else addProperty("audience",notifyAudience.trim())}
             notifyOpen=false;onAction("POST","api/admin/notifications/direct",body)
-        },enabled=notifyTitle.trim().length>=2&&notifyMessage.trim().length>=2&&notifyRole in listOf("fanni","client")&&notifyMode in listOf("single","group")&&(notifyMode=="single"||(if(notifyRole=="fanni")notifyAudience in listOf("all","approved","disabled") else notifyAudience in listOf("all","active","disabled")))){Text("إرسال")}},
+        },enabled=notifyTitle.trim().length in 2..100&&notifyMessage.trim().length in 2..300&&notifyRole in listOf("fanni","client")&&notifyMode in listOf("single","group")&&(notifyMode=="group"||notifyPhone.trim().isNotBlank())&&(notifyMode=="single"||(if(notifyRole=="fanni")notifyAudience in listOf("all","approved","disabled") else notifyAudience in listOf("all","active","disabled")))){Text("إرسال")}},
         dismissButton={TextButton(onClick={notifyOpen=false}){Text("إلغاء")}}
     )
     if(bulkRegionEditOpen) AlertDialog(onDismissRequest={bulkRegionEditOpen=false},title={Text("تعديل أسماء المناطق المحددة")},text={Column(Modifier.heightIn(max=480.dp).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(8.dp)){bulkRegionNames.toList().forEach{(id,name)->OutlinedTextField(value=name,onValueChange={value->bulkRegionNames=bulkRegionNames.toMutableMap().apply{put(id,value)}},label={Text("الاسم الجديد — $name")},singleLine=true,modifier=Modifier.fillMaxWidth())}}},confirmButton={TextButton(onClick={val clean=bulkRegionNames.mapValues{it.value.trim().replace(Regex("\\s+")," ")};if(clean.values.any{it.length<2||it.length>100})return@TextButton;bulkRegionEditOpen=false;selectedBulk=emptySet();onBulkRenameRegions(clean)},enabled=bulkRegionNames.isNotEmpty()&&bulkRegionNames.values.all{it.trim().length in 2..100}){Text("حفظ الأسماء")}},dismissButton={TextButton(onClick={bulkRegionEditOpen=false}){Text("إلغاء")}})
