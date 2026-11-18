@@ -1136,26 +1136,33 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
  }else{
   val p=root?.get("content")?.takeIf{it.isJsonObject}?.asJsonObject
   var announcement by remember(payload){mutableStateOf(p?.get("announcement")?.asString.orEmpty())}
+  var announcementAudience by remember(payload){mutableStateOf(p?.get("announcementAudience")?.asString?.takeIf{it in listOf("client","fanni","both")}?: "client")}
   var question by remember(payload){mutableStateOf("")}
   var answer by remember(payload){mutableStateOf("")}
+  var faqAudience by remember(payload){mutableStateOf("client")}
   var faqIndex by remember(payload){mutableStateOf(-1)}
+  fun audienceLabel(value:String)=when(value){"fanni"->"الفنيون فقط";"both"->"العملاء والفنيون";else->"العملاء فقط"}
   var previewOpen by remember(payload){mutableStateOf(false)}
    var faqDeleteIndex by remember(payload){mutableStateOf<Int?>(null)}
   val faqs=p?.get("faqs")?.takeIf{it.isJsonArray}?.asJsonArray
   Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){
    Text("الإعلانات والأسئلة الشائعة",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold,color=DarkAccent)
    OutlinedButton(onClick={previewOpen=true},modifier=Modifier.fillMaxWidth()){Text("معاينة الإعلان والأسئلة الشائعة")}
-   OutlinedTextField(announcement,{announcement=it},label={Text("إعلان واجهة العميل")},modifier=Modifier.fillMaxWidth(),minLines=3)
-   Button(onClick={onSave("PATCH","api/admin/content/announcement",JsonObject().apply{addProperty("announcement",announcement.trim())})},enabled=canWrite("api/admin/content/announcement"),modifier=Modifier.fillMaxWidth()){Text("حفظ الإعلان")}
+   OutlinedTextField(announcement,{announcement=it},label={Text("نص الإعلان")},modifier=Modifier.fillMaxWidth(),minLines=3)
+   Text("إرسال الإعلان إلى",fontWeight=FontWeight.SemiBold,color=DarkAccent)
+   Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(6.dp)){
+    listOf("client" to "العملاء فقط","fanni" to "الفنيون فقط","both" to "العملاء والفنيون").forEach{(value,label)->FilterChip(selected=announcementAudience==value,onClick={announcementAudience=value},label={Text(label)})}
+   }
+   Button(onClick={onSave("PATCH","api/admin/content/announcement",JsonObject().apply{addProperty("announcement",announcement.trim());addProperty("announcementAudience",announcementAudience)})},enabled=canWrite("api/admin/content/announcement"),modifier=Modifier.fillMaxWidth()){Text("حفظ الإعلان")}
    Text("الأسئلة الشائعة",fontWeight=FontWeight.Bold,color=DarkAccent)
    faqs?.forEachIndexed{index,faq->
     Card(Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=Color.White)){
      Column(Modifier.padding(12.dp)){
       Text(faq.asJsonObject.get("question")?.asString.orEmpty(),fontWeight=FontWeight.Bold)
       Text(faq.asJsonObject.get("answer")?.asString.orEmpty(),style=MaterialTheme.typography.bodySmall)
-      Text("الحالة: "+if(faq.asJsonObject.get("active")?.asBoolean!=false)"مفعل" else "متوقف",style=MaterialTheme.typography.labelSmall,color=Color.Gray)
+      Text("الجمهور: "+audienceLabel(faq.asJsonObject.get("audience")?.asString?: "client")+" • الحالة: "+if(faq.asJsonObject.get("active")?.asBoolean!=false)"مفعل" else "متوقف",style=MaterialTheme.typography.labelSmall,color=Color.Gray)
       Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){
-       TextButton(onClick={faqIndex=index;question=faq.asJsonObject.get("question")?.asString.orEmpty();answer=faq.asJsonObject.get("answer")?.asString.orEmpty()}){Text("تعديل")}
+       TextButton(onClick={faqIndex=index;question=faq.asJsonObject.get("question")?.asString.orEmpty();answer=faq.asJsonObject.get("answer")?.asString.orEmpty();faqAudience=faq.asJsonObject.get("audience")?.asString?.takeIf{it in listOf("client","fanni","both")}?: "client"}){Text("تعديل")}
        TextButton(onClick={
         val body=JsonObject().apply{addProperty("announcement",announcement.trim());val array=com.google.gson.JsonArray();faqs?.forEachIndexed{idx,entry->val copy=entry.asJsonObject.deepCopy();if(idx==index)copy.addProperty("active",copy.get("active")?.asBoolean==false);array.add(copy)};add("faqs",array)}
         onSave("PUT","api/admin/content",body)
@@ -1165,22 +1172,27 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
      }
     }
    }
-   OutlinedTextField(question,{question=it},label={Text("سؤال جديد")},modifier=Modifier.fillMaxWidth())
+   OutlinedTextField(question,{question=it},label={Text(if(faqIndex>=0)"تعديل السؤال" else "سؤال جديد")},modifier=Modifier.fillMaxWidth())
    OutlinedTextField(answer,{answer=it},label={Text("الإجابة")},modifier=Modifier.fillMaxWidth(),minLines=2)
+   Text("عرض السؤال على",fontWeight=FontWeight.SemiBold,color=DarkAccent)
+   Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(6.dp)){
+    listOf("client" to "العملاء فقط","fanni" to "الفنيون فقط","both" to "العملاء والفنيون").forEach{(value,label)->FilterChip(selected=faqAudience==value,onClick={faqAudience=value},label={Text(label)})}
+   }
    Button(onClick={
     val body=JsonObject().apply{
      addProperty("announcement",announcement.trim())
+     addProperty("announcementAudience",announcementAudience)
      val array=com.google.gson.JsonArray()
      faqs?.forEach{array.add(it)}
      if(faqIndex>=0&&faqIndex<array.size()){
       val old=array[faqIndex].asJsonObject.deepCopy()
-      old.addProperty("question",question.trim());old.addProperty("answer",answer.trim());array.set(faqIndex,old)
-     }else array.add(JsonObject().apply{addProperty("question",question.trim());addProperty("answer",answer.trim());addProperty("active",true)})
+      old.addProperty("question",question.trim());old.addProperty("answer",answer.trim());old.addProperty("audience",faqAudience);array.set(faqIndex,old)
+     }else array.add(JsonObject().apply{addProperty("question",question.trim());addProperty("answer",answer.trim());addProperty("active",true);addProperty("audience",faqAudience)})
      add("faqs",array)
     }
-    onSave("PUT","api/admin/content",body);faqIndex=-1;question="";answer=""
+    onSave("PUT","api/admin/content",body);faqIndex=-1;question="";answer="";faqAudience="client"
    },enabled=question.trim().length>=2&&answer.trim().length>=2&&canWrite("api/admin/content"),modifier=Modifier.fillMaxWidth()){Text(if(faqIndex>=0)"حفظ تعديل السؤال" else "إضافة السؤال")}
-   if(faqIndex>=0)TextButton(onClick={faqIndex=-1;question="";answer=""},modifier=Modifier.fillMaxWidth()){Text("إلغاء التعديل")}
+   if(faqIndex>=0)TextButton(onClick={faqIndex=-1;question="";answer="";faqAudience="client"},modifier=Modifier.fillMaxWidth()){Text("إلغاء التعديل")}
   }
   if(previewOpen)AlertDialog(
    onDismissRequest={previewOpen=false},
