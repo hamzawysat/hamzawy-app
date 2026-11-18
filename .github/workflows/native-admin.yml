@@ -11,7 +11,7 @@ on:
 # Keep only the newest build for a branch. Push and pull_request events
 # for the same PR branch share one concurrency group, avoiding duplicate APK builds.
 concurrency:
-  group: native-admin-android-${{ github.event.pull_request.head.ref || github.ref }}
+  group: native-admin-android-${{ github.event.pull_request.head.ref || github.ref_name }}
   cancel-in-progress: true
 
 permissions:
