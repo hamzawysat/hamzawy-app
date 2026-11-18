@@ -32,7 +32,6 @@ class SonaaMessagingService : FirebaseMessagingService() {
             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
             putExtra("destination", destination)
             putExtra("link", message.data["link"].orEmpty())
-            putExtra("link", message.data["link"].orEmpty())
         }
         val pending = PendingIntent.getActivity(this, type.hashCode(), intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         val notification = NotificationCompat.Builder(this, channel)
