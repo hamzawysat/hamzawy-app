@@ -145,13 +145,13 @@ class MainActivity : ComponentActivity() {
                     view: android.webkit.WebView?,
                     request: android.webkit.WebResourceRequest
                 ): Boolean {
-                    return !isAllowedAdminUrl(request.url)
+                    return handleWebViewNavigation(request.url)
                 }
 
                 @Suppress("DEPRECATION")
                 override fun shouldOverrideUrlLoading(view: android.webkit.WebView?, url: String?): Boolean {
                     if (url.isNullOrBlank()) return true
-                    return !isAllowedAdminUrl(android.net.Uri.parse(url))
+                    return handleWebViewNavigation(android.net.Uri.parse(url))
                 }
 
                 override fun onPageFinished(view: android.webkit.WebView?, url: String?) {
@@ -208,6 +208,21 @@ class MainActivity : ComponentActivity() {
                 .edit().putString("pending_fcm_token", token).apply()
             syncFcmTokenIntoWebView()
         }
+    }
+
+    private fun handleWebViewNavigation(uri: android.net.Uri): Boolean {
+        if (isAllowedAdminUrl(uri)) return false
+
+        // Keep the admin WebView restricted, but hand WhatsApp contact links
+        // to Android so the installed app or browser can open them.
+        val host = uri.host?.lowercase()
+        val isWhatsAppLink = uri.scheme.equals("https", ignoreCase = true) &&
+            host in setOf("wa.me", "api.whatsapp.com", "web.whatsapp.com")
+        if (isWhatsAppLink) {
+            runCatching { startActivity(Intent(Intent.ACTION_VIEW, uri)) }
+            return true
+        }
+        return true
     }
 
     private fun isAllowedAdminUrl(uri: android.net.Uri): Boolean {
