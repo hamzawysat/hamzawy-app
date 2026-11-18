@@ -1377,10 +1377,10 @@ private fun canWriteApi(info:JsonElement?,path:String):Boolean{
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             pair.forEach { target ->
                                 val label = when (target) {
-                                    AdminSection.ORDERS -> "طلبات العملاء الجديدة"
-                                    AdminSection.PENDING -> "فني جديد / اعتماد"
-                                    AdminSection.STORE_PRODUCTS -> "إضافة منتج"
-                                    AdminSection.CONTENT -> "إعلان جديد"
+                                    AdminSection.ORDERS -> "طلبات العملاء"
+                                    AdminSection.PENDING -> "انتظار اعتماد الفنيين"
+                                    AdminSection.STORE_PRODUCTS -> "إدارة المتجر"
+                                    AdminSection.CONTENT -> "الإعلانات والأسئلة الشائعة"
                                     else -> target.title
                                 }
                                 Button(
