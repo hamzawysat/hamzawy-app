@@ -951,4 +951,7 @@ test('forced password changes from client and technician login are enforced unti
   assert.ok(screens.includes('setPasswordChangeRequired(false)'));
   assert.ok(auth.includes('required = false'));
   assert.ok(auth.includes('{!required ? <Button title="‹ رجوع إلى حسابي"'));
+  assert.ok(auth.includes('{!required ? <Field label="كلمة المرور الحالية"'), 'forced password change must hide the current password field');
+  assert.ok(screens.includes('(!passwordChangeRequired && !currentPassword)'), 'current password is required only for voluntary changes');
+  assert.ok(screens.includes('...(passwordChangeRequired ? {} : { currentPassword })'), 'forced password change must omit currentPassword from the API request');
 });

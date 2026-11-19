@@ -1269,14 +1269,14 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     const currentPassword = accountPasswordForm.currentPassword;
     const newPassword = accountPasswordForm.newPassword;
     const confirmPassword = accountPasswordForm.confirmPassword;
-    if (!currentPassword || newPassword.length < 8 || newPassword !== confirmPassword) {
+    if ((!passwordChangeRequired && !currentPassword) || newPassword.length < 8 || newPassword !== confirmPassword) {
       setAccountPasswordForm(v => ({ ...v, error: 'كلمة المرور الجديدة 8 أحرف على الأقل ويجب أن يتطابق التأكيد.' }));
       return;
     }
     setAccountPasswordForm(v => ({ ...v, loading: true, error: '' }));
     try {
       const role = session.role === 'client' ? 'client' : 'fanni';
-      const result = await api('/password-recovery/change/' + role, { method: 'POST', token: session.token, body: { currentPassword, newPassword, confirmPassword } });
+      const result = await api('/password-recovery/change/' + role, { method: 'POST', token: session.token, body: { ...(passwordChangeRequired ? {} : { currentPassword }), newPassword, confirmPassword } });
       try { await SecureStore.deleteItemAsync(`sonaa.auth.password.v1.${role}.${normalizePhoneDigits(session.user?.phone)}`); } catch (_) {}
       setAccountPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '', loading: false, error: '' });
       if (passwordChangeRequired) {
