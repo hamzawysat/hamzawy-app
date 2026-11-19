@@ -803,7 +803,8 @@ test('native customer and technician stores use managed category artwork with pr
   assert.ok(store.includes('imageUrl: String(categoryInfo?.imageUrl || fallbackProduct?.imageUrl || \'\').trim()'));
   assert.ok(store.includes('<StoreImage value={group.imageUrl || coverProduct?.imageUrl}'));
   assert.ok(store.includes('onPress={() => setSelectedCategory(group.category)}'));
-  assert.ok(store.includes('selectedGroup.items.map(({ item, index }) => ('));
+  assert.ok(store.includes('const displayedProducts = normalizedQuery ? searchMatches : (selectedGroup?.items || null)'));
+  assert.ok(store.includes('displayedProducts.map(({ item, index }) => ('));
   assert.ok(store.includes("onPress={() => setSelectedCategory('')}"));
 });
 
