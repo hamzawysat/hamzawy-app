@@ -907,3 +907,13 @@ test('native client and technician store use the authenticated bulk-order flow s
   assert.ok(store.includes('ابحث عن منتج أو قسم أو وصف'));
   assert.ok(store.includes('تأكيد الطلب المجمع'));
 });
+
+
+test('native store cart persists per signed-in role and account across screen changes', () => {
+  const store = fs.readFileSync(path.join(root, 'src/screens/shared/StoreScreen.js'), 'utf8');
+  assert.ok(store.includes("import * as SecureStore from 'expo-secure-store'"));
+  assert.ok(store.includes('sonaa.store.cart.v1:'));
+  assert.ok(store.includes('SecureStore.getItemAsync(cartStorageKey)'));
+  assert.ok(store.includes('SecureStore.setItemAsync(cartStorageKey, JSON.stringify(cart))'));
+  assert.ok(store.includes('cartLoadedFor !== cartStorageKey'));
+});
