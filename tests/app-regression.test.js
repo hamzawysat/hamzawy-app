@@ -926,3 +926,16 @@ test('client and technician notification taps use real dashboard tab keys', () =
   assert.ok(!screens.includes("tab: 'myOrders'"), 'myOrders is a browser tab name, not a native technician tab');
   assert.ok(!screens.includes("setClientTab('orders')"), 'orders is a browser tab name, not a native client tab');
 });
+
+
+test('technician wallet top-ups preserve an idempotency key across retries and clear it only after success', () => {
+  const screens = fs.readFileSync(path.join(root, 'src/screens/AppScreens.js'), 'utf8');
+  const start = screens.indexOf('async function submitTopup()');
+  const end = screens.indexOf('\n  async function loadSupportCases()', start);
+  assert.ok(start >= 0 && end > start, 'technician top-up handler should exist');
+  const handler = screens.slice(start, end);
+  assert.ok(handler.includes('sonaa.fanni.topup.pending.v1.'), 'pending key should be scoped to the technician account');
+  assert.ok(handler.includes('pending?.fingerprint === fingerprint'), 'same request should reuse its pending key');
+  assert.ok(handler.includes('idempotencyKey, note:'), 'the idempotency key should be sent to the backend');
+  assert.ok(handler.includes('SecureStore.deleteItemAsync(pendingKeyStorage)'), 'pending key should be cleared after confirmed success');
+});
