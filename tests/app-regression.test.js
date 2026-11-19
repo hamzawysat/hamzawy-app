@@ -873,3 +873,36 @@ test('mobile registration forwards referral codes and existing wallet screens la
   assert.match(technicianWallet, /item\.referralNumber/);
 });
 
+
+
+test('native store search normalizes Arabic spelling and tolerates common typos', () => {
+  const {
+    normalizeArabicStoreSearch,
+    matchesArabicStoreProductSearch
+  } = require('../src/utils/store-search');
+  assert.equal(normalizeArabicStoreSearch('إشــتراك مُميّز'), 'اشتراك مميز');
+  assert.equal(normalizeArabicStoreSearch('أجهزة آيفون ١٢'), 'اجهزه ايفون 12');
+  const product = {
+    name: 'اشتراك مميز',
+    category: 'الباقات',
+    description: 'تجديد اشتراك القنوات',
+    details: 'رسيفر HD'
+  };
+  assert.equal(matchesArabicStoreProductSearch(product, 'اشترك مميز'), true);
+  assert.equal(matchesArabicStoreProductSearch(product, 'تجديد قنوات'), true);
+  assert.equal(matchesArabicStoreProductSearch(product, 'رسيفر'), true);
+  assert.equal(matchesArabicStoreProductSearch(product, 'منتج غير موجود'), false);
+});
+
+test('native client and technician store use the authenticated bulk-order flow safely', () => {
+  const store = fs.readFileSync(path.join(root, 'src/screens/shared/StoreScreen.js'), 'utf8');
+  assert.ok(store.includes("'/store/' + role + '/orders/bulk'"));
+  assert.ok(store.includes('expectedPrice: Number(item.price || 0)'));
+  assert.ok(store.includes('idempotencyKey: key'));
+  assert.ok(store.includes('error?.priceChanged'));
+  assert.ok(store.includes('error?.canUseCashOnDelivery === true'));
+  assert.ok(store.includes("item.type === 'subscription'"));
+  assert.ok(store.includes("api('/store/' + role + '/orders'"));
+  assert.ok(store.includes('ابحث عن منتج أو قسم أو وصف'));
+  assert.ok(store.includes('تأكيد الطلب المجمع'));
+});
