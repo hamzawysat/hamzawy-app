@@ -11,7 +11,7 @@ on:
       - 'package.json'
       - '.github/workflows/app-tests.yml'
   push:
-    branches: [ main, 'refactor/app-organization-2026-10-31', 'feature/sync-web-updates-20261103', 'feature/central-api-config-20261116', 'fix/native-tab-grid-20261116', 'fix/technician-id-card-upload-20261116', 'fix/technician-home-default-20261116', 'fix/technician-tabs-10-grid-20261117', 'fix/push-notification-tap-routing', 'fix/referrals-rewards-2026-11' ]
+    branches: [ main, 'integration/hamzawy-unified-work', 'refactor/app-organization-2026-10-31', 'feature/sync-web-updates-20261103', 'feature/central-api-config-20261116', 'fix/native-tab-grid-20261116', 'fix/technician-id-card-upload-20261116', 'fix/technician-home-default-20261116', 'fix/technician-tabs-10-grid-20261117', 'fix/push-notification-tap-routing', 'fix/referrals-rewards-2026-11' ]
     paths:
       - 'tests/**'
       - 'src/**'
