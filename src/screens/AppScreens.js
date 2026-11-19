@@ -1144,7 +1144,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     if (technicianStatus !== 'معتمد') { Alert.alert('الحساب غير معتمد', 'شحن المحفظة متاح بعد اعتماد حسابك من الإدارة.'); return; }
     if (!Number.isInteger(amount) || amount < 10 || amount > 10000 || !/^01[0125][0-9]{8}$/.test(phone) || !topup.method || String(topup.reference || '').trim().length > 50) { Alert.alert('بيانات غير صحيحة', 'اكتب مبلغًا من 10 إلى 10000 جنيه ورقم محوّل صحيحًا واختار نوع المحفظة.'); return; }
     const fingerprint = JSON.stringify({ phone, amount, reference, method: topup.method });
-    const accountKey = normalizePhoneDigits(session?.user?.phone || session?.user?._id || session?.user?.id || 'account');
+    const accountKey = String(session?.user?.phone || session?.user?._id || session?.user?.id || 'account').trim().replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64) || 'account';
     const pendingKeyStorage = 'sonaa.fanni.topup.pending.v1.' + accountKey;
     let idempotencyKey = '';
     try {
