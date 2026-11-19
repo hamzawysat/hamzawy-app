@@ -4,6 +4,7 @@ import { api, getMediaUrl } from '../../services/api';
 import { COLORS } from '../../theme/colors';
 import { styles } from '../../theme/styles';
 import { Button, Field } from '../../components/FormControls';
+import { normalizeArabicStoreSearch, matchesArabicStoreProductSearch } from '../../utils/store-search';
 
 function requestKey(prefix) {
   return prefix + '-' + Date.now() + '-' + Math.random().toString(36).slice(2);
@@ -97,6 +98,11 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
   const [previousOrdersOpen, setPreviousOrdersOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [expandedProductDetails, setExpandedProductDetails] = useState({});
+  const [searchQuery, setSearchQuery] = useState('');
+  const [cart, setCart] = useState([]);
+  const [cartNote, setCartNote] = useState('');
+  const [cartPaymentMethod, setCartPaymentMethod] = useState('wallet');
+  const [cartSubmitting, setCartSubmitting] = useState(false);
 
   const load = useCallback(async (silent = false) => {
     if (!session?.token) return;
@@ -187,6 +193,110 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
     }
   };
 
+  const addToCart = item => {
+    if (!item?._id) return;
+    if (item.type === 'subscription') { openPurchase(item); return; }
+    const productId = String(item._id);
+    setCart(current => {
+      const existing = current.find(entry => entry.productId === productId);
+      if (existing) return current.map(entry => entry.productId === productId
+        ? { ...entry, quantity: Math.min(1000, Number(entry.quantity || 1) + 1) }
+        : entry);
+      return [...current, { productId, name: String(item.name || 'منتج'), price: Number(item.price || 0), quantity: 1 }];
+    });
+    Alert.alert('سلة المشتريات', 'تمت إضافة المنتج إلى السلة.');
+  };
+
+  const updateCartQuantity = (productId, quantity) => {
+    const next = Number(quantity);
+    if (!Number.isInteger(next) || next < 0 || next > 1000) return;
+    setCart(current => next === 0
+      ? current.filter(item => item.productId !== String(productId))
+      : current.map(item => item.productId === String(productId) ? { ...item, quantity: next } : item));
+  };
+
+  const refreshCartPrices = async () => {
+    const catalog = await api('/store/products');
+    const freshProducts = Array.isArray(catalog.products) ? catalog.products : [];
+    setProducts(freshProducts);
+    setCategories(Array.isArray(catalog.categories) ? catalog.categories : []);
+    setCart(current => current.map(entry => {
+      const fresh = freshProducts.find(product => String(product._id) === entry.productId);
+      return fresh ? { ...entry, name: String(fresh.name || entry.name), price: Number(fresh.price || 0) } : entry;
+    }));
+  };
+
+  const submitCartOrder = async () => {
+    if (!cart.length || cartSubmitting) return;
+    if (cart.length > 50) {
+      Alert.alert('السلة كبيرة', 'الحد الأقصى للطلب المجمع هو 50 منتجًا مختلفًا.');
+      return;
+    }
+    const key = requestKey('store-bulk');
+    const send = method => api('/store/' + role + '/orders/bulk', {
+      method: 'POST',
+      token: session.token,
+      body: {
+        items: cart.map(item => ({
+          productId: item.productId,
+          quantity: Number(item.quantity || 1),
+          expectedPrice: Number(item.price || 0)
+        })),
+        note: String(cartNote || '').trim().slice(0, 1000),
+        paymentMethod: method,
+        idempotencyKey: key
+      }
+    });
+    setCartSubmitting(true);
+    try {
+      let result;
+      try {
+        result = await send(cartPaymentMethod);
+      } catch (error) {
+        if (error?.priceChanged) {
+          try { await refreshCartPrices(); } catch (_) {}
+          Alert.alert('السعر اتغير', 'حدّثنا أسعار المنتجات المتاحة. راجع إجمالي السلة قبل تأكيد الطلب مرة أخرى.');
+          return;
+        }
+        if (cartPaymentMethod === 'wallet' && error?.status === 409 && error?.canUseCashOnDelivery === true) {
+          setCartSubmitting(false);
+          Alert.alert('رصيد المحفظة غير كافٍ', (error.message || 'رصيد المحفظة غير كافٍ.') + '\nهل تريد إكمال الطلب والدفع عند الاستلام؟', [
+            { text: 'إلغاء', style: 'cancel' },
+            { text: 'الدفع عند الاستلام', onPress: async () => {
+              setCartSubmitting(true);
+              try {
+                const fallback = await send('cash_on_delivery');
+                if (fallback.balance !== undefined) onWalletBalanceChange?.(Number(fallback.balance));
+                setCart([]);
+                setCartNote('');
+                Alert.alert('تم إرسال الطلب', fallback.message || 'تم إرسال طلب الشراء المجمع.');
+                await load(true);
+              } catch (fallbackError) {
+                if (fallbackError?.priceChanged) {
+                  try { await refreshCartPrices(); } catch (_) {}
+                  Alert.alert('السعر اتغير', 'راجع الأسعار الجديدة في السلة ثم أعد التأكيد.');
+                } else {
+                  Alert.alert('تعذر إرسال الطلب', fallbackError.message || 'حاول مرة أخرى.');
+                }
+              } finally { setCartSubmitting(false); }
+            } }
+          ]);
+          return;
+        }
+        throw error;
+      }
+      if (result.balance !== undefined) onWalletBalanceChange?.(Number(result.balance));
+      setCart([]);
+      setCartNote('');
+      Alert.alert('تم إرسال الطلب', result.message || 'تم إرسال طلب الشراء المجمع بنجاح.');
+      await load(true);
+    } catch (error) {
+      Alert.alert('تعذر إرسال الطلب', error.message || 'حاول مرة أخرى.');
+    } finally {
+      setCartSubmitting(false);
+    }
+  };
+
   const userBalance = Number(walletBalance ?? session?.user?.walletBalance ?? session?.user?.balance ?? 0);
   const groupedProducts = useMemo(() => {
     const groups = new Map();
@@ -202,10 +312,24 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
     });
   }, [products, categories]);
   const selectedGroup = groupedProducts.find(group => group.category === selectedCategory);
+  const normalizedQuery = normalizeArabicStoreSearch(searchQuery);
+  const searchMatches = useMemo(() => products
+    .map((item, index) => ({ item, index }))
+    .filter(({ item }) => matchesArabicStoreProductSearch(item, normalizedQuery)), [products, normalizedQuery]);
+  const displayedProducts = normalizedQuery ? searchMatches : (selectedGroup?.items || null);
+  const cartTotal = useMemo(() => cart.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1), 0), [cart]);
 
   return (
     <View style={{ width: '100%' }}>
       <View style={{ padding: 14, paddingBottom: 28 }}>
+        <TextInput
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholder="ابحث عن منتج أو قسم أو وصف..."
+          placeholderTextColor={COLORS.muted}
+          accessibilityLabel="البحث في منتجات المتجر"
+          style={{ backgroundColor: COLORS.white, borderWidth: 1, borderColor: COLORS.border, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, color: COLORS.text, textAlign: 'right', marginBottom: 12 }}
+        />
         <View style={[styles.dataCard, { marginBottom: 12 }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <TouchableOpacity
@@ -231,20 +355,60 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
             )) : <Text style={styles.emptyText}>لسه مفيش طلبات شراء.</Text>
           ) : null}
         </View>
-        {loading ? <ActivityIndicator color={COLORS.teal} size="large" /> : error ? <View style={styles.dataCard}><Text style={styles.errorText}>{error}</Text><Button title="إعادة المحاولة" onPress={() => load()} /></View> :
-          selectedGroup ? (
-            <View style={{ marginBottom: 12 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                <TouchableOpacity accessibilityRole="button" onPress={() => setSelectedCategory('')}
-                  style={{ paddingHorizontal: 12, paddingVertical: 9, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.white }}>
-                  <Text style={{ color: COLORS.teal, fontSize: 12, fontWeight: '900' }}>← كل الأقسام</Text>
-                </TouchableOpacity>
-                <View style={{ alignItems: 'flex-end' }}>
-                  <Text style={styles.sectionTitle}>{selectedGroup.category}</Text>
-                  <Text style={{ color: COLORS.muted, fontSize: 11, fontWeight: '700' }}>{selectedGroup.items.length} منتج</Text>
+        {cart.length ? (
+          <View style={[styles.dataCard, { marginBottom: 12 }]}>
+            <Text style={styles.cardTitleSmall}>سلة المشتريات ({cart.length})</Text>
+            {cart.map(item => (
+              <View key={item.productId} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, paddingVertical: 9, borderBottomWidth: 1, borderBottomColor: COLORS.border }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.detailBold}>{item.name}</Text>
+                  <Text style={styles.detailSmall}>{money(item.price)} × {item.quantity}</Text>
                 </View>
+                <TouchableOpacity accessibilityRole="button" accessibilityLabel={'تقليل كمية ' + item.name} onPress={() => updateCartQuantity(item.productId, Number(item.quantity) - 1)} style={{ padding: 8 }}>
+                  <Text style={{ color: COLORS.teal, fontSize: 18, fontWeight: '900' }}>−</Text>
+                </TouchableOpacity>
+                <Text style={{ color: COLORS.text, fontWeight: '900' }}>{item.quantity}</Text>
+                <TouchableOpacity accessibilityRole="button" accessibilityLabel={'زيادة كمية ' + item.name} onPress={() => updateCartQuantity(item.productId, Math.min(1000, Number(item.quantity) + 1))} style={{ padding: 8 }}>
+                  <Text style={{ color: COLORS.teal, fontSize: 18, fontWeight: '900' }}>+</Text>
+                </TouchableOpacity>
+                <TouchableOpacity accessibilityRole="button" accessibilityLabel={'حذف ' + item.name} onPress={() => updateCartQuantity(item.productId, 0)} style={{ padding: 6 }}>
+                  <Text style={{ color: COLORS.red, fontSize: 11, fontWeight: '900' }}>حذف</Text>
+                </TouchableOpacity>
               </View>
-              {selectedGroup.items.map(({ item, index }) => (
+            ))}
+            <Text style={[styles.detailBold, { textAlign: 'right', marginTop: 12 }]}>الإجمالي: {money(cartTotal)}</Text>
+            <Text style={[styles.sectionTitle, { marginTop: 10 }]}>طريقة الدفع</Text>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <TouchableOpacity onPress={() => setCartPaymentMethod('wallet')} style={{ flex: 1, padding: 11, borderRadius: 10, borderWidth: 1, borderColor: cartPaymentMethod === 'wallet' ? COLORS.teal : COLORS.border, backgroundColor: cartPaymentMethod === 'wallet' ? COLORS.indigo50 : COLORS.white }}>
+                <Text style={{ textAlign: 'center', fontWeight: '900', color: COLORS.text }}>من المحفظة</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setCartPaymentMethod('cash_on_delivery')} style={{ flex: 1, padding: 11, borderRadius: 10, borderWidth: 1, borderColor: cartPaymentMethod === 'cash_on_delivery' ? COLORS.teal : COLORS.border, backgroundColor: cartPaymentMethod === 'cash_on_delivery' ? COLORS.indigo50 : COLORS.white }}>
+                <Text style={{ textAlign: 'center', fontWeight: '900', color: COLORS.text }}>عند الاستلام</Text>
+              </TouchableOpacity>
+            </View>
+            <Field label="ملاحظات للطلب (اختياري)" value={cartNote} onChangeText={setCartNote} multiline />
+            <Button title={cartSubmitting ? 'جاري إرسال الطلب...' : 'تأكيد الطلب المجمع'} onPress={submitCartOrder} disabled={cartSubmitting} />
+          </View>
+        ) : null}
+        {loading ? <ActivityIndicator color={COLORS.teal} size="large" /> : error ? <View style={styles.dataCard}><Text style={styles.errorText}>{error}</Text><Button title="إعادة المحاولة" onPress={() => load()} /></View> :
+          displayedProducts ? (
+            <View style={{ marginBottom: 12 }}>
+              {normalizedQuery ? (
+                <Text style={[styles.sectionTitle, { textAlign: 'right', marginBottom: 12 }]}>نتائج البحث: {displayedProducts.length} منتج</Text>
+              ) : (
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                  <TouchableOpacity accessibilityRole="button" onPress={() => setSelectedCategory('')}
+                    style={{ paddingHorizontal: 12, paddingVertical: 9, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.white }}>
+                    <Text style={{ color: COLORS.teal, fontSize: 12, fontWeight: '900' }}>← كل الأقسام</Text>
+                  </TouchableOpacity>
+                  <View style={{ alignItems: 'flex-end' }}>
+                    <Text style={styles.sectionTitle}>{selectedGroup?.category}</Text>
+                    <Text style={{ color: COLORS.muted, fontSize: 11, fontWeight: '700' }}>{displayedProducts.length} منتج</Text>
+                  </View>
+                </View>
+              )}
+              {normalizedQuery && !displayedProducts.length ? <View style={styles.dataCard}><Text style={styles.emptyText}>ملقيناش منتجات مطابقة. جرّب كلمة أقصر أو كتابة مختلفة.</Text></View> : null}
+              {displayedProducts.map(({ item, index }) => (
                 <View key={String(item._id || index)} style={[styles.dataCard, { marginBottom: 10, flexDirection: 'row', alignItems: 'flex-start', gap: 12 }]}>
                   <StoreImage value={item.imageUrl} style={{ width: 96, height: 96, borderRadius: 12 }} />
                   <View style={{ flex: 1 }}>
@@ -261,7 +425,10 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
                           تفاصيل المنتج {expandedProductDetails[String(item._id || index)] ? '⌃' : '⌄'}
                         </Text>
                       </TouchableOpacity>
-                      <Button title="اطلب المنتج" onPress={() => openPurchase(item)} />
+                      <TouchableOpacity accessibilityRole="button" onPress={() => addToCart(item)} style={{ backgroundColor: COLORS.teal, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9 }}>
+                        <Text style={{ color: COLORS.white, fontWeight: '900', fontSize: 11 }}>{item.type === 'subscription' ? 'اطلب الاشتراك' : 'أضف للسلة'}</Text>
+                      </TouchableOpacity>
+                      {item.type !== 'subscription' ? <Button title="شراء مباشر" onPress={() => openPurchase(item)} /> : null}
                     </View>
                     {expandedProductDetails[String(item._id || index)] ? (
                       <View style={{ marginTop: 8, padding: 10, borderRadius: 10, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: COLORS.border, gap: 6 }}>
