@@ -1143,8 +1143,29 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     const technicianStatus = String(techData.profile?.status || session?.user?.status || '').trim();
     if (technicianStatus !== 'معتمد') { Alert.alert('الحساب غير معتمد', 'شحن المحفظة متاح بعد اعتماد حسابك من الإدارة.'); return; }
     if (!Number.isInteger(amount) || amount < 10 || amount > 10000 || !/^01[0125][0-9]{8}$/.test(phone) || !topup.method || String(topup.reference || '').trim().length > 50) { Alert.alert('بيانات غير صحيحة', 'اكتب مبلغًا من 10 إلى 10000 جنيه ورقم محوّل صحيحًا واختار نوع المحفظة.'); return; }
+    const fingerprint = JSON.stringify({ phone, amount, reference, method: topup.method });
+    const accountKey = normalizePhoneDigits(session?.user?.phone || session?.user?._id || session?.user?.id || 'account');
+    const pendingKeyStorage = 'sonaa.fanni.topup.pending.v1.' + accountKey;
+    let idempotencyKey = '';
     try {
-      const result = await api('/fanni/wallet/topup', { method: 'POST', token: session.token, body: { amount, fromPhone: phone, phone, reference, referenceCode: reference, method: topup.method, note: ('تحويل من ' + phone + ' بقيمة ' + amount + ' - كود: ' + (reference || 'بدون')).slice(0, 200) } });
+      const rawPending = await SecureStore.getItemAsync(pendingKeyStorage);
+      const pending = rawPending ? JSON.parse(rawPending) : null;
+      if (pending?.fingerprint === fingerprint && typeof pending.key === 'string' && pending.key) {
+        idempotencyKey = pending.key;
+      }
+    } catch (_) {}
+    if (!idempotencyKey) {
+      idempotencyKey = 'fanni-topup-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+      try {
+        await SecureStore.setItemAsync(pendingKeyStorage, JSON.stringify({ fingerprint, key: idempotencyKey }));
+      } catch (error) {
+        Alert.alert('تعذر تجهيز طلب الشحن', 'تعذر حفظ مفتاح حماية الطلب. حاول مرة أخرى.');
+        return;
+      }
+    }
+    try {
+      const result = await api('/fanni/wallet/topup', { method: 'POST', token: session.token, body: { amount, fromPhone: phone, phone, reference, referenceCode: reference, method: topup.method, idempotencyKey, note: ('تحويل من ' + phone + ' بقيمة ' + amount + ' - كود: ' + (reference || 'بدون')).slice(0, 200) } });
+      try { await SecureStore.deleteItemAsync(pendingKeyStorage); } catch (_) {}
       Alert.alert('تم إرسال طلب الشحن', result.message || 'طلبك قيد مراجعة الإدارة.');
       setTopup({ amount: '', fromPhone: '', reference: '', method: 'vodafone_cash' });
       setReloadKey(value => value + 1);
