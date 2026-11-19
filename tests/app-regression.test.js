@@ -955,3 +955,36 @@ test('forced password changes from client and technician login are enforced unti
   assert.ok(screens.includes('(!passwordChangeRequired && !currentPassword)'), 'current password is required only for voluntary changes');
   assert.ok(screens.includes('...(passwordChangeRequired ? {} : { currentPassword })'), 'forced password change must omit currentPassword from the API request');
 });
+
+
+test('saved client and technician passwords are silently prefilled when opening login', () => {
+  const start = app.indexOf('const goLogin = async mode =>');
+  const end = app.indexOf('const toggleArray =', start);
+  assert.ok(start >= 0 && end > start, 'login navigation handler should exist');
+  const handler = app.slice(start, end);
+  assert.ok(handler.includes('SecureStore.getItemAsync(`sonaa.auth.password.v1.${mode}.'));
+  assert.ok(handler.includes('if (savedPassword) setPassword(savedPassword)'));
+  assert.ok(!handler.includes('Alert.alert'));
+  assert.ok(!handler.includes('تسجيل دخول أسرع'));
+  assert.ok(!handler.includes('هكتبها بنفسي'));
+});
+
+test('password changes ask whether to update the securely stored password for both account roles', () => {
+  assert.ok(app.includes('function promptSavedPasswordUpdate(role, phone, newPassword, successMessage)'));
+  assert.ok(app.includes("text: 'نعم، حدّثها'"));
+  assert.ok(app.includes('SecureStore.setItemAsync(savedPasswordKey, newPassword)'));
+  assert.ok(app.includes('SecureStore.deleteItemAsync(savedPasswordKey)'));
+  const changeStart = app.indexOf('async function changeAccountPassword()');
+  const changeEnd = app.indexOf('async function startPasswordRecovery()', changeStart);
+  const changeHandler = app.slice(changeStart, changeEnd);
+  assert.ok(changeHandler.includes('promptSavedPasswordUpdate(role, session.user?.phone, newPassword'));
+  assert.ok(!changeHandler.includes('deleteItemAsync(`sonaa.auth.password.v1.'));
+});
+
+test('password recovery also offers to update the saved password without retaining stale credentials', () => {
+  const start = app.indexOf('async function resetRecoveredPassword()');
+  const end = app.indexOf('\n  useEffect(() => {\n    if (screen !== \'passwordRecovery\'', start);
+  assert.ok(start >= 0 && end > start, 'password recovery handler should exist');
+  const handler = app.slice(start, end);
+  assert.ok(handler.includes('promptSavedPasswordUpdate(recoveryForm.role, recoveryForm.phone, recoveryForm.newPassword'));
+});
