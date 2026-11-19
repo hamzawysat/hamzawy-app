@@ -1264,6 +1264,28 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     try { const result = await api('/fanni/me', { method: 'PATCH', token: session.token, body: { phone, specialties, areas: selectedAreas } }); const updatedUser = result.user || { ...session.user, pendingProfileChange: result.pendingProfileChange }; const nextSession = { ...session, user: { ...session.user, ...updatedUser, pendingProfileChange: result.pendingProfileChange || updatedUser.pendingProfileChange } }; await SecureStore.setItemAsync('sonaa.auth.session.v1', JSON.stringify(nextSession)); setSession(nextSession); setTechData(current => ({ ...current, profile: { ...(current.profile || session.user), ...updatedUser, pendingProfileChange: result.pendingProfileChange || updatedUser.pendingProfileChange } })); setProfileEditForm(current => ({ ...current, loading: false, error: '', message: result.message || 'تم إرسال طلب تعديل بياناتك للإدارة للمراجعة.' })); }
     catch (error) { setProfileEditForm(current => ({ ...current, loading: false, error: error.message || 'تعذر إرسال طلب تعديل البيانات.' })); }
   }
+  function promptSavedPasswordUpdate(role, phone, newPassword, successMessage) {
+    const normalizedPhone = normalizePhoneDigits(phone);
+    if (!['client', 'fanni'].includes(role) || !normalizedPhone || !newPassword) return;
+    const savedPasswordKey = `sonaa.auth.password.v1.${role}.${normalizedPhone}`;
+    Alert.alert('تحديث كلمة المرور المحفوظة', `${successMessage}\n\nتحب نحدّث كلمة المرور المحفوظة في الذاكرة علشان تستخدمها في تسجيل الدخول القادم؟`, [
+      {
+        text: 'لا، شكرًا',
+        style: 'cancel',
+        onPress: async () => {
+          try { await SecureStore.deleteItemAsync(savedPasswordKey); } catch (_) {}
+        }
+      },
+      {
+        text: 'نعم، حدّثها',
+        onPress: async () => {
+          try { await SecureStore.setItemAsync(savedPasswordKey, newPassword); }
+          catch (_) { Alert.alert('تعذر التحديث', 'ما قدرناش نحدّث كلمة المرور المحفوظة على الجهاز.'); }
+        }
+      }
+    ]);
+  }
+
   async function changeAccountPassword() {
     if (!session) return;
     const currentPassword = accountPasswordForm.currentPassword;
@@ -1277,7 +1299,6 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     try {
       const role = session.role === 'client' ? 'client' : 'fanni';
       const result = await api('/password-recovery/change/' + role, { method: 'POST', token: session.token, body: { ...(passwordChangeRequired ? {} : { currentPassword }), newPassword, confirmPassword } });
-      try { await SecureStore.deleteItemAsync(`sonaa.auth.password.v1.${role}.${normalizePhoneDigits(session.user?.phone)}`); } catch (_) {}
       setAccountPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '', loading: false, error: '' });
       if (passwordChangeRequired) {
         const nextSession = { ...session, mustChangePassword: false };
@@ -1286,7 +1307,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         setPasswordChangeRequired(false);
         setScreen(session.role === 'client' ? 'client' : 'technician');
       }
-      Alert.alert('حسابي', result.message || 'تم تغيير كلمة المرور.');
+      promptSavedPasswordUpdate(role, session.user?.phone, newPassword, result.message || 'تم تغيير كلمة المرور بنجاح.');
     } catch (err) {
       setAccountPasswordForm(v => ({ ...v, loading: false, error: err.message || 'تعذر تغيير كلمة المرور.' }));
     }
@@ -1334,7 +1355,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     setRecoveryForm(v => ({ ...v, loading: true, error: '' }));
     try {
       const result = await api('/password-recovery/request/' + encodeURIComponent(recoveryForm.id) + '/reset-password', { method: 'POST', headers: { 'X-Recovery-Token': recoveryForm.token }, body: { newPassword: recoveryForm.newPassword, confirmPassword: recoveryForm.confirmPassword } });
-      Alert.alert('تمت الاستعادة', result.message || 'تم تغيير كلمة المرور.');
+      promptSavedPasswordUpdate(recoveryForm.role, recoveryForm.phone, recoveryForm.newPassword, result.message || 'تم تغيير كلمة المرور بنجاح.');
       setRecoveryForm({ role: 'client', phone: '', token: '', id: '', messages: [], text: '', code: '', newPassword: '', confirmPassword: '', loading: false, error: '', info: '' });
       setScreen('login');
     } catch (err) { setRecoveryForm(v => ({ ...v, loading: false, error: err.message || 'تعذر تغيير كلمة المرور.' })); }
@@ -1404,10 +1425,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     if (lastPhone) {
       try {
         const savedPassword = await SecureStore.getItemAsync(`sonaa.auth.password.v1.${mode}.${normalizePhoneDigits(lastPhone)}`);
-        if (savedPassword) Alert.alert('تسجيل دخول أسرع', `هل تريد استخدام كلمة المرور المحفوظة للرقم ${lastPhone}؟`, [
-          { text: 'لا، هكتبها بنفسي', style: 'cancel' },
-          { text: 'استخدم كلمة المرور', onPress: () => setPassword(savedPassword) }
-        ]);
+        if (savedPassword) setPassword(savedPassword);
       } catch (_) {}
     }
   };
