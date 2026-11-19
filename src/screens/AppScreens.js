@@ -46,6 +46,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     back: { fileId: '', previewUri: '', uploading: false, status: '' }
   });
   const [identityPreviewUri, setIdentityPreviewUri] = useState('');
+  const [passwordChangeRequired, setPasswordChangeRequired] = useState(false);
 
   async function pickTechnicianIdentityImage(side, source) {
     if (!['front', 'back'].includes(side) || identityCardUploads[side]?.uploading || loginLoading) return;
@@ -273,7 +274,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
           ]);
           const user = result.client || result.user || saved.user;
           if (!user) throw new Error('استجابة التحقق من الجلسة غير مكتملة.');
-          saved = { token: saved.token, user, role: saved.role };
+          saved = { token: saved.token, user, role: saved.role, mustChangePassword: saved.mustChangePassword === true };
           await SecureStore.setItemAsync('sonaa.auth.session.v1', JSON.stringify(saved));
         } catch (error) {
           if (error?.status === 401 || error?.status === 403) {
@@ -286,9 +287,10 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         }
         if (!mounted) return;
         setSession(saved);
+        setPasswordChangeRequired(saved.mustChangePassword === true);
         if (saved.role === 'client') setClientTab('home');
         if (saved.role === 'fanni') setTechData(current => ({ ...current, tab: 'home' }));
-        const target = saved.role === 'client' ? 'client' : 'technician';
+        const target = saved.mustChangePassword ? 'changePassword' : (saved.role === 'client' ? 'client' : 'technician');
         screenRef.current = target;
         setScreenState(target);
       } catch (error) {
@@ -303,6 +305,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
 
   useEffect(() => {
     const onHardwareBack = () => {
+      if (passwordChangeRequired) return true;
       if (offerDraft) {
         setOfferDraft(null);
         return true;
@@ -343,7 +346,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     };
     const subscription = BackHandler.addEventListener('hardwareBackPress', onHardwareBack);
     return () => subscription.remove();
-  }, [screen, offerDraft, notificationsOpen, session, clientTab, setClientTab]);
+  }, [screen, offerDraft, notificationsOpen, session, clientTab, setClientTab, passwordChangeRequired]);
 
   useEffect(() => {
     if (!['client', 'technician', 'clientRegister', 'technicianRegister', 'profileEdit'].includes(screen)) return;
@@ -542,18 +545,21 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         if (!result.token || !result.user) throw new Error('استجابة تسجيل دخول الفني غير مكتملة.');
         role = 'fanni'; user = result.user;
       }
-      const nextSession = { token: result.token, user, role };
+      const mustChangePassword = result.mustChangePassword === true;
+      const nextSession = { token: result.token, user, role, mustChangePassword };
       if (role === 'client' || role === 'fanni') {
         await SecureStore.setItemAsync('sonaa.auth.session.v1', JSON.stringify(nextSession));
       }
       setSession(nextSession);
+      setPasswordChangeRequired(mustChangePassword);
       if (role === 'client') setClientTab('home');
       if (role === 'fanni') setTechData(current => ({ ...current, tab: 'home' }));
       const loginPhone = identifier;
       try { await SecureStore.setItemAsync(`sonaa.auth.lastPhone.v1.${role}`, loginPhone); } catch (_) {}
       const loginPassword = password;
       setPassword('');
-      setScreen(role === 'client' ? 'client' : 'technician');
+      setScreen(mustChangePassword ? 'changePassword' : (role === 'client' ? 'client' : 'technician'));
+      if (mustChangePassword) return;
       const savedPasswordKey = `sonaa.auth.password.v1.${role}.${normalizePhoneDigits(loginPhone)}`;
       let previouslySavedPassword = '';
       try { previouslySavedPassword = await SecureStore.getItemAsync(savedPasswordKey); } catch (_) {}
@@ -1273,6 +1279,13 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
       const result = await api('/password-recovery/change/' + role, { method: 'POST', token: session.token, body: { currentPassword, newPassword, confirmPassword } });
       try { await SecureStore.deleteItemAsync(`sonaa.auth.password.v1.${role}.${normalizePhoneDigits(session.user?.phone)}`); } catch (_) {}
       setAccountPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '', loading: false, error: '' });
+      if (passwordChangeRequired) {
+        const nextSession = { ...session, mustChangePassword: false };
+        await SecureStore.setItemAsync('sonaa.auth.session.v1', JSON.stringify(nextSession));
+        setSession(nextSession);
+        setPasswordChangeRequired(false);
+        setScreen(session.role === 'client' ? 'client' : 'technician');
+      }
       Alert.alert('حسابي', result.message || 'تم تغيير كلمة المرور.');
     } catch (err) {
       setAccountPasswordForm(v => ({ ...v, loading: false, error: err.message || 'تعذر تغيير كلمة المرور.' }));
@@ -1368,7 +1381,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     screenHistoryRef.current = [];
     screenRef.current = 'home';
     setScreenState('home');
-    setSession(null); setUsername(''); setPassword('');
+    setSession(null); setPasswordChangeRequired(false); setUsername(''); setPassword('');
     setClientData({ orders: [], loading: false, error: '', sn: '', clientToken: '' });
     setTechData({ profile: null, orders: [], offers: [], wallet: [], loading: false, error: '', tab: 'home' });
     setNotifications({ items: [], unread: 0, loading: false, error: '' });
@@ -1410,7 +1423,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
 
   if (screen === 'profileEdit') return <ProfileEditScreen session={session} techData={techData} categories={categories} profileEditForm={profileEditForm} setProfileEditForm={setProfileEditForm} areas={areas} profileEditOpenCategory={profileEditOpenCategory} setProfileEditOpenCategory={setProfileEditOpenCategory} toggleProfileEditSpecialty={toggleProfileEditSpecialty} saveProfileEdits={saveProfileEdits} setScreen={setScreen} />;
 
-  if (screen === 'changePassword') return <ChangePasswordScreen accountPasswordForm={accountPasswordForm} setAccountPasswordForm={setAccountPasswordForm} changeAccountPassword={changeAccountPassword} setScreen={setScreen} />;
+  if (screen === 'changePassword') return <ChangePasswordScreen accountPasswordForm={accountPasswordForm} setAccountPasswordForm={setAccountPasswordForm} changeAccountPassword={changeAccountPassword} setScreen={setScreen} required={passwordChangeRequired} />;
 
   if (screen === 'passwordRecovery') return <PasswordRecoveryScreen recoveryForm={recoveryForm} setRecoveryForm={setRecoveryForm} setScreen={setScreen} startPasswordRecovery={startPasswordRecovery} dateLabel={dateLabel} sendRecoveryMessage={sendRecoveryMessage} verifyRecoveryCode={verifyRecoveryCode} resetRecoveredPassword={resetRecoveredPassword} refreshPasswordRecovery={refreshPasswordRecovery} />;
 
