@@ -466,11 +466,54 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
       } catch (err) { Alert.alert('الإشعارات', err.message || 'تعذر تحديث الإشعار.'); }
     }
     setNotificationsOpen(false);
-    if (session?.role === 'fanni' && ['topup_approved', 'topup_rejected', 'fanni_wallet_credit', 'fanni_wallet_settlement'].includes(type)) {
-      setTechData(current => ({ ...current, tab: 'wallet' }));
+
+    // Match the browser notification behavior: prefer a safe same-origin tab link,
+    // then fall back to the notification type when no usable link is supplied.
+    let requestedTab = '';
+    try {
+      const target = new URL(String(item?.link || ''), 'https://hamzawy.local');
+      if (target.origin === 'https://hamzawy.local') requestedTab = String(target.searchParams.get('tab') || '');
+    } catch (_) {}
+
+    if (session?.role === 'fanni') {
+      const technicianTabs = {
+        wallet: 'wallet',
+        available: 'available',
+        store: 'store',
+        myOrders: 'currentJobs',
+        currentJobs: 'currentJobs',
+        offers: 'offers',
+        completed: 'completed',
+      };
+      let tab = technicianTabs[requestedTab] || '';
+      if (!tab) {
+        if (['topup_approved', 'topup_rejected', 'wallet_credit', 'fanni_wallet_credit', 'fanni_wallet_settlement', 'technician_settlement', 'wallet_debit', 'commission_deducted'].includes(type)) tab = 'wallet';
+        else if (type === 'new_opportunity') tab = 'available';
+        else if (type === 'store_order_update') tab = 'store';
+        else if (['offer_accepted', 'order_cancelled', 'order_completed', 'order_message', 'price_change_requested', 'client_service_refunded'].includes(type)) tab = 'currentJobs';
+      }
+      if (tab) setTechData(current => ({ ...current, tab }));
       setScreen('technician');
-    } else if (session?.role === 'client' && (type.startsWith('client_wallet_') || type === 'client_service_refunded')) {
-      setClientTab('wallet');
+    } else if (session?.role === 'client') {
+      const clientTabs = {
+        home: 'home',
+        wallet: 'wallet',
+        store: 'store',
+        subscriptions: 'subscriptions',
+        complaint: 'complaint',
+        orders: 'current',
+        current: 'current',
+        previous: 'previous',
+        track: 'track',
+      };
+      let tab = clientTabs[requestedTab] || '';
+      if (!tab) {
+        if (type.startsWith('client_wallet_') || type === 'client_service_refunded') tab = 'wallet';
+        else if (type === 'subscription_activated' || type === 'subscription_renewed') tab = 'subscriptions';
+        else if (type === 'store_order_update') tab = 'store';
+        else if (['order_created', 'new_offer', 'offer_accepted', 'order_cancelled', 'order_completed', 'order_rated'].includes(type)) tab = 'current';
+      }
+      if (tab) setClientTab(tab);
       setScreen('client');
     }
   }
