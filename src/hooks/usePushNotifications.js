@@ -49,7 +49,7 @@ export function usePushNotifications(session, onNotificationResponse) {
           await Notifications.setNotificationChannelAsync('hamzawy_official', {
             name: 'إشعارات حمزاوي سات',
             importance: Notifications.AndroidImportance.MAX,
-            sound: 'HamzawySat_Notification_V12_WOW_Loud.ogg',
+            sound: 'hamzawy_sat_notification_v12_wow_loud.ogg',
             vibrationPattern: [0, 250, 250, 250],
             lightColor: COLORS.teal500,
           });

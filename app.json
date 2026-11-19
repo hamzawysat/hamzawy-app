@@ -35,7 +35,7 @@
         {
           "defaultChannel": "hamzawy_official",
           "sounds": [
-            "./assets/notification-sounds/HamzawySat_Notification_V12_WOW_Loud.ogg"
+            "./assets/notification-sounds/hamzawy_sat_notification_v12_wow_loud.ogg"
           ]
         }
       ],
