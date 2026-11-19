@@ -516,7 +516,6 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         { text: 'حفظ كلمة المرور', onPress: async () => {
           try {
             await SecureStore.setItemAsync(`sonaa.auth.password.v1.${role}.${normalizePhoneDigits(loginPhone)}`, loginPassword);
-            Alert.alert('تم الحفظ', 'هنقترح عليك استخدام كلمة المرور دي لما ترجع تسجل بنفس الرقم.');
           } catch (_) { Alert.alert('تعذر الحفظ', 'ما قدرناش نحفظ كلمة المرور بأمان على الجهاز.'); }
         } }
       ]);
