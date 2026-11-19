@@ -1,17 +1,7 @@
 name: Publish Android OTA Update
 
 on:
-  push:
-    branches: [main, 'fix/referrals-rewards-2026-11']
-    paths:
-      - 'App.js'
-      - 'src/**'
-      - 'tests/**'
-      - 'package.json'
-      - 'app.json'
-      - '.github/workflows/ota-update.yml'
-  pull_request:
-    branches: [main]
+  # OTA publishing is manual only. No automatic publish on push or pull request.
   workflow_dispatch:
 
 concurrency:
