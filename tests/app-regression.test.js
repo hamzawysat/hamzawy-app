@@ -939,3 +939,16 @@ test('technician wallet top-ups preserve an idempotency key across retries and c
   assert.ok(handler.includes('idempotencyKey, note:'), 'the idempotency key should be sent to the backend');
   assert.ok(handler.includes('SecureStore.deleteItemAsync(pendingKeyStorage)'), 'pending key should be cleared after confirmed success');
 });
+
+
+test('forced password changes from client and technician login are enforced until completion', () => {
+  const screens = fs.readFileSync(path.join(root, 'src/screens/AppScreens.js'), 'utf8');
+  const auth = fs.readFileSync(path.join(root, 'src/screens/auth/AuthScreens.js'), 'utf8');
+  assert.ok(screens.includes('const mustChangePassword = result.mustChangePassword === true'));
+  assert.ok(screens.includes("setScreen(mustChangePassword ? 'changePassword'"));
+  assert.ok(screens.includes('mustChangePassword: saved.mustChangePassword === true'));
+  assert.ok(screens.includes("if (passwordChangeRequired) return true"));
+  assert.ok(screens.includes('setPasswordChangeRequired(false)'));
+  assert.ok(auth.includes('required = false'));
+  assert.ok(auth.includes('{!required ? <Button title="‹ رجوع إلى حسابي"'));
+});
