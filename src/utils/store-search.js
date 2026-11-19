@@ -3,7 +3,7 @@
 function normalizeArabicStoreSearch(value) {
   return String(value ?? '')
     .normalize('NFKD')
-    .replace(/[\\u064B-\\u065F\\u0670\\u0640]/g, '')
+    .replace(/[\u064B-\u065F\u0670\u0640]/g, '')
     .replace(/[أإآٱ]/g, 'ا')
     .replace(/[ؤ]/g, 'و')
     .replace(/[ئ]/g, 'ي')
@@ -12,9 +12,9 @@ function normalizeArabicStoreSearch(value) {
     .replace(/[٠-٩]/g, digit => String(digit.charCodeAt(0) - 0x0660))
     .replace(/[۰-۹]/g, digit => String(digit.charCodeAt(0) - 0x06f0))
     .toLowerCase()
-    .replace(/[^a-z0-9\\u0600-\\u06FF]+/g, ' ')
+    .replace(/[^a-z0-9\u0600-\u06FF]+/g, ' ')
     .trim()
-    .replace(/\\s+/g, ' ');
+    .replace(/\s+/g, ' ');
 }
 
 function storeSearchEditDistance(a, b, limit) {
