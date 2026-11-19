@@ -79,6 +79,18 @@ test('rating dismissal state is loaded before being considered ready for the act
   assert.match(app, /setRatingDismissalsLoaded\(true\)/);
 });
 
+test('password-save consent is asked only until a password exists for that role and phone', () => {
+  const loginStart = app.indexOf('async function handleLogin()');
+  const loginEnd = app.indexOf('async function registerClient()', loginStart);
+  const loginBody = app.slice(loginStart, loginEnd);
+  assert.ok(loginBody.includes('SecureStore.getItemAsync(savedPasswordKey)'));
+  assert.ok(loginBody.includes('if (previouslySavedPassword)'));
+  assert.ok(loginBody.includes('if (previouslySavedPassword !== loginPassword)'));
+  assert.ok(loginBody.includes("Alert.alert('حفظ بيانات الدخول'"));
+  assert.ok(loginBody.includes('sonaa.auth.password.v1.'));
+});
+
+
 test('client and technician sessions are restored from SecureStore and validated', () => {
   assert.match(app, /sonaa\.auth\.session\.v1/);
   assert.match(app, /SecureStore\.getItemAsync\('sonaa\.auth\.session\.v1'\)/);
