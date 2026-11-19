@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, Image, Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { api, getMediaUrl } from '../../services/api';
+import * as SecureStore from 'expo-secure-store';
 import { COLORS } from '../../theme/colors';
 import { styles } from '../../theme/styles';
 import { Button, Field } from '../../components/FormControls';
@@ -103,6 +104,30 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
   const [cartNote, setCartNote] = useState('');
   const [cartPaymentMethod, setCartPaymentMethod] = useState('wallet');
   const [cartSubmitting, setCartSubmitting] = useState(false);
+  const [cartLoadedFor, setCartLoadedFor] = useState('');
+  const cartStorageKey = useMemo(() => 'sonaa.store.cart.v1:' + role + ':' + String(session?.user?._id || session?.user?.id || 'account'), [role, session?.user?._id, session?.user?.id]);
+
+  useEffect(() => {
+    let active = true;
+    setCart([]);
+    setCartLoadedFor('');
+    SecureStore.getItemAsync(cartStorageKey).then(serialized => {
+      if (!active) return;
+      let saved = [];
+      try {
+        const parsed = JSON.parse(serialized || '[]');
+        if (Array.isArray(parsed)) saved = parsed.filter(item => item && typeof item.productId === 'string' && Number.isInteger(Number(item.quantity)) && Number(item.quantity) > 0);
+      } catch (_) {}
+      setCart(saved);
+      setCartLoadedFor(cartStorageKey);
+    }).catch(() => { if (active) setCartLoadedFor(cartStorageKey); });
+    return () => { active = false; };
+  }, [cartStorageKey]);
+
+  useEffect(() => {
+    if (cartLoadedFor !== cartStorageKey) return;
+    SecureStore.setItemAsync(cartStorageKey, JSON.stringify(cart)).catch(() => {});
+  }, [cart, cartLoadedFor, cartStorageKey]);
 
   const load = useCallback(async (silent = false) => {
     if (!session?.token) return;
