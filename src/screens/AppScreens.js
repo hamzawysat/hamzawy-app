@@ -146,14 +146,14 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
       } else if (type === 'store_order_update') {
         setTechData(current => ({ ...current, tab: 'store' }));
       } else if (['offer_accepted', 'order_cancelled', 'order_completed', 'order_message', 'price_change_requested', 'client_service_refunded'].includes(type)) {
-        setTechData(current => ({ ...current, tab: 'myOrders' }));
+        setTechData(current => ({ ...current, tab: 'currentJobs' }));
       }
       setScreen('technician');
     } else if (session?.role === 'client') {
       if (type.startsWith('client_wallet_') || type === 'client_service_refunded') setClientTab('wallet');
       else if (type === 'subscription_activated' || type === 'subscription_renewed') setClientTab('subscriptions');
       else if (type === 'store_order_update') setClientTab('store');
-      else if (['order_created', 'new_offer', 'offer_accepted', 'order_cancelled', 'order_completed', 'order_rated'].includes(type)) setClientTab('orders');
+      else if (['order_created', 'new_offer', 'offer_accepted', 'order_cancelled', 'order_completed', 'order_rated'].includes(type)) setClientTab('current');
       setScreen('client');
     }
   };
