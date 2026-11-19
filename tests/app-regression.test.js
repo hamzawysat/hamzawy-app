@@ -917,3 +917,12 @@ test('native store cart persists per signed-in role and account across screen ch
   assert.ok(store.includes('SecureStore.setItemAsync(cartStorageKey, JSON.stringify(cart))'));
   assert.ok(store.includes('cartLoadedFor !== cartStorageKey'));
 });
+
+
+test('client and technician notification taps use real dashboard tab keys', () => {
+  const screens = fs.readFileSync(path.join(root, 'src/screens/AppScreens.js'), 'utf8');
+  assert.ok(screens.includes("setTechData(current => ({ ...current, tab: 'currentJobs' }))"), 'technician order notifications must open the current jobs tab');
+  assert.ok(screens.includes("setClientTab('current')"), 'client order notifications must open the current orders tab');
+  assert.ok(!screens.includes("tab: 'myOrders'"), 'myOrders is a browser tab name, not a native technician tab');
+  assert.ok(!screens.includes("setClientTab('orders')"), 'orders is a browser tab name, not a native client tab');
+});
