@@ -46,9 +46,10 @@ export function usePushNotifications(session, onNotificationResponse) {
           return;
         }
         if (Platform.OS === 'android') {
-          await Notifications.setNotificationChannelAsync('default', {
-            name: 'إشعارات صُنّاع',
+          await Notifications.setNotificationChannelAsync('hamzawy_official', {
+            name: 'إشعارات حمزاوي سات',
             importance: Notifications.AndroidImportance.MAX,
+            sound: 'HamzawySat_Notification_V12_WOW_Loud.ogg',
             vibrationPattern: [0, 250, 250, 250],
             lightColor: COLORS.teal500,
           });
