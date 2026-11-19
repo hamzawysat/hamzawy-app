@@ -511,14 +511,25 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
       const loginPassword = password;
       setPassword('');
       setScreen(role === 'client' ? 'client' : 'technician');
-      Alert.alert('حفظ بيانات الدخول', 'تحب نحفظ كلمة المرور لهذا الرقم بأمان على الجهاز علشان تستخدمها المرة الجاية؟', [
-        { text: 'لا، شكرًا', style: 'cancel' },
-        { text: 'حفظ كلمة المرور', onPress: async () => {
-          try {
-            await SecureStore.setItemAsync(`sonaa.auth.password.v1.${role}.${normalizePhoneDigits(loginPhone)}`, loginPassword);
-          } catch (_) { Alert.alert('تعذر الحفظ', 'ما قدرناش نحفظ كلمة المرور بأمان على الجهاز.'); }
-        } }
-      ]);
+      const savedPasswordKey = `sonaa.auth.password.v1.${role}.${normalizePhoneDigits(loginPhone)}`;
+      let previouslySavedPassword = '';
+      try { previouslySavedPassword = await SecureStore.getItemAsync(savedPasswordKey); } catch (_) {}
+      if (previouslySavedPassword) {
+        // سبق للمستخدم الموافقة على الحفظ لهذا الحساب؛ لا نكرر السؤال.
+        // لو كلمة المرور اتغيرت خارج التطبيق، نحدّث النسخة المحفوظة بعد نجاح الدخول.
+        if (previouslySavedPassword !== loginPassword) {
+          try { await SecureStore.setItemAsync(savedPasswordKey, loginPassword); } catch (_) {}
+        }
+      } else {
+        Alert.alert('حفظ بيانات الدخول', 'تحب نحفظ كلمة المرور لهذا الرقم بأمان على الجهاز علشان تستخدمها المرة الجاية؟', [
+          { text: 'لا، شكرًا', style: 'cancel' },
+          { text: 'حفظ كلمة المرور', onPress: async () => {
+            try {
+              await SecureStore.setItemAsync(savedPasswordKey, loginPassword);
+            } catch (_) { Alert.alert('تعذر الحفظ', 'ما قدرناش نحفظ كلمة المرور بأمان على الجهاز.'); }
+          } }
+        ]);
+      }
     } catch (err) {
       Alert.alert('تعذر تسجيل الدخول', err.message || 'راجع البيانات وحاول مرة أخرى.');
     } finally { setLoginLoading(false); }
