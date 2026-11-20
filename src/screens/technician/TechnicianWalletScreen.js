@@ -66,7 +66,7 @@ export default function TechnicianWalletScreen({ session, user, transferNumbers,
           </TouchableOpacity>)}
       </View>
       {error ? <View style={styles.dataCard}><Text style={styles.errorText}>{error}</Text></View> : null}
-      {loading ? <ActivityIndicator color={COLORS.teal} /> : null}
+      {loading ? <ActivityIndicator color={COLORS.navy} /> : null}
       {tab === 'topup' ? <View style={styles.dataCard}>
         <Text style={styles.cardTitlePremium}>أرقام التحويل المعتمدة</Text>
         {[1, 2].map(index => {
@@ -82,7 +82,7 @@ export default function TechnicianWalletScreen({ session, user, transferNumbers,
         <Field label="رقم الهاتف المحوّل منه" value={topup.fromPhone} onChangeText={value => setTopup(current => ({ ...current, fromPhone: value }))} keyboardType="phone-pad" />
         <Text style={styles.sectionTitle}>نوع المحفظة المحوَّل منها</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 7 }}>
-          {METHODS.map(item => <TouchableOpacity key={item.id} onPress={() => setTopup(current => ({ ...current, method: item.id }))} style={{ padding: 9, borderRadius: 9, borderWidth: 1, borderColor: topup.method === item.id ? COLORS.teal : COLORS.border, backgroundColor: topup.method === item.id ? COLORS.indigo50 : COLORS.white }}>
+          {METHODS.map(item => <TouchableOpacity key={item.id} onPress={() => setTopup(current => ({ ...current, method: item.id }))} style={{ padding: 9, borderRadius: 9, borderWidth: 1, borderColor: topup.method === item.id ? COLORS.navy : COLORS.border, backgroundColor: topup.method === item.id ? '#EEF2FF' : COLORS.white }}>
             <Text style={{ fontSize: 11, fontWeight: '800', color: COLORS.text }}>{item.label}</Text>
           </TouchableOpacity>)}
         </View>
