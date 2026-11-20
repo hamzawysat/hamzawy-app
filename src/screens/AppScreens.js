@@ -1469,13 +1469,13 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
       {!isClient && <>
         <Text style={styles.sectionTitle}>اختار الخدمات اللي بتقدمها</Text>
         {servicesLoading && categories.length === 0 ? <View style={{ paddingVertical: 14, alignItems: 'center' }}>
-          <ActivityIndicator color={COLORS.teal} />
+          <ActivityIndicator color={COLORS.navy} />
           <Text style={[styles.detail, { textAlign: 'center' }]}>جاري تحميل الخدمات...</Text>
         </View> : null}
         {!servicesLoading && servicesError && categories.length === 0 ? <View style={{ backgroundColor: COLORS.dangerBg, borderWidth: 1, borderColor: COLORS.dangerBorder, borderRadius: 12, padding: 12, marginBottom: 10 }}>
           <Text style={[styles.errorText, { textAlign: 'center' }]}>تعذر تحميل الخدمات. تحقق من اتصال الإنترنت ثم أعد المحاولة.</Text>
           <TouchableOpacity onPress={() => setReloadKey(value => value + 1)} disabled={servicesLoading}
-            style={{ alignSelf: 'center', backgroundColor: COLORS.teal, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 10, marginTop: 6 }}>
+            style={{ alignSelf: 'center', backgroundColor: COLORS.navy, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 10, marginTop: 6 }}>
             <Text style={{ color: COLORS.white, fontWeight: '900', fontSize: 13 }}>إعادة تحميل الخدمات</Text>
           </TouchableOpacity>
         </View> : null}
@@ -1504,8 +1504,8 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
                 <TouchableOpacity disabled={upload.uploading || loginLoading} onPress={() => pickTechnicianIdentityImage(side, 'gallery')} style={{ flex: 1, minHeight: 42, borderRadius: 10, borderWidth: 1, borderColor: '#BFDBFE', backgroundColor: '#EFF6FF', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 }}>
                   <Text style={{ color: '#1E40AF', fontSize: 11, fontWeight: '900', textAlign: 'center' }}>{upload.fileId ? 'اختيار من المعرض مرة أخرى' : 'اختيار من المعرض'}</Text>
                 </TouchableOpacity>
-                <TouchableOpacity disabled={upload.uploading || loginLoading} onPress={() => pickTechnicianIdentityImage(side, 'camera')} style={{ flex: 1, minHeight: 42, borderRadius: 10, borderWidth: 1, borderColor: '#A7F3D0', backgroundColor: '#ECFDF5', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 }}>
-                  <Text style={{ color: '#047857', fontSize: 11, fontWeight: '900', textAlign: 'center' }}>📷 التقاط بالكاميرا</Text>
+                <TouchableOpacity disabled={upload.uploading || loginLoading} onPress={() => pickTechnicianIdentityImage(side, 'camera')} style={{ flex: 1, minHeight: 42, borderRadius: 10, borderWidth: 1, borderColor: '#C7D2FE', backgroundColor: '#EEF2FF', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 }}>
+                  <Text style={{ color: '#102A9B', fontSize: 11, fontWeight: '900', textAlign: 'center' }}>📷 التقاط بالكاميرا</Text>
                 </TouchableOpacity>
               </View>
               {upload.previewUri ? <View style={{ flexDirection: 'row-reverse', gap: 8 }}>
@@ -1551,7 +1551,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         </View>
         <TouchableOpacity disabled={!guidelinesReachedEnd} onPress={() => setGuidelinesChecked(value => !value)} activeOpacity={0.8}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, opacity: guidelinesReachedEnd ? 1 : 0.45 }}>
-          <View style={{ width: 24, height: 24, borderRadius: 6, borderWidth: 2, borderColor: guidelinesChecked ? COLORS.teal : COLORS.muted, backgroundColor: guidelinesChecked ? COLORS.teal : COLORS.white, alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ width: 24, height: 24, borderRadius: 6, borderWidth: 2, borderColor: guidelinesChecked ? COLORS.navy : COLORS.muted, backgroundColor: guidelinesChecked ? COLORS.navy : COLORS.white, alignItems: 'center', justifyContent: 'center' }}>
             <Text style={{ color: COLORS.white, fontWeight: '900' }}>{guidelinesChecked ? '✓' : ''}</Text>
           </View>
           <Text style={[styles.detail, { flex: 1, fontWeight: '800', color: COLORS.text }]}>

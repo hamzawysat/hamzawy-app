@@ -97,7 +97,7 @@ export default function ClientSubscriptionsScreen({ session, walletBalance = 0, 
         <View style={{ flex: 1 }}><Button title={'الاشتراكات المتاحة (' + items.length + ')'} secondary={view !== 'available'} onPress={() => setView('available')} /></View>
       </View>
       {error ? <View style={styles.dataCard}><Text style={styles.errorText}>{error}</Text><Button title="إعادة المحاولة" secondary onPress={load} /></View> : null}
-      {loading ? <ActivityIndicator color={COLORS.teal} /> : null}
+      {loading ? <ActivityIndicator color={COLORS.navy} /> : null}
       {view === 'available' ? <View style={styles.dataCard}>
         <Text style={styles.cardTitleSmall}>الاشتراكات المتاحة</Text>
         {items.length ? items.map((item, index) => <View key={String(item._id || index)} style={{ paddingVertical: 11, borderTopWidth: index ? 1 : 0, borderColor: COLORS.border }}>

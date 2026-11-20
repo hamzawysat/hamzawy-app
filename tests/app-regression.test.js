@@ -299,6 +299,14 @@ test('technician completed orders expose a manual client rating button only when
   assert.ok(app.includes("(item.ratings || []).some(r => r.reviewerRole === 'fanni')"));
 });
 
+test('client previous-order classification includes every completed status used by account history', () => {
+  const clientScreen = fs.readFileSync(path.join(root, 'src/screens/client/ClientDashboard.js'), 'utf8');
+  assert.match(clientScreen, /const CLIENT_PREVIOUS_ORDER_STATUSES = new Set\(\[.*'مكتمل'.*'مكتملة'.*'completed'.*'complete'.*'finished'/);
+  assert.match(clientScreen, /function isPreviousClientOrder\(order\)/);
+  assert.ok(clientScreen.includes('isPreviousClientOrder(order)'));
+  assert.ok(clientScreen.includes('isPreviousClientOrder(o)'));
+});
+
 test('client current orders tab is labeled الطلبات الجارية', () => {
   assert.ok(app.includes("{key:'current',label:'الطلبات الجارية'"));
   assert.ok(!app.includes("{key:'current',label:'جارية'"));
@@ -307,8 +315,8 @@ test('client current orders tab is labeled الطلبات الجارية', () =>
 test('client and technician notifications visually distinguish unread items and provide read all', () => {
   assert.equal(app.split('title="قراءة الكل" secondary onPress={markAllNotificationsRead}').length - 1, 2);
   assert.equal(app.split('(item.read || item.readAt) ? styles.notificationRead : styles.notificationUnread').length - 1, 2);
-  assert.ok(app.includes("notificationRead: { backgroundColor: COLORS.background, opacity: 0.62 }"));
-  assert.ok(app.includes("notificationReadText: { color: COLORS.muted }"));
+  assert.ok(app.includes("notificationRead: { backgroundColor: '#F8F9FC', opacity: 0.76 }"));
+  assert.ok(app.includes("notificationReadText: { color: '#71809A' }"));
   assert.ok(app.includes("unread: 0 }));"));
 });
 
@@ -617,8 +625,10 @@ test('native store ads use one server-clock schedule shared by clients and techn
   assert.ok(!store.includes('setInterval'));
   const client = fs.readFileSync(path.join(root, 'src/screens/client/ClientDashboard.js'), 'utf8');
   const tech = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianDashboard.js'), 'utf8');
-  assert.ok(client.includes("visible={clientTab !== 'store'}"));
-  assert.ok(tech.includes("visible={tab !== 'store'}"));
+  assert.ok(client.includes('<StoreAdBanner role="client" session={session} visible={clientTab !== \'store\'}'));
+  assert.ok(tech.includes('<StoreAdBanner role="fanni" session={session} visible={tab !== \'store\'}'));
+  assert.ok(client.includes("onOpenStore={() => setClientTab('store')}"));
+  assert.ok(tech.includes("onOpenStore={() => setTechData(v => ({ ...v, tab: 'store' }))}"));
 });
 
 test('technician dashboard includes browser home, store, support, filters, pagination and full wallet tabs', () => {

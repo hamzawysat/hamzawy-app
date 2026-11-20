@@ -35,9 +35,9 @@ export default function ReferralCard({ session, kind, cardRef, expanded = false,
     try { await Share.share({ message: invitationMessage + '\n' + data.url }); }
     catch (e) { Alert.alert('تعذر المشاركة', e.message || 'حاول مرة أخرى.'); }
   };
-  return <View ref={cardRef} collapsable={false} style={[styles.dataCard, { borderWidth: 1, borderColor: COLORS.teal, marginTop: 12 }]}>
+  return <View ref={cardRef} collapsable={false} style={[styles.dataCard, { borderWidth: 1, borderColor: COLORS.navy, marginTop: 12 }]}>
     <Text style={styles.cardTitlePremium}>{title}</Text>
-    {showToggle ? <TouchableOpacity onPress={() => onExpandedChange?.(!expanded)} accessibilityRole="button" style={{ paddingVertical: 10, paddingHorizontal: 12, borderRadius: 10, backgroundColor: COLORS.indigo50, marginTop: 6 }}>
+    {showToggle ? <TouchableOpacity onPress={() => onExpandedChange?.(!expanded)} accessibilityRole="button" style={{ paddingVertical: 10, paddingHorizontal: 12, borderRadius: 10, backgroundColor: '#EEF2FF', marginTop: 6 }}>
       <Text style={{ textAlign: 'center', color: COLORS.navy, fontWeight: '900' }}>{expanded ? 'إخفاء تفاصيل الدعوة ▲' : 'عرض تفاصيل الدعوة ▼'}</Text>
     </TouchableOpacity> : null}
     {expanded ? <>
@@ -64,7 +64,7 @@ export default function ReferralCard({ session, kind, cardRef, expanded = false,
         <Text style={styles.detailSmall}>الإنجاز: {Number(item.completedCount || 0)} / {Number(item.requiredCount || (isClient ? 1 : 3))} • مكافأتك: {item.inviterReward?.paidAt ? 'تم الصرف' : 'لم تصرف'} • مكافأة المدعو: {item.inviteeReward?.paidAt ? 'تم الصرف' : 'لم تصرف'}</Text>
       </View>)}
     </View> : null}
-    <TouchableOpacity onPress={load} disabled={loading} style={{ paddingVertical: 8 }}><Text style={{ textAlign: 'center', color: COLORS.teal, fontWeight: '900' }}>تحديث بيانات الدعوة</Text></TouchableOpacity>
+    <TouchableOpacity onPress={load} disabled={loading} style={{ paddingVertical: 8 }}><Text style={{ textAlign: 'center', color: COLORS.navy, fontWeight: '900' }}>تحديث بيانات الدعوة</Text></TouchableOpacity>
     </> : <Text style={[styles.detail, { marginTop: 8, fontSize: 14, lineHeight: 22, fontWeight: '700', color: COLORS.navy }]}>{isClient ? 'عن كل صديق جديد يسجل من رابط دعوتك ويكمل أول طلب، تحصل أنت وهو على 50 جنيهًا مكافأة.' : 'كل فني جديد يسجل من رابطك ويكمل 3 طلبات يمنحك ويمنحه 150 جنيهًا مكافأة.'} {loading ? 'جاري تحميل البيانات...' : ''}</Text>}
   </View>;
 }

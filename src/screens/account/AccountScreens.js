@@ -9,6 +9,11 @@ export function AccountScreen({ session, clientData, techData, setScreen, beginP
     const history = isClientAccount ? clientData.orders : session?.role === 'fanni' ? techData.offers : [];
     const completedHistory = (history || []).filter(item => ['تم الانتهاء', 'مكتمل', 'مكتملة', 'completed', 'complete', 'finished'].includes(String(item.status || item.orderStatus || '').trim().toLowerCase()));
     const content = <>
+      <View style={{ backgroundColor: '#101F9B', borderRadius: 21, padding: 17, marginBottom: 10, shadowColor: '#07136E', shadowOpacity: 0.15, shadowRadius: 12, elevation: 4 }}>
+        <Text style={{ color: '#DCE5FF', fontSize: 11, fontWeight: '800', textAlign: 'right' }}>حسابك على حمزاوي سات</Text>
+        <Text style={{ color: '#FFFFFF', fontSize: 20, fontWeight: '900', textAlign: 'right', marginTop: 7 }}>{session?.user?.name || 'أهلاً بيك'}</Text>
+        <Text style={{ color: '#E2E8FF', fontSize: 12, fontWeight: '700', textAlign: 'right', marginTop: 4 }}>{isClientAccount ? 'حساب عميل' : session?.role === 'fanni' ? 'حساب فني' : 'حساب الإدارة'}</Text>
+      </View>
       {!embedded ? <Button title="‹ رجوع" secondary onPress={() => setScreen(session?.role === 'client' ? 'client' : session?.role === 'fanni' ? 'technician' : 'admin')} /> : null}
       <View style={styles.dataCard}>
         <Text style={styles.sectionTitle}>بيانات الحساب</Text>

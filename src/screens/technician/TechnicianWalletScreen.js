@@ -53,19 +53,20 @@ export default function TechnicianWalletScreen({ session, user, transferNumbers,
 
   return (
     <ScrollView contentContainerStyle={styles.technicianPage} showsVerticalScrollIndicator={false}>
-      <View style={styles.walletCard}>
-        <Text style={styles.walletTitle}>المحفظة 💰</Text>
+      <View style={[styles.walletCard, { backgroundColor: '#101F9B', borderColor: '#101F9B', borderRadius: 23, padding: 19, shadowColor: '#07136E', shadowOpacity: 0.2, shadowRadius: 14, elevation: 5 }]}>
+        <Text style={[styles.walletTitle, { color: '#DCE5FF' }]}>محفظة حمزاوي سات</Text>
+        <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: '800', textAlign: 'right', marginTop: 5 }}>رصيدك الحالي</Text>
         <Text style={styles.walletAmount}>{Number(user?.walletBalance || user?.balance || 0).toLocaleString('ar-EG')} جنيه</Text>
         <Button title={loading ? 'جاري التحديث...' : 'تحديث الرصيد والسجل'} secondary onPress={load} disabled={loading} />
       </View>
       <View style={{ flexDirection: 'row', gap: 6, marginVertical: 10 }}>
         {[{ id: 'topup', label: 'شحن المحفظة' }, { id: 'requests', label: 'طلبات الشحن' }, { id: 'transactions', label: 'سجل العمليات' }].map(item =>
-          <TouchableOpacity key={item.id} onPress={() => setTab(item.id)} style={{ flex: 1, minHeight: 48, justifyContent: 'center', padding: 7, borderRadius: 10, borderWidth: 1, borderColor: tab === item.id ? COLORS.navy : COLORS.border, backgroundColor: tab === item.id ? COLORS.navy : COLORS.white }}>
+          <TouchableOpacity key={item.id} onPress={() => setTab(item.id)} style={{ flex: 1, minHeight: 48, justifyContent: 'center', padding: 7, borderRadius: 14, borderWidth: 1, borderColor: tab === item.id ? '#101F9B' : '#E5E9F2', backgroundColor: tab === item.id ? '#101F9B' : COLORS.white }}>
             <Text style={{ color: tab === item.id ? COLORS.white : COLORS.text, fontSize: 10, fontWeight: '900', textAlign: 'center' }}>{item.label}</Text>
           </TouchableOpacity>)}
       </View>
       {error ? <View style={styles.dataCard}><Text style={styles.errorText}>{error}</Text></View> : null}
-      {loading ? <ActivityIndicator color={COLORS.teal} /> : null}
+      {loading ? <ActivityIndicator color={COLORS.navy} /> : null}
       {tab === 'topup' ? <View style={styles.dataCard}>
         <Text style={styles.cardTitlePremium}>أرقام التحويل المعتمدة</Text>
         {[1, 2].map(index => {
@@ -81,7 +82,7 @@ export default function TechnicianWalletScreen({ session, user, transferNumbers,
         <Field label="رقم الهاتف المحوّل منه" value={topup.fromPhone} onChangeText={value => setTopup(current => ({ ...current, fromPhone: value }))} keyboardType="phone-pad" />
         <Text style={styles.sectionTitle}>نوع المحفظة المحوَّل منها</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 7 }}>
-          {METHODS.map(item => <TouchableOpacity key={item.id} onPress={() => setTopup(current => ({ ...current, method: item.id }))} style={{ padding: 9, borderRadius: 9, borderWidth: 1, borderColor: topup.method === item.id ? COLORS.teal : COLORS.border, backgroundColor: topup.method === item.id ? COLORS.indigo50 : COLORS.white }}>
+          {METHODS.map(item => <TouchableOpacity key={item.id} onPress={() => setTopup(current => ({ ...current, method: item.id }))} style={{ padding: 9, borderRadius: 9, borderWidth: 1, borderColor: topup.method === item.id ? COLORS.navy : COLORS.border, backgroundColor: topup.method === item.id ? '#EEF2FF' : COLORS.white }}>
             <Text style={{ fontSize: 11, fontWeight: '800', color: COLORS.text }}>{item.label}</Text>
           </TouchableOpacity>)}
         </View>
