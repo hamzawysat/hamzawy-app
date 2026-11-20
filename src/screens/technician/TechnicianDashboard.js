@@ -113,7 +113,7 @@ export function TechnicianDashboard({ context }) {
           {tab === 'home' && <ScrollView ref={referralScrollRef} contentContainerStyle={[styles.technicianPage,{paddingHorizontal:12,paddingTop:8,paddingBottom:132}]}>
             <View style={{flexDirection:'row-reverse',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
               <View style={{flexDirection:'row-reverse',alignItems:'center',flex:1}}>
-                <View style={{width:48,height:48,borderRadius:24,backgroundColor:'#102A9B',alignItems:'center',justifyContent:'center',marginLeft:9}}><Text style={{color:'#FFF',fontSize:23,fontWeight:'900'}}>{String(user.name||'ف').trim().charAt(0)}</Text></View>
+                <View style={{width:34,height:34,alignItems:'center',justifyContent:'center',marginLeft:9}}><Text style={{color:'#8195E5',fontSize:35,lineHeight:37,fontWeight:'900',textShadowColor:'#DCE4FF',textShadowOffset:{width:0,height:1},textShadowRadius:3}}>✦</Text><Text style={{position:'absolute',color:'#172554',fontSize:14,fontWeight:'900',fontStyle:'italic',textShadowColor:'#FFFFFF',textShadowOffset:{width:0,height:0},textShadowRadius:2,transform:[{rotate:'-8deg'}]}}>{String(user.name||'ف').trim().charAt(0)}</Text></View>
                 <View style={{flex:1}}><Text style={{color:'#09145B',fontSize:16,fontWeight:'900',textAlign:'right'}}>مرحباً {user.name||'بك'}</Text><Text style={{color:'#46506B',fontSize:11,fontWeight:'700',textAlign:'right',marginTop:3}}>{user.level||'مبتدئ'} • معتمد • {Number(user.walletBalance||user.balance||0).toLocaleString('ar-EG')} جنيه</Text></View>
               </View>
               <TouchableOpacity
