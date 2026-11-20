@@ -157,7 +157,7 @@ export const styles = StyleSheet.create({
   voiceRecorderSaved: { color: COLORS.greenDark, fontSize: 12, fontWeight: '800', textAlign: 'right' },
   voicePlaybackButton: { marginTop: 10, backgroundColor: COLORS.indigo900, borderRadius: 10, paddingVertical: 11, paddingHorizontal: 12, alignItems: 'center' },
   voicePlaybackText: { color: COLORS.white, fontSize: 13, fontWeight: '900', textAlign: 'center' },
-  serviceDescriptionBox: { backgroundColor: '#EEF2FF', borderRightWidth: 4, borderRightColor: '#263DBB', borderRadius: 15, paddingVertical: 14, paddingHorizontal: 15, marginTop: 10, marginBottom: 8 },
+  serviceDescriptionBox: { backgroundColor: COLORS.indigo50, borderRightWidth: 4, borderRightColor: '#263DBB', borderRadius: 15, paddingVertical: 14, paddingHorizontal: 15, marginTop: 10, marginBottom: 8 },
   serviceDescriptionLabel: { color: '#172DAD', fontSize: 13, fontWeight: '900', textAlign: 'right', marginBottom: 7 },
   serviceDescriptionText: { color: '#172554', fontSize: 16, fontWeight: '700', lineHeight: 27, textAlign: 'right' },
   detailBold: { color: COLORS.navy, fontSize: 13, fontWeight: '800', textAlign: 'right', marginTop: 6 },
