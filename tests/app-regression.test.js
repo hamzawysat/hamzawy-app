@@ -374,6 +374,19 @@ test('wallet transfer notice explains accepted routes in both client and technic
 });
 
 
+test('client order validation shows a separate message for each missing field', () => {
+  const screens = fs.readFileSync(path.join(root, 'src/screens/AppScreens.js'), 'utf8');
+  const start = screens.indexOf('  async function createOrder() {');
+  const end = screens.indexOf('  async function trackClientOrder()', start);
+  const createOrder = screens.slice(start, end);
+  assert.ok(createOrder.includes("Alert.alert('الخدمة التفصيلية مطلوبة', 'اختار الخدمة التفصيلية لإكمال الطلب.')"));
+  assert.ok(createOrder.includes("Alert.alert('المنطقة مطلوبة', 'اختار منطقة العمل من القائمة لإكمال الطلب.')"));
+  assert.ok(createOrder.includes("if (detailedAddress.length < 10)"));
+  assert.ok(createOrder.includes('اكتب العنوان بالتفصيل في 10 أحرف على الأقل'));
+  assert.ok(!createOrder.includes("'بيانات ناقصة'"), 'combined missing-data alert should be removed');
+  assert.ok(createOrder.includes("if (description.length < 10 && !form.voiceRecordingData)"));
+});
+
 test('client request form Enter advances from detailed description to budget and submits from budget', () => {
   const descriptionField = app.match(/<Field inputRef=\{clientDescriptionInputRef\}[^\n]+/);
   const budgetField = app.match(/<Field inputRef=\{clientBudgetInputRef\}[^\n]+/);
