@@ -1,7 +1,7 @@
 export function normalizeAreaSearch(value) {
   return String(value || '')
     .normalize('NFKC')
-    .replace(/[\\u064B-\\u065F\\u0670\\u0640\\u200E\\u200F\\u202A-\\u202E\\u2066-\\u2069]/g, '')
+    .replace(/[\u064B-\u065F\u0670\u0640\u200E\u200F\u202A-\u202E\u2066-\u2069]/g, '')
     .replace(/[أإآٱ]/g, 'ا')
     .replace(/[ؤ]/g, 'و')
     .replace(/[ئ]/g, 'ي')
@@ -9,13 +9,13 @@ export function normalizeAreaSearch(value) {
     .replace(/[ة]/g, 'ه')
     .replace(/[٠-٩]/g, digit => String(digit.charCodeAt(0) - 0x0660))
     .replace(/[۰-۹]/g, digit => String(digit.charCodeAt(0) - 0x06f0))
-    .replace(/\\s+/g, ' ')
+    .replace(/\s+/g, ' ')
     .trim()
     .toLocaleLowerCase('ar-EG');
 }
 
 export function isReservedAreaLabel(value) {
-  return normalizeAreaSearch(value).replace(/\\s+/g, '') === normalizeAreaSearch('جميع المناطق').replace(/\\s+/g, '');
+  return normalizeAreaSearch(value).replace(/\s+/g, '') === normalizeAreaSearch('جميع المناطق').replace(/\s+/g, '');
 }
 
 function areaSearchEditDistance(a, b, limit) {
