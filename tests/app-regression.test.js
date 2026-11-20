@@ -552,6 +552,7 @@ test('area search normalizes Arabic alif variants and strips diacritics and invi
   assert.match(helpers, /\[أإآٱ\]\/g/);
   assert.match(helpers, /\\u064B-\\u065F/);
   assert.match(helpers, /isReservedAreaLabel/);
+  assert.match(helpers, /replace\\(\/\\[ة\\]\/g, 'ه'\\)/, 'Arabic ta marbuta and ha should normalize consistently');
 });
 
 test('technician registration and profile edits use approved multi-select areas, not free text', () => {
