@@ -617,8 +617,10 @@ test('native store ads use one server-clock schedule shared by clients and techn
   assert.ok(!store.includes('setInterval'));
   const client = fs.readFileSync(path.join(root, 'src/screens/client/ClientDashboard.js'), 'utf8');
   const tech = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianDashboard.js'), 'utf8');
-  assert.ok(client.includes("visible={clientTab !== 'store'}"));
-  assert.ok(tech.includes("visible={tab !== 'store'}"));
+  assert.ok(client.includes('<StoreAdBanner role="client" session={session} visible={clientTab !== \'store\'}'));
+  assert.ok(tech.includes('<StoreAdBanner role="fanni" session={session} visible={tab !== \'store\'}'));
+  assert.ok(client.includes("onOpenStore={() => setClientTab('store')}"));
+  assert.ok(tech.includes("onOpenStore={() => setTechData(v => ({ ...v, tab: 'store' }))}"));
 });
 
 test('technician dashboard includes browser home, store, support, filters, pagination and full wallet tabs', () => {
