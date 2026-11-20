@@ -72,14 +72,14 @@ export function StoreAdBanner({ role, session, visible = true, onOpenStore }) {
   if (!visible || !displayReady || !item) return null;
   return (
     <TouchableOpacity accessibilityRole="button" onPress={onOpenStore}
-      style={{ marginHorizontal: 14, marginTop: 8, marginBottom: 4, padding: 10, borderRadius: 14, borderWidth: 1, borderColor: '#DCE6F2', backgroundColor: '#FFFFFF', flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+      style={{ marginHorizontal: 14, marginTop: 9, marginBottom: 6, padding: 12, borderRadius: 18, borderWidth: 1, borderColor: '#D8E1FF', backgroundColor: '#EEF2FF', flexDirection: 'row', alignItems: 'center', gap: 11, shadowColor: '#102A9B', shadowOpacity: 0.07, shadowRadius: 9, shadowOffset: { width: 0, height: 3 }, elevation: 2 }}>
       <StoreImage value={item.imageUrl} style={{ width: 62, height: 62, borderRadius: 10 }} />
       <View style={{ flex: 1 }}>
-        <Text style={{ color: '#64748B', fontSize: 10, fontWeight: '800' }}>عرض من متجر حمزاوي سات</Text>
+        <Text style={{ color: '#102A9B', fontSize: 10, fontWeight: '900' }}>إعلان من متجر حمزاوي سات</Text>
         <Text numberOfLines={1} style={{ color: COLORS.text, fontSize: 13, fontWeight: '900', marginTop: 3 }}>{item.name || 'منتج مميز'}</Text>
-        <Text style={{ color: COLORS.teal, fontSize: 12, fontWeight: '900', marginTop: 3 }}>{money(item.price)}</Text>
+        <Text style={{ color: '#102A9B', fontSize: 12, fontWeight: '900', marginTop: 3 }}>{money(item.price)}</Text>
       </View>
-      <Text style={{ color: COLORS.teal, fontWeight: '900' }}>شاهد ←</Text>
+      <Text style={{ color: '#102A9B', fontWeight: '900' }}>شاهد ←</Text>
     </TouchableOpacity>
   );
 }
