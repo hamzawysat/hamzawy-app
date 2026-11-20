@@ -33,7 +33,7 @@ function AppContent() {
   return <View style={styles.appRoot}>
     {showBrandHeader ? <SafeAreaView style={styles.brandHeaderSafe}>
       <View style={styles.brandHeader}>
-        {headerInitial ? <View style={styles.brandHeaderAvatar}><Text style={styles.brandHeaderAvatarText}>{headerInitial}</Text></View> : null}
+        {headerInitial ? <View style={styles.brandHeaderAvatar}><Text style={styles.brandHeaderAvatarStar}>✦</Text><Text style={styles.brandHeaderAvatarText}>{headerInitial}</Text></View> : null}
         <Image source={require("./assets/LOGO_UPLOAD_HERE/logo.png")} style={styles.brandHeaderLogo} resizeMode="contain" />
         <Text style={styles.brandHeaderTitle}>حمزاوي سات</Text>
       </View>
