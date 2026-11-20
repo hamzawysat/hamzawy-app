@@ -105,7 +105,7 @@ export function ClientDashboard({ context }) {
       </View>
       <View style={{minHeight:76,paddingHorizontal:16,paddingVertical:10,backgroundColor:'#F2F4F9',flexDirection:'row-reverse',alignItems:'center',justifyContent:'space-between'}}>
         <View style={{flexDirection:'row-reverse',alignItems:'center',flex:1}}>
-          <View style={{width:48,height:48,borderRadius:24,backgroundColor:'#102A9B',alignItems:'center',justifyContent:'center',marginLeft:10}}><Text style={{color:'#FFF',fontSize:23,fontWeight:'900'}}>{String(session.user?.name||'ع').trim().charAt(0)}</Text></View>
+          <View style={{width:34,height:34,alignItems:'center',justifyContent:'center',marginLeft:10}}><Text style={{color:'#8195E5',fontSize:35,lineHeight:37,fontWeight:'900',textShadowColor:'#DCE4FF',textShadowOffset:{width:0,height:1},textShadowRadius:3}}>✦</Text><Text style={{position:'absolute',color:'#172554',fontSize:14,fontWeight:'900',fontStyle:'italic',textShadowColor:'#FFFFFF',textShadowOffset:{width:0,height:0},textShadowRadius:2,transform:[{rotate:'-8deg'}]}}>{String(session.user?.name||'ع').trim().charAt(0)}</Text></View>
           <View style={{flex:1}}><Text style={{color:'#09145B',fontSize:16,fontWeight:'900',textAlign:'right'}}>مرحباً {session.user?.name||'بك'}</Text><Text style={{color:'#46506B',fontSize:12,fontWeight:'700',textAlign:'right',marginTop:3}}>عميل • {walletBalance.toLocaleString('ar-EG')} جنيه</Text></View>
         </View>
       </View>
