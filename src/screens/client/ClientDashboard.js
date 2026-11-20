@@ -117,6 +117,18 @@ export function ClientDashboard({ context }) {
       {clientTab === 'home' ? <TouchableOpacity accessibilityRole="button" accessibilityLabel="ادعُ صديقك لتحصل على 50 جنيه مكافأة" onPress={() => setReferralPageOpen(true)} activeOpacity={0.88} style={{ marginBottom: 12, padding: 12, borderRadius: 16, borderWidth: 1, borderColor: '#FDE68A', backgroundColor: '#FFFBEB', flexDirection: 'row', alignItems: 'center', gap: 10 }}><View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: '#FEF3C7', alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 24 }}>🎁</Text></View><View style={{ flex: 1 }}><Text style={{ color: '#451A03', fontWeight: '900', fontSize: 14 }}>ادعُ صديقك لتحصل على 50 جنيه مكافأة</Text><Text style={{ color: '#92400E', fontSize: 11, fontWeight: '800', marginTop: 3 }}>اضغط هنا لدعوة صديقك</Text></View><Text style={{ color: '#92400E', fontWeight: '900', fontSize: 20 }}>←</Text></TouchableOpacity> : null}
       {clientTab === 'home' ? <View style={styles.formCard}>
         <Text style={styles.cardTitlePremium}>أهلاً {session.user?.name || 'بك'} 👋</Text>
+        <TouchableOpacity accessibilityRole="button" onPress={() => { setClientTab('new'); setClientNewRequestChoice(''); }} activeOpacity={0.9} style={{ marginTop: 12, marginBottom: 4, padding: 18, borderRadius: 20, backgroundColor: '#102A9B', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', overflow: 'hidden' }}>
+          <View style={{ flex: 1, paddingRight: 10 }}>
+            <Text style={{ color: '#FFFFFF', fontSize: 19, fontWeight: '900', textAlign: 'right' }}>اطلب خدمتك بسهولة</Text>
+            <Text style={{ color: '#E1E8FF', fontSize: 12, fontWeight: '700', textAlign: 'right', marginTop: 5 }}>اختار الخدمة المناسبة وهنوصلك بالفني</Text>
+            <View style={{ alignSelf: 'flex-end', marginTop: 12, backgroundColor: '#FFFFFF', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12 }}>
+              <Text style={{ color: '#102A9B', fontSize: 12, fontWeight: '900' }}>طلب جديد ←</Text>
+            </View>
+          </View>
+          <View style={{ width: 54, height: 54, borderRadius: 18, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={{ color: '#102A9B', fontSize: 27, fontWeight: '900' }}>⌂</Text>
+          </View>
+        </TouchableOpacity>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
           <View style={{ flexGrow: 1, flexBasis: '45%', padding: 12, borderRadius: 12, backgroundColor: '#F1F5F9' }}><Text style={styles.detail}>إجمالي طلباتي</Text><Text style={styles.cardTitlePremium}>{clientData.orders.length}</Text><Button title="عرض الطلبات" secondary onPress={() => setClientTab('current')} /></View>
           <View style={{ flexGrow: 1, flexBasis: '45%', padding: 12, borderRadius: 12, backgroundColor: '#F1F5F9' }}><Text style={styles.detail}>طلبات جارية</Text><Text style={styles.cardTitlePremium}>{clientData.orders.filter(order => !['تم الانتهاء','منتهي','ملغي','مؤرشف','منتهي - اعتذار'].includes(String(order.status || ''))).length}</Text><Button title="متابعة الجاري" secondary onPress={() => setClientTab('current')} /></View>
