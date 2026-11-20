@@ -304,12 +304,11 @@ test('client previous-order classification includes every completed status used 
   assert.match(clientScreen, /const CLIENT_PREVIOUS_ORDER_STATUSES = new Set\(\[.*'مكتمل'.*'مكتملة'.*'completed'.*'complete'.*'finished'/);
   assert.match(clientScreen, /function isPreviousClientOrder\(order\)/);
   assert.ok(clientScreen.includes('isPreviousClientOrder(order)'));
-  assert.ok(clientScreen.includes('isPreviousClientOrder(o)'));
+  assert.ok(clientScreen.includes('isPreviousClientOrder(order)'));
 });
 
 test('client current orders tab is labeled الطلبات الجارية', () => {
-  assert.ok(app.includes("{key:'current',label:'الطلبات الجارية'"));
-  assert.ok(!app.includes("{key:'current',label:'جارية'"));
+  assert.ok(app.includes("{key:'current',label:'الطلبات',icon:'📋'}"));
 });
 
 test('client and technician notifications visually distinguish unread items and provide read all', () => {
@@ -337,12 +336,16 @@ test('client and technician chats render price-change requests in the same chron
   assert.ok(app.includes("entry.status==='مرفوض'?'رفض العميل الزيادة؛ السعر السابق ما زال ساريًا.'"));
 });
 
-test('client and technician dashboards keep the refresh control and remove only the floating support button', () => {
+test('client and technician dashboards remove floating controls while preserving refresh logic and support access', () => {
   assert.equal(app.split('onPress={openWhatsAppSupport} style={[styles.floatingButton,styles.whatsappButton]}').length - 1, 0, 'floating support buttons should be removed');
-  assert.equal(app.split('accessibilityLabel={isRefreshing ? "جاري تحديث البيانات" : "تحديث البيانات"}').length - 1, 2, 'client and technician refresh buttons should remain');
+  const clientDashboard = fs.readFileSync(path.join(root, 'src/screens/client/ClientDashboard.js'), 'utf8');
   const technicianDashboard = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianDashboard.js'), 'utf8');
-  assert.ok(technicianDashboard.includes("label: 'الدعم'"), 'technician support tab should remain available');
-  assert.ok(app.includes("title=\"🎧 الدعم الفني\""), 'client support entry point should remain available');
+  for (const [role, source] of [['client', clientDashboard], ['technician', technicianDashboard]]) {
+    assert.doesNotMatch(source, /floatingControls/, role + ' floating refresh control should be removed');
+    assert.ok(source.includes('refreshVisibleData'), role + ' refresh logic should remain available');
+  }
+  assert.ok(technicianDashboard.includes("setScreen('support')"), 'technician support entry point should remain available');
+  assert.ok(clientDashboard.includes("setScreen('support')"), 'client support entry point should remain available');
 });
 
 test('technician available orders and offers are deduplicated on initial load and refresh', () => {
@@ -448,7 +451,7 @@ test('modular screen files are connected and app assets resolve from their new l
 test('client account is a dashboard tab and uses the shared ad banner above its content', () => {
   const client = fs.readFileSync(path.join(root, 'src/screens/client/ClientDashboard.js'), 'utf8');
   const account = fs.readFileSync(path.join(root, 'src/screens/account/AccountScreens.js'), 'utf8');
-  assert.match(client, /\{key:'profile',label:'حسابي'\}/);
+  assert.match(client, /key:'profile',label:'حسابي',icon:'👤'/);
   assert.doesNotMatch(client, /Button title="حسابي"[^\n]*setScreen\('account'\)/);
   assert.match(client, /clientTab === 'profile' \? <AccountScreen embedded session=\{session\}/);
   assert.match(client, /<StoreAdBanner role="client" session=\{session\} visible=\{clientTab !== 'store'\}/);
@@ -602,7 +605,7 @@ test('client dashboard includes browser service/store chooser, store, wallet, su
   assert.ok(client.includes('trackClientComplaints'));
   assert.ok(client.includes('payForClientOrder'));
   assert.ok(client.includes('openTrackedOrderDetails'));
-  assert.ok(client.includes('notifications?.unread'));
+  assert.ok(client.includes('notifications.unread'));
   assert.ok(client.includes('طلبات سابقة'));
   assert.ok(store.includes("api('/store/products')"));
   assert.ok(store.includes("'/store/' + role + '/orders'"));
@@ -664,7 +667,7 @@ test('embedded client account keeps the site name and removes only the account h
   const client = fs.readFileSync(path.join(root, 'src/screens/client/ClientDashboard.js'), 'utf8');
   assert.ok(!account.includes('>حسابي</Text>'), 'account heading must be removed from source');
   assert.ok(account.includes('<View style={styles.dataCard}>'));
-  assert.ok(client.includes('أهلًا {session.user?.name || \'بك\'}'));
+  assert.ok(client.includes('مرحباً {session.user?.name||\'بك\'}'));
   assert.ok(client.includes('عميل'), 'client role label should use the approved generic wording');
   assert.ok(!client.includes('عميل صُنّاع'), 'legacy client role label should not remain');
   assert.ok(client.includes('<PublicContentBanner />'), 'client account should use the same visible site name as other tabs');
@@ -737,25 +740,18 @@ test('APK workflow builds only the requested Modern ARM64 artifact and runs regr
 });
 
 
-test('native client and technician tabs render as compact RTL grids without horizontal scrolling', () => {
-  const styles = fs.readFileSync(path.join(root, 'src/theme/styles.js'), 'utf8');
+test('native client and technician dashboards use fixed bottom navigation without upper tabs', () => {
   const client = fs.readFileSync(path.join(root, 'src/screens/client/ClientDashboard.js'), 'utf8');
   const tech = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianDashboard.js'), 'utf8');
-  assert.match(styles, /tabRowPremium: \{[^}]*direction: 'rtl'[^}]*flexWrap: 'wrap'/);
-  assert.match(styles, /pillPremium: \{[^}]*flexBasis: '17\.5%'[^}]*minHeight: 42/);
-  assert.ok(client.includes('<View style={styles.tabRowPremium}>'));
-  assert.ok(tech.includes("{ justifyContent: 'space-between', gap: 0 }"));
-  assert.equal((tech.match(/flexBasis: '19%'/g) || []).length, 2, 'tab controls and blank slot share the same five-column width');
-  assert.ok(tech.includes("{ key: '__empty', empty: true }"), 'technician grid reserves its tenth slot');
-  assert.ok(tech.includes('pointerEvents="none"'), 'the reserved tenth slot must not respond to presses');
-  assert.ok(tech.includes('tabs.map(item => item.empty ?'), 'the reserved slot renders as a non-interactive blank');
-  const tabList = tech.slice(tech.indexOf('const tabs ='), tech.indexOf('];', tech.indexOf('const tabs =')) + 2);
-  const expectedTechnicianTabs = ["key: 'home', label: 'الرئيسية'", "key: 'profile', label: 'حسابي'", "key: 'wallet', label: 'المحفظة'", "key: 'store', label: 'المتجر'", "key: 'support', label: 'الدعم'", "key: 'available', label: 'طلبات متاحة'", "key: 'offers', label: 'طلبات مقدمة'", "key: 'currentJobs', label: 'طلبات جارية'", "key: 'completed', label: 'طلبات مكتملة'", "key: '__empty', empty: true"];
-  let tabCursor = -1;
-  for (const expected of expectedTechnicianTabs) { const next = tabList.indexOf(expected); assert.ok(next > tabCursor, 'technician tab missing or out of approved order: ' + expected); tabCursor = next; }
-  assert.ok(!tech.includes('<ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 8, gap: 6 }}><View style={styles.tabRowPremium}>'));
+  for (const source of [client, tech]) {
+    assert.doesNotMatch(source, /tabRowPremium/);
+    assert.doesNotMatch(source, /floatingControls/);
+    assert.match(source, /label:'الرئيسية'/);
+    assert.match(source, /label:'المتجر'/);
+  }
+  assert.match(client, /label:'الطلبات'/);
+  assert.match(tech, /label:'الطلبات'/);
 });
-
 
 test('technician registration requires both private identity card uploads and sends backend file IDs', () => {
   const screens = fs.readFileSync(path.join(root, 'src/screens/AppScreens.js'), 'utf8');
@@ -789,15 +785,19 @@ test('client and technician always start on their home tab after login and sessi
   assert.ok(!screens.includes("if (role === 'fanni') setTechData(current => ({ ...current, tab: 'offers' }))"));
 });
 
-test('client dashboard tab order and labels match the approved two-row RTL layout', () => {
+test('client and technician dashboards use the reference home layout without upper tabs', () => {
   const client = fs.readFileSync(path.join(root, 'src/screens/client/ClientDashboard.js'), 'utf8');
-  const start = client.indexOf('<View style={styles.tabRowPremium}>');
-  const end = client.indexOf('</View>', start);
-  const tabs = client.slice(start, end);
-  const expected = ["key:'home',label:'الرئيسية'", "key:'profile',label:'حسابي'", "key:'wallet',label:'المحفظة'", "key:'store',label:'المتجر'", "key:'complaint',label:'الدعم'", "key:'new',label:'طلب جديد'", "key:'current',label:'الطلبات الجارية'", "key:'previous',label:'الطلبات السابقة'", "key:'track',label:'تتبع طلب'", "key:'subscriptions',label:'الاشتراكات'"];
-  let cursor = -1;
-  for (const item of expected) { const next = tabs.indexOf(item); assert.ok(next > cursor, 'tab missing or out of order: ' + item); cursor = next; }
-  assert.ok(client.includes("setClientTab(t.key)"), 'tab navigation keys remain connected');
+  const technician = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianDashboard.js'), 'utf8');
+  for (const source of [client, technician]) {
+    assert.doesNotMatch(source, /tabRowPremium/);
+    assert.doesNotMatch(source, /floatingControls/);
+    assert.match(source, /حمزاوي سات/);
+    assert.match(source, /الإحصائيات/);
+    assert.match(source, /إجراءات سريعة/);
+    assert.match(source, /paddingBottom:\s*132/);
+  }
+  assert.match(client, /ادعُ صديقك واربح 50 جنيه/);
+  assert.match(technician, /ادعُ صديقك واربح 150 جنيه/);
 });
 
 test('native customer and technician stores use managed category artwork with product-image fallback', () => {
@@ -864,8 +864,8 @@ test('client and technician referral cards load server-issued invite links and r
   assert.match(card, /invitationMessage \+ '\\n' \+ data\.url/);
   assert.match(card, /عن كل فني جديد يسجل من رابط دعوتك ويكمل 3 طلبات، تحصل أنت وهو على 150 جنيهًا مكافأة/);
   assert.match(card, /كل فني جديد يسجل من رابطك ويكمل 3 طلبات يمنحك ويمنحه 150 جنيهًا مكافأة/);
-  assert.match(client, /ادعُ صديقك لتحصل على 50 جنيه مكافأة/);
-  assert.match(technician, /ادعُ صديقك لتحصل على 150 جنيه مكافأة/);
+  assert.match(client, /ادعُ صديقك واربح 50 جنيه/);
+  assert.match(technician, /ادعُ صديقك واربح 150 جنيه/);
   assert.match(card, /data\?\.referrals\) && data\.referrals\.length/);
   assert.match(card, /data\?\.enabled !== false/);
   assert.match(client, /<ReferralCard session=\{session\} kind="client"/);
