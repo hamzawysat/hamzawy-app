@@ -99,18 +99,14 @@ export function ClientDashboard({ context }) {
   }, [isRefreshing, refreshSpin]);
   const refreshRotation = refreshSpin.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
   return <SafeAreaView style={styles.safe}>
-      {/* HEADER PREMIUM COMPACT - اسم العميل صغير */}
-      <View style={styles.clientHeader}>
-        <View style={styles.clientHeaderLeft}>
-          <TouchableOpacity onPress={() => { setNotificationsOpen(v => !v); setReloadKey(v => v + 1); }} style={styles.bellButtonSmall}><Text style={styles.bellText}>🔔</Text>{notifications.unread > 0 ? <View style={styles.bellBadgeDot}><Text style={styles.bellBadgeText}>{notifications.unread}</Text></View> : null}</TouchableOpacity>
-          
-          <Button title="خروج" logout onPress={() => setLogoutConfirmOpen(true)} />
-        </View>
-        <View style={styles.clientHeaderRight}>
-          <View style={styles.clientHeaderInfo}>
-            <Text style={styles.clientNameSmall} numberOfLines={1}>أهلًا {session.user?.name || 'بك'}</Text>
-            <Text style={styles.clientRoleSmall}>عميل</Text>
-          </View>
+      <View style={{height:64,backgroundColor:'#FFF',paddingHorizontal:18,flexDirection:'row',alignItems:'center',justifyContent:'space-between',borderBottomWidth:1,borderBottomColor:'#E7EAF2'}}>
+        <TouchableOpacity onPress={()=>{setNotificationsOpen(v=>!v);setReloadKey(v=>v+1);}} style={{width:42,height:42,alignItems:'center',justifyContent:'center'}}><Text style={{fontSize:27}}>🔔</Text>{notifications.unread>0?<View style={{position:'absolute',top:1,left:1,minWidth:17,height:17,borderRadius:9,backgroundColor:'#E5484D',alignItems:'center',justifyContent:'center'}}><Text style={{color:'#FFF',fontSize:10,fontWeight:'900'}}>{notifications.unread}</Text></View>:null}</TouchableOpacity>
+        <View style={{flexDirection:'row',alignItems:'center',gap:8}}><Text style={{color:'#102A9B',fontSize:24,fontWeight:'900'}}>حمزاوي سات</Text><Text style={{fontSize:27}}>🛡️</Text></View>
+      </View>
+      <View style={{minHeight:76,paddingHorizontal:16,paddingVertical:10,backgroundColor:'#F2F4F9',flexDirection:'row-reverse',alignItems:'center',justifyContent:'space-between'}}>
+        <View style={{flexDirection:'row-reverse',alignItems:'center',flex:1}}>
+          <View style={{width:48,height:48,borderRadius:24,backgroundColor:'#102A9B',alignItems:'center',justifyContent:'center',marginLeft:10}}><Text style={{color:'#FFF',fontSize:23,fontWeight:'900'}}>{String(session.user?.name||'ع').trim().charAt(0)}</Text></View>
+          <View style={{flex:1}}><Text style={{color:'#09145B',fontSize:16,fontWeight:'900',textAlign:'right'}}>مرحباً {session.user?.name||'بك'}</Text><Text style={{color:'#46506B',fontSize:12,fontWeight:'700',textAlign:'right',marginTop:3}}>عميل • {walletBalance.toLocaleString('ar-EG')} جنيه</Text></View>
         </View>
       </View>
       {!referralPageOpen ? <StoreAdBanner role="client" session={session} visible={clientTab !== 'store'} onOpenStore={() => setClientTab('store')} /> : null}
@@ -118,39 +114,20 @@ export function ClientDashboard({ context }) {
     <ScrollView ref={clientScrollRef} contentContainerStyle={[styles.page, { paddingBottom: 132 }]} showsVerticalScrollIndicator={false}>
       {referralPageOpen ? <View style={styles.formCard}><Button title="← رجوع للرئيسية" secondary onPress={() => setReferralPageOpen(false)} /><ReferralCard session={session} kind="client" expanded showToggle={false} /></View> : <><PublicContentBanner />
       {clientTab === 'home' ? <TouchableOpacity accessibilityRole="button" accessibilityLabel="ادعُ صديقك لتحصل على 50 جنيه مكافأة" onPress={() => setReferralPageOpen(true)} activeOpacity={0.88} style={{ marginBottom: 12, padding: 12, borderRadius: 16, borderWidth: 1, borderColor: '#FDE68A', backgroundColor: '#FFFBEB', flexDirection: 'row', alignItems: 'center', gap: 10 }}><View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: '#FEF3C7', alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 24 }}>🎁</Text></View><View style={{ flex: 1 }}><Text style={{ color: '#451A03', fontWeight: '900', fontSize: 14 }}>ادعُ صديقك لتحصل على 50 جنيه مكافأة</Text><Text style={{ color: '#92400E', fontSize: 11, fontWeight: '800', marginTop: 3 }}>اضغط هنا لدعوة صديقك</Text></View><Text style={{ color: '#92400E', fontWeight: '900', fontSize: 20 }}>←</Text></TouchableOpacity> : null}
-      {clientTab === 'home' ? <View style={styles.formCard}>
-        <Text style={styles.cardTitlePremium}>أهلاً {session.user?.name || 'بك'} 👋</Text>
-        <TouchableOpacity accessibilityRole="button" onPress={() => { setClientTab('new'); setClientNewRequestChoice(''); }} activeOpacity={0.9} style={{ marginTop: 12, marginBottom: 4, padding: 18, borderRadius: 20, backgroundColor: '#102A9B', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', overflow: 'hidden' }}>
-          <View style={{ flex: 1, paddingRight: 10 }}>
-            <Text style={{ color: '#FFFFFF', fontSize: 19, fontWeight: '900', textAlign: 'right' }}>اطلب خدمتك بسهولة</Text>
-            <Text style={{ color: '#E1E8FF', fontSize: 12, fontWeight: '700', textAlign: 'right', marginTop: 5 }}>اختار الخدمة المناسبة وهنوصلك بالفني</Text>
-            <View style={{ alignSelf: 'flex-end', marginTop: 12, backgroundColor: '#FFFFFF', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12 }}>
-              <Text style={{ color: '#102A9B', fontSize: 12, fontWeight: '900' }}>طلب جديد ←</Text>
-            </View>
-          </View>
-          <View style={{ width: 54, height: 54, borderRadius: 18, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ color: '#102A9B', fontSize: 27, fontWeight: '900' }}>⌂</Text>
-          </View>
+      {clientTab === 'home' ? <View style={{paddingHorizontal:12,paddingTop:8,gap:10}}>
+        <TouchableOpacity onPress={() => { setClientTab('new'); setClientNewRequestChoice(''); }} activeOpacity={0.9} style={{backgroundColor:'#092D9E',borderRadius:18,padding:14,minHeight:116,flexDirection:'row',alignItems:'center',justifyContent:'space-between'}}>
+          <View style={{flex:1}}><Text style={{color:'#FFF',fontSize:18,fontWeight:'900',textAlign:'right'}}>اطلب خدمتك بسهولة</Text><Text style={{color:'#E3EAFF',fontSize:13,fontWeight:'700',textAlign:'right',marginTop:6}}>اختار الخدمة المناسبة وهنوصلك بالفني</Text><View style={{alignSelf:'flex-end',backgroundColor:'#FFF',borderRadius:11,paddingHorizontal:14,paddingVertical:8,marginTop:12}}><Text style={{color:'#102A9B',fontSize:13,fontWeight:'900'}}>اطلب الآن ←</Text></View></View>
+          <View style={{width:54,height:54,borderRadius:27,backgroundColor:'#DCE6FF',alignItems:'center',justifyContent:'center',marginLeft:12}}><Text style={{fontSize:26}}>🛠️</Text></View>
         </TouchableOpacity>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
-          <View style={{ flexGrow: 1, flexBasis: '45%', padding: 12, borderRadius: 12, backgroundColor: '#F1F5F9' }}><Text style={styles.detail}>إجمالي طلباتي</Text><Text style={styles.cardTitlePremium}>{clientData.orders.length}</Text><Button title="عرض الطلبات" secondary onPress={() => setClientTab('current')} /></View>
-          <View style={{ flexGrow: 1, flexBasis: '45%', padding: 12, borderRadius: 12, backgroundColor: '#F1F5F9' }}><Text style={styles.detail}>طلبات جارية</Text><Text style={styles.cardTitlePremium}>{clientData.orders.filter(order => !isPreviousClientOrder(order)).length}</Text><Button title="متابعة الجاري" secondary onPress={() => setClientTab('current')} /></View>
-          <View style={{ flexGrow: 1, flexBasis: '45%', padding: 12, borderRadius: 12, backgroundColor: '#F1F5F9' }}><Text style={styles.detail}>طلبات سابقة</Text><Text style={styles.cardTitlePremium}>{clientData.orders.filter(order => isPreviousClientOrder(order)).length}</Text><Button title="عرض السابق" secondary onPress={() => setClientTab('previous')} /></View>
-          <View style={{ flexGrow: 1, flexBasis: '45%', padding: 12, borderRadius: 12, backgroundColor: '#F1F5F9' }}><Text style={styles.detail}>رصيد محفظتي</Text><Text style={styles.cardTitlePremium}>{walletBalance.toLocaleString('ar-EG')} ج</Text><Button title="فتح المحفظة" secondary onPress={() => setClientTab('wallet')} /></View>
+        <Text style={{color:'#07145C',fontSize:22,fontWeight:'900',textAlign:'right'}}>الإحصائيات</Text>
+        <View style={{flexDirection:'row',flexWrap:'wrap',justifyContent:'space-between',gap:10}}>
+          {[{label:'طلبات جارية',value:clientData.orders.filter(order=>!isPreviousClientOrder(order)).length,icon:'📋',action:'current'},{label:'رصيد المحفظة',value:walletBalance.toLocaleString('ar-EG')+' ج',icon:'💳',action:'wallet'},{label:'طلبات سابقة',value:clientData.orders.filter(order=>isPreviousClientOrder(order)).length,icon:'✓',action:'previous'},{label:'إجمالي الطلبات',value:clientData.orders.length,icon:'📄',action:'current'}].map(item=><TouchableOpacity key={item.label} onPress={()=>setClientTab(item.action)} style={{width:'48%',minHeight:108,backgroundColor:'#FFF',borderRadius:16,padding:10,alignItems:'center',justifyContent:'center',elevation:3,shadowColor:'#172554',shadowOpacity:.09,shadowRadius:7,shadowOffset:{width:0,height:3}}}><View style={{width:42,height:42,borderRadius:21,backgroundColor:'#E3E9FF',alignItems:'center',justifyContent:'center',marginBottom:5}}><Text style={{fontSize:21}}>{item.icon}</Text></View><Text style={{color:'#50566A',fontSize:12,fontWeight:'700'}}>{item.label}</Text><Text style={{color:'#09145B',fontSize:20,fontWeight:'900',marginTop:2}}>{item.value}</Text></TouchableOpacity>)}
         </View>
-        <View style={{ marginTop: 12, padding: 12, borderRadius: 12, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: COLORS.border }}>
-          <Text style={styles.detailBold}>الإشعارات</Text><Text style={styles.detail}>{Number(notifications?.unread || 0)} إشعار غير مقروء</Text><Button title="فتح الإشعارات" secondary onPress={() => { setNotificationsOpen(true); setReloadKey(value => value + 1); }} />
+        <TouchableOpacity onPress={()=>setReferralPageOpen(true)} activeOpacity={0.88} style={{backgroundColor:'#DCE5FF',borderRadius:13,padding:8,flexDirection:'row-reverse',alignItems:'center',gap:9}}><Text style={{fontSize:21}}>🎁</Text><View style={{flex:1}}><Text style={{color:'#09145B',fontSize:14,fontWeight:'900',textAlign:'right'}}>ادعُ صديقك واربح 50 جنيه</Text><Text style={{color:'#26356E',fontSize:11,fontWeight:'700',textAlign:'right',marginTop:3}}>شارك رابط الدعوة واكسب رصيد عند انضمام صديقك</Text></View><View style={{backgroundColor:'#102A9B',borderRadius:11,paddingHorizontal:11,paddingVertical:9}}><Text style={{color:'#FFF',fontWeight:'900',fontSize:12}}>دعوة الآن ←</Text></View></TouchableOpacity>
+        <Text style={{color:'#07145C',fontSize:22,fontWeight:'900',textAlign:'right'}}>إجراءات سريعة</Text>
+        <View style={{backgroundColor:'#FFF',borderRadius:17,paddingHorizontal:12,elevation:3}}>
+          {[{label:'طلب خدمة جديدة',icon:'＋',run:()=>{setClientTab('new');setClientNewRequestChoice('');}},{label:'سجل الطلبات',icon:'📋',run:()=>setClientTab('current')},{label:'التقارير',icon:'📊',run:()=>setClientTab('previous')},{label:'الإعدادات',icon:'⚙️',run:()=>setClientTab('profile')}].map((item,index)=><TouchableOpacity key={item.label} onPress={item.run} style={{minHeight:52,flexDirection:'row-reverse',alignItems:'center',borderBottomWidth:index===3?0:1,borderBottomColor:'#EDF0F5',gap:12}}><Text style={{fontSize:21,width:28,textAlign:'center'}}>{item.icon}</Text><Text style={{flex:1,color:'#111827',fontSize:15,fontWeight:'800',textAlign:'right'}}>{item.label}</Text><Text style={{color:'#CBD0D9',fontSize:24}}>‹</Text></TouchableOpacity>)}
         </View>
-        <Text style={[styles.cardTitleSmall, { marginTop: 14 }]}>القائمة الرئيسية</Text>
-        <Text style={styles.detail}>اختار القسم اللي عايز تفتحه.</Text>
-        <Button title="＋ طلب خدمة جديدة" onPress={() => { setClientTab('new'); setClientNewRequestChoice(''); }} />
-        <Button title="📋 طلباتي" secondary onPress={() => setClientTab('current')} />
-        <Button title="🔎 تتبع طلب" secondary onPress={() => setClientTab('track')} />
-        <Button title="💳 محفظتي" secondary onPress={() => setClientTab('wallet')} />
-        <Button title="📄 الاشتراكات" secondary onPress={() => setClientTab('subscriptions')} />
-        <Button title="🛍️ المتجر" secondary onPress={() => setClientTab('store')} />
-        <Button title="⚠️ الشكاوى" secondary onPress={() => setClientTab('complaint')} />
-        <Button title="🎧 الدعم الفني" secondary onPress={() => setScreen('support')} />
       </View> : null}
       {clientTab === 'new' && !clientNewRequestChoice ? <View style={styles.formCard}><Text style={styles.cardTitlePremium}>طلب جديد</Text><Text style={styles.detail}>تحب تطلب خدمة ولا تشتري منتج من المتجر؟</Text><Button title="🛠️ عايز صنايعي" onPress={() => setClientNewRequestChoice('technician')} /><Button title="🛍️ عايز أشتري من المتجر" secondary onPress={() => setClientTab('store')} /></View> : null}
       {clientTab === 'new' && clientNewRequestChoice === 'technician' ? <><Button title="رجوع لاختيار نوع الطلب" secondary onPress={() => setClientNewRequestChoice('')} /><View style={styles.welcomeCard}><Text style={styles.welcomeTitle}>اطلب خدمتك الآن 🚀</Text><Text style={styles.welcomeSub}>اختار المهنة والخدمة والفني المناسب هيجيلك</Text></View>
