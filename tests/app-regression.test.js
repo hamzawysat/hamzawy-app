@@ -1006,8 +1006,8 @@ test('public banner omits the redundant site name and referral promos pulse on b
   const client = fs.readFileSync(path.join(root, 'src/screens/client/ClientDashboard.js'), 'utf8');
   const technician = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianDashboard.js'), 'utf8');
   assert.doesNotMatch(banner, /siteName|حمزاوي سات/);
-  assert.match(referral, /Animated\\.loop\\(Animated\\.sequence/);
-  assert.match(referral, /toValue: 1\\.035/);
+  assert.match(referral, /Animated\.loop\(Animated\.sequence/);
+  assert.match(referral, /toValue: 1\.035/);
   assert.match(client, /<ReferralPromo onPress=/);
   assert.match(technician, /<ReferralPromo onPress=/);
 });
