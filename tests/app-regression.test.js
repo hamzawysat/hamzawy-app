@@ -345,7 +345,7 @@ test('client and technician dashboards remove floating controls while preserving
     assert.ok(source.includes('refreshVisibleData'), role + ' refresh logic should remain available');
   }
   assert.ok(technicianDashboard.includes("setScreen('support')"), 'technician support entry point should remain available');
-  assert.ok(app.includes("title=\"🎧 الدعم الفني\""), 'client support entry point should remain available');
+  assert.ok(clientDashboard.includes("setScreen('support')"), 'client support entry point should remain available');
 });
 
 test('technician available orders and offers are deduplicated on initial load and refresh', () => {
@@ -451,7 +451,7 @@ test('modular screen files are connected and app assets resolve from their new l
 test('client account is a dashboard tab and uses the shared ad banner above its content', () => {
   const client = fs.readFileSync(path.join(root, 'src/screens/client/ClientDashboard.js'), 'utf8');
   const account = fs.readFileSync(path.join(root, 'src/screens/account/AccountScreens.js'), 'utf8');
-  assert.match(client, /\{key:'profile',label:'حسابي'\}/);
+  assert.match(client, /key:'profile',label:'حسابي',icon:'👤'/);
   assert.doesNotMatch(client, /Button title="حسابي"[^\n]*setScreen\('account'\)/);
   assert.match(client, /clientTab === 'profile' \? <AccountScreen embedded session=\{session\}/);
   assert.match(client, /<StoreAdBanner role="client" session=\{session\} visible=\{clientTab !== 'store'\}/);
