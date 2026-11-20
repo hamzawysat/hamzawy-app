@@ -17,10 +17,11 @@ export const styles = StyleSheet.create({
 
   safe: { flex: 1, backgroundColor: PAGE_COLORS.client.background },
   technicianSafe: { flex: 1, backgroundColor: PAGE_COLORS.technician.background },
-  supportSafe: { flex: 1, backgroundColor: PAGE_COLORS.support.background },
+  supportSafe: { flex: 1, backgroundColor: '#F2F4F9' },
+  safe: { flex: 1, backgroundColor: '#F2F4F9' },
   page: { padding: 14, paddingBottom: 34, gap: 10, backgroundColor: '#F2F4F9' },
   technicianPage: { padding: 14, paddingBottom: 34, gap: 10, backgroundColor: '#F2F4F9' },
-  supportPage: { padding: 14, paddingBottom: 28, gap: 10, backgroundColor: PAGE_COLORS.support.background },
+  supportPage: { padding: 14, paddingBottom: 34, gap: 10, backgroundColor: '#F2F4F9' },
   flex: { flex: 1 },
   
   // CLIENT HEADER PREMIUM - اسم صغير
@@ -234,7 +235,7 @@ export const styles = StyleSheet.create({
   groupTitle: { color: COLORS.navy, fontWeight: '800', textAlign: 'right', fontSize: 13 },
   choiceRow: { paddingVertical: 7, borderBottomWidth: 1, borderBottomColor: COLORS.background },
   choiceText: { color: COLORS.slateIndigo, textAlign: 'right', fontSize: 13 },
-  headerRow: { padding: 12, flexDirection: 'row-reverse', alignItems: 'center', gap: 8, backgroundColor: COLORS.white, borderBottomWidth: 1, borderBottomColor: COLORS.paleIndigo },
+  headerRow: { padding: 14, flexDirection: 'row-reverse', alignItems: 'center', gap: 8, backgroundColor: COLORS.white, borderBottomWidth: 1, borderBottomColor: '#E5E9F2' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
   statusText: { marginTop: 10, color: COLORS.muted, textAlign: 'center', fontSize: 13 },
   listPremium: { paddingHorizontal: 10, paddingBottom: 16, gap: 2 },
