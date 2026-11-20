@@ -170,13 +170,19 @@ test('rating modal and rating submission safely handle missing technician order 
   assert.match(app.slice(submitStart, submitEnd), /if \(!order \|\| typeof order !== 'object' \|\| !sn\) \{[\s\S]*?setRatingPrompt\(null\)/);
 });
 
-test('brand header keeps one straight word with the animated shimmer layered over it', () => {
+test('brand header displays the brand without any moving shine or shimmer', () => {
   const appEntry = fs.readFileSync(path.join(root, 'App.js'), 'utf8');
-  assert.ok(appEntry.includes('<Text style={styles.brandHeaderTitle}>حمزاوي سات</Text>'), 'Hamzawy Sat brand should be rendered once as native text');
-  assert.ok(appEntry.includes('Animated.View pointerEvents="none" style={[styles.brandHeaderShimmer'), 'shimmer should be an overlay, not another text layer');
-  assert.ok(appEntry.includes('<LinearGradient colors={['), 'the shine gradient should remain animated over the word');
-  assert.ok(!appEntry.includes('react-native-svg'), 'the SVG mask that caused duplicate glyph rendering should not be used');
+  assert.ok(appEntry.includes('<Text style={styles.brandHeaderTitle}>حمزاوي سات</Text>'), 'Hamzawy Sat brand should remain visible as native text');
+  assert.doesNotMatch(appEntry, /shimmer|LinearGradient|brandHeaderShimmer/, 'the moving shine effect must be completely removed from the header');
   assert.equal((appEntry.match(/brandHeaderTitle}>حمزاوي سات/g) || []).length, 1, 'header should contain exactly one brand word');
+});
+
+test('client and technician account logout buttons appear after account actions and before service history', () => {
+  const account = fs.readFileSync(path.join(root, 'src/screens/account/AccountScreens.js'), 'utf8');
+  const passwordButton = account.indexOf('Button title="تغيير كلمة المرور"');
+  const logoutButton = account.indexOf('Button title="تسجيل الخروج"');
+  const historyHeading = account.indexOf('سجل الخدمات والتقييمات');
+  assert.ok(passwordButton !== -1 && logoutButton > passwordButton && historyHeading > logoutButton, 'logout must follow the two account action buttons and precede service history');
 });
 
 test('startup splash stays visible until saved account restoration finishes', () => {
