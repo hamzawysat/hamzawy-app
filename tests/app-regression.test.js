@@ -307,8 +307,8 @@ test('client current orders tab is labeled الطلبات الجارية', () =>
 test('client and technician notifications visually distinguish unread items and provide read all', () => {
   assert.equal(app.split('title="قراءة الكل" secondary onPress={markAllNotificationsRead}').length - 1, 2);
   assert.equal(app.split('(item.read || item.readAt) ? styles.notificationRead : styles.notificationUnread').length - 1, 2);
-  assert.ok(app.includes("notificationRead: { backgroundColor: COLORS.background, opacity: 0.62 }"));
-  assert.ok(app.includes("notificationReadText: { color: COLORS.muted }"));
+  assert.ok(app.includes("notificationRead: { backgroundColor: '#F8F9FC', opacity: 0.76 }"));
+  assert.ok(app.includes("notificationReadText: { color: '#71809A' }"));
   assert.ok(app.includes("unread: 0 }));"));
 });
 
