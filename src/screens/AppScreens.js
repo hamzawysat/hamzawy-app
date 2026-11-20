@@ -645,7 +645,19 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
   }
 
   async function createOrder() {
-    if (!form.service || !areas.includes(form.area) || isReservedAreaLabel(form.area) || form.address.trim().length < 2) { Alert.alert('بيانات ناقصة', 'اختار الخدمة والمنطقة من القائمة المعتمدة واكتب العنوان بالتفصيل.'); return; }
+    if (!String(form.service || '').trim()) {
+      Alert.alert('الخدمة التفصيلية مطلوبة', 'اختار الخدمة التفصيلية لإكمال الطلب.');
+      return;
+    }
+    if (!areas.includes(form.area) || isReservedAreaLabel(form.area)) {
+      Alert.alert('المنطقة مطلوبة', 'اختار منطقة العمل من القائمة لإكمال الطلب.');
+      return;
+    }
+    const detailedAddress = String(form.address || '').trim();
+    if (detailedAddress.length < 10) {
+      Alert.alert('العنوان التفصيلي غير مكتمل', 'اكتب العنوان بالتفصيل في 10 أحرف على الأقل، مع ذكر الشارع ورقم العقار أو أقرب علامة مميزة.');
+      return;
+    }
     setLoginLoading(true);
     try {
       const description = form.description.trim();
