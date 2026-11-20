@@ -338,10 +338,12 @@ test('client and technician chats render price-change requests in the same chron
 
 test('client and technician dashboards remove floating controls while preserving refresh logic and support access', () => {
   assert.equal(app.split('onPress={openWhatsAppSupport} style={[styles.floatingButton,styles.whatsappButton]}').length - 1, 0, 'floating support buttons should be removed');
-  assert.equal(app.split('floatingControls').length - 1, 0, 'floating refresh controls should be removed');
-  assert.ok(app.includes('refreshVisibleData'), 'client refresh logic should remain available');
+  const clientDashboard = fs.readFileSync(path.join(root, 'src/screens/client/ClientDashboard.js'), 'utf8');
   const technicianDashboard = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianDashboard.js'), 'utf8');
-  assert.ok(technicianDashboard.includes('refreshVisibleData'), 'technician refresh logic should remain available');
+  for (const [role, source] of [['client', clientDashboard], ['technician', technicianDashboard]]) {
+    assert.doesNotMatch(source, /floatingControls/, role + ' floating refresh control should be removed');
+    assert.ok(source.includes('refreshVisibleData'), role + ' refresh logic should remain available');
+  }
   assert.ok(technicianDashboard.includes("setScreen('support')"), 'technician support entry point should remain available');
   assert.ok(app.includes("title=\"🎧 الدعم الفني\""), 'client support entry point should remain available');
 });
