@@ -6,8 +6,9 @@ export const styles = StyleSheet.create({
   brandHeaderSafe: { backgroundColor: PAGE_COLORS.home.background },
   // FIXED COMPACT HEADER - لا ياخذ نص الشاشة
   brandHeader: { height: 48, minHeight: 48, maxHeight: 48, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', backgroundColor: COLORS.white, borderBottomWidth: 1, borderBottomColor: COLORS.paleIndigo },
-  brandHeaderAvatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: COLORS.navy, borderWidth: 1, borderColor: '#C7D2FE', alignItems: 'center', justifyContent: 'center', marginRight: 9 },
-  brandHeaderAvatarText: { color: COLORS.white, fontSize: 14, fontWeight: '900' },
+  brandHeaderAvatar: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', marginRight: 9 },
+  brandHeaderAvatarStar: { color: '#8195E5', fontSize: 37, lineHeight: 40, fontWeight: '900', textShadowColor: '#DCE4FF', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 },
+  brandHeaderAvatarText: { position: 'absolute', color: '#172554', fontSize: 16, fontWeight: '900', fontStyle: 'italic', textShadowColor: '#FFFFFF', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 2, transform: [{ rotate: '-8deg' }] },
   brandHeaderLogo: { width: 34, height: 34 },
   brandHeaderTitleWrap: { width: 120, minWidth: 120, height: 30, marginLeft: 8, justifyContent: 'center', overflow: 'hidden' },
   brandHeaderTitle: { color: PAGE_COLORS.home.primary, fontSize: 18, fontWeight: '900', letterSpacing: 0.3, alignSelf: 'flex-start' },

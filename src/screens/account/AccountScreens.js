@@ -24,6 +24,7 @@ export function AccountScreen({ session, clientData, techData, setScreen, beginP
       </View>
       {['client', 'fanni'].includes(session?.role) ? <Button title="✏️ تعديل بياناتي" onPress={beginProfileEdit} /> : null}
       <Button title="تغيير كلمة المرور" onPress={() => setScreen('changePassword')} />
+      { ['client', 'fanni'].includes(session?.role) && onLogout ? <View style={{ marginTop: 18 }}><Button title="تسجيل الخروج" secondary onPress={onLogout} /></View> : null}
       {['client', 'fanni'].includes(session?.role) ? <>
         <Text style={styles.sectionTitle}>سجل الخدمات والتقييمات</Text>
         {completedHistory.length ? completedHistory.map((item, index) => {
@@ -37,7 +38,6 @@ export function AccountScreen({ session, clientData, techData, setScreen, beginP
           </View>;
         }) : <Text style={styles.detail}>لا توجد عمليات مكتملة لعرضها حاليًا.</Text>}
       </> : null}
-      { ['client', 'fanni'].includes(session?.role) && onLogout ? <View style={{ marginTop: 18 }}><Button title="تسجيل الخروج" secondary onPress={onLogout} /></View> : null}
     </>;
     return embedded
       ? <View style={styles.page}>{content}</View>

@@ -22,8 +22,9 @@ import { Button, Field } from '../../components/FormControls';
 import VoiceRecorder from '../../components/VoiceRecorder';
 import VoicePlayback from '../../components/VoicePlayback';
 import StoreScreen, { StoreAdBanner } from '../shared/StoreScreen';
+import { matchesAreaSearch } from '../../utils/area-helpers';
 import TechnicianWalletScreen from './TechnicianWalletScreen';
-import ReferralCard from '../shared/ReferralCard';
+import ReferralCard, { ReferralPromo } from '../shared/ReferralCard';
 
 export function TechnicianDashboard({ context }) {
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
@@ -74,10 +75,10 @@ export function TechnicianDashboard({ context }) {
   const refreshRotation = refreshSpin.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
   const availableServices = Array.from(new Set((categories || []).flatMap(category => Array.isArray(category.services) ? category.services : [])));
   const filteredAvailableOrders = technicianOrders.filter(item => {
-    const query = technicianSearch.trim().toLocaleLowerCase();
-    const haystack = [item.service, item.specialty, item.area, item.sn, item.orderSn, item.description, item.desc].filter(Boolean).join(' ').toLocaleLowerCase();
+    const haystack = [item.service, item.specialty, item.area, item.sn, item.orderSn, item.description, item.desc].filter(Boolean).join(' ');
+    const searchMatch = matchesAreaSearch(haystack, technicianSearch);
     const serviceMatch = technicianServiceFilter === 'الكل' || String(item.service || item.specialty || '') === technicianServiceFilter;
-    return (!query || haystack.includes(query)) && serviceMatch;
+    return searchMatch && serviceMatch;
   });
     const tabs = [{ key: 'home', label: 'الرئيسية' }, { key: 'profile', label: 'حسابي' }, { key: 'wallet', label: 'المحفظة' }, { key: 'store', label: 'المتجر' }, { key: 'support', label: 'الدعم' }, { key: 'available', label: 'طلبات متاحة' }, { key: 'offers', label: 'طلبات مقدمة' }, { key: 'currentJobs', label: 'طلبات جارية' }, { key: 'completed', label: 'طلبات مكتملة' }, { key: '__empty', empty: true }];
   const hasMoreAvailable = technicianOrdersPagination
@@ -139,10 +140,10 @@ export function TechnicianDashboard({ context }) {
             <View style={{flexDirection:'row',flexWrap:'wrap',justifyContent:'space-between',gap:10,marginBottom:4}}>
               {[{label:'رصيد المحفظة',value:Number(user.walletBalance||user.balance||0).toLocaleString('ar-EG')+' ج',icon:'💳',action:'wallet'},{label:'فرص متاحة',value:filteredAvailableOrders.length,icon:'💼',action:'available'},{label:'مهام مكتملة',value:technicianOffers.filter(isCompletedJob).length,icon:'✓',action:'completed'},{label:'عروضي',value:technicianOffers.filter(item=>!isCompletedJob(item)).length,icon:'📄',action:'offers'}].map(item=><TouchableOpacity key={item.label} onPress={()=>setTechData(v=>({...v,tab:item.action}))} style={{width:'48%',minHeight:108,backgroundColor:'#FFF',borderRadius:16,padding:10,alignItems:'center',justifyContent:'center',elevation:3,shadowColor:'#172554',shadowOpacity:.09,shadowRadius:7,shadowOffset:{width:0,height:3}}}><View style={{width:42,height:42,borderRadius:21,backgroundColor:'#E3E9FF',alignItems:'center',justifyContent:'center',marginBottom:5}}><Text style={{fontSize:21}}>{item.icon}</Text></View><Text style={{color:'#50566A',fontSize:12,fontWeight:'700'}}>{item.label}</Text><Text style={{color:'#09145B',fontSize:20,fontWeight:'900',marginTop:2}}>{item.value}</Text></TouchableOpacity>)}
             </View>
-            <TouchableOpacity onPress={()=>setReferralPageOpen(true)} activeOpacity={0.88} style={{backgroundColor:'#DCE5FF',borderRadius:13,padding:8,marginBottom:2,flexDirection:'row-reverse',alignItems:'center',gap:9}}><Text style={{fontSize:21}}>🎁</Text><View style={{flex:1}}><Text style={{color:'#09145B',fontSize:14,fontWeight:'900',textAlign:'right'}}>ادعُ صديقك واربح 150 جنيه</Text><Text style={{color:'#26356E',fontSize:11,fontWeight:'700',textAlign:'right',marginTop:3}}>شارك رابط الدعوة واكسب رصيد لكل صديق ينضم</Text></View><View style={{backgroundColor:'#102A9B',borderRadius:11,paddingHorizontal:11,paddingVertical:9}}><Text style={{color:'#FFF',fontWeight:'900',fontSize:12}}>دعوة الآن ←</Text></View></TouchableOpacity>
+            <ReferralPromo onPress={()=>setReferralPageOpen(true)} style={{backgroundColor:'#DCE5FF',borderRadius:13,padding:8,marginBottom:2,flexDirection:'row-reverse',alignItems:'center',gap:9}}><Text style={{fontSize:21}}>🎁</Text><View style={{flex:1}}><Text style={{color:'#09145B',fontSize:14,fontWeight:'900',textAlign:'right'}}>ادعُ صديقك واربح 150 جنيه</Text><Text style={{color:'#26356E',fontSize:11,fontWeight:'700',textAlign:'right',marginTop:3}}>شارك رابط الدعوة واكسب رصيد لكل صديق ينضم</Text></View><View style={{backgroundColor:'#102A9B',borderRadius:11,paddingHorizontal:11,paddingVertical:9}}><Text style={{color:'#FFF',fontWeight:'900',fontSize:12}}>دعوة الآن ←</Text></View></ReferralPromo>
             <Text style={{color:'#07145C',fontSize:22,fontWeight:'900',textAlign:'right',marginBottom:2}}>إجراءات سريعة</Text>
             <View style={{backgroundColor:'#FFF',borderRadius:17,paddingHorizontal:12,elevation:3}}>
-              {[{label:'طلب دعم فني',icon:'🎧',run:()=>setScreen('support')},{label:'سجل المهام',icon:'📋',run:()=>setTechData(v=>({...v,tab:'completed'}))},{label:'التقارير',icon:'📊',run:()=>setTechData(v=>({...v,tab:'offers'}))},{label:'الإعدادات',icon:'⚙️',run:()=>setTechData(v=>({...v,tab:'profile'}))}].map((item,index)=><TouchableOpacity key={item.label} onPress={item.run} style={{minHeight:52,flexDirection:'row-reverse',alignItems:'center',borderBottomWidth:index===3?0:1,borderBottomColor:'#EDF0F5',gap:12}}><Text style={{fontSize:21,width:28,textAlign:'center'}}>{item.icon}</Text><Text style={{flex:1,color:'#111827',fontSize:15,fontWeight:'800',textAlign:'right'}}>{item.label}</Text><Text style={{color:'#CBD0D9',fontSize:24}}>‹</Text></TouchableOpacity>)}
+              {[{label:'سجل المهام',icon:'📋',run:()=>setTechData(v=>({...v,tab:'completed'}))},{label:'التقارير',icon:'📊',run:()=>setTechData(v=>({...v,tab:'offers'}))},{label:'الإعدادات',icon:'⚙️',run:()=>setTechData(v=>({...v,tab:'profile'}))},{label:'طلب دعم فني',icon:'🎧',run:()=>setScreen('support')}].map((item,index)=><TouchableOpacity key={item.label} onPress={item.run} style={{minHeight:52,flexDirection:'row-reverse',alignItems:'center',borderBottomWidth:index===3?0:1,borderBottomColor:'#EDF0F5',gap:12}}><Text style={{fontSize:21,width:28,textAlign:'center'}}>{item.icon}</Text><Text style={{flex:1,color:'#111827',fontSize:15,fontWeight:'800',textAlign:'right'}}>{item.label}</Text><Text style={{color:'#CBD0D9',fontSize:24}}>‹</Text></TouchableOpacity>)}
             </View>
             {!isApproved?<Text style={{color:COLORS.amber800,fontSize:11,lineHeight:20,marginTop:10,textAlign:'right'}}>حسابك {user.status||'قيد المراجعة'}. إرسال العروض وشحن المحفظة متاحان بعد اعتماد الإدارة.</Text>:null}
           </ScrollView>}

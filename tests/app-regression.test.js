@@ -170,13 +170,19 @@ test('rating modal and rating submission safely handle missing technician order 
   assert.match(app.slice(submitStart, submitEnd), /if \(!order \|\| typeof order !== 'object' \|\| !sn\) \{[\s\S]*?setRatingPrompt\(null\)/);
 });
 
-test('brand header keeps one straight word with the animated shimmer layered over it', () => {
+test('brand header displays the brand without any moving shine or shimmer', () => {
   const appEntry = fs.readFileSync(path.join(root, 'App.js'), 'utf8');
-  assert.ok(appEntry.includes('<Text style={styles.brandHeaderTitle}>حمزاوي سات</Text>'), 'Hamzawy Sat brand should be rendered once as native text');
-  assert.ok(appEntry.includes('Animated.View pointerEvents="none" style={[styles.brandHeaderShimmer'), 'shimmer should be an overlay, not another text layer');
-  assert.ok(appEntry.includes('<LinearGradient colors={['), 'the shine gradient should remain animated over the word');
-  assert.ok(!appEntry.includes('react-native-svg'), 'the SVG mask that caused duplicate glyph rendering should not be used');
+  assert.ok(appEntry.includes('<Text style={styles.brandHeaderTitle}>حمزاوي سات</Text>'), 'Hamzawy Sat brand should remain visible as native text');
+  assert.doesNotMatch(appEntry, /shimmer|LinearGradient|brandHeaderShimmer/, 'the moving shine effect must be completely removed from the header');
   assert.equal((appEntry.match(/brandHeaderTitle}>حمزاوي سات/g) || []).length, 1, 'header should contain exactly one brand word');
+});
+
+test('client and technician account logout buttons appear after account actions and before service history', () => {
+  const account = fs.readFileSync(path.join(root, 'src/screens/account/AccountScreens.js'), 'utf8');
+  const passwordButton = account.indexOf('Button title="تغيير كلمة المرور"');
+  const logoutButton = account.indexOf('Button title="تسجيل الخروج"');
+  const historyHeading = account.indexOf('سجل الخدمات والتقييمات');
+  assert.ok(passwordButton !== -1 && logoutButton > passwordButton && historyHeading > logoutButton, 'logout must follow the two account action buttons and precede service history');
 });
 
 test('startup splash stays visible until saved account restoration finishes', () => {
@@ -368,6 +374,19 @@ test('wallet transfer notice explains accepted routes in both client and technic
 });
 
 
+test('client order validation shows a separate message for each missing field', () => {
+  const screens = fs.readFileSync(path.join(root, 'src/screens/AppScreens.js'), 'utf8');
+  const start = screens.indexOf('  async function createOrder() {');
+  const end = screens.indexOf('  async function trackClientOrder()', start);
+  const createOrder = screens.slice(start, end);
+  assert.ok(createOrder.includes("Alert.alert('الخدمة التفصيلية مطلوبة', 'اختار الخدمة التفصيلية لإكمال الطلب.')"));
+  assert.ok(createOrder.includes("Alert.alert('المنطقة مطلوبة', 'اختار منطقة العمل من القائمة لإكمال الطلب.')"));
+  assert.ok(createOrder.includes("if (detailedAddress.length < 10)"));
+  assert.ok(createOrder.includes('اكتب العنوان بالتفصيل في 10 أحرف على الأقل'));
+  assert.ok(!createOrder.includes("'بيانات ناقصة'"), 'combined missing-data alert should be removed');
+  assert.ok(createOrder.includes("if (description.length < 10 && !form.voiceRecordingData)"));
+});
+
 test('client request form Enter advances from detailed description to budget and submits from budget', () => {
   const descriptionField = app.match(/<Field inputRef=\{clientDescriptionInputRef\}[^\n]+/);
   const budgetField = app.match(/<Field inputRef=\{clientBudgetInputRef\}[^\n]+/);
@@ -533,6 +552,7 @@ test('area search normalizes Arabic alif variants and strips diacritics and invi
   assert.match(helpers, /\[أإآٱ\]\/g/);
   assert.match(helpers, /\\u064B-\\u065F/);
   assert.match(helpers, /isReservedAreaLabel/);
+  assert.match(helpers, /\.replace\(\/\[ة\]\/g, 'ه'\)/, 'Arabic ta marbuta and ha should normalize consistently');
 });
 
 test('technician registration and profile edits use approved multi-select areas, not free text', () => {
@@ -670,15 +690,15 @@ test('embedded client account keeps the site name and removes only the account h
   assert.ok(client.includes('مرحباً {session.user?.name||\'بك\'}'));
   assert.ok(client.includes('عميل'), 'client role label should use the approved generic wording');
   assert.ok(!client.includes('عميل صُنّاع'), 'legacy client role label should not remain');
-  assert.ok(client.includes('<PublicContentBanner />'), 'client account should use the same visible site name as other tabs');
+  assert.ok(client.includes('<PublicContentBanner />'), 'client account should keep the shared public content banner');
 });
 
-test('native client dashboard displays public maintenance notices, announcements and FAQs', () => {
+test('native client dashboard displays public maintenance notices, announcements and FAQs without the redundant site name', () => {
   const banner = fs.readFileSync(path.join(root, 'src/screens/shared/PublicContentBanner.js'), 'utf8');
   const client = fs.readFileSync(path.join(root, 'src/screens/client/ClientDashboard.js'), 'utf8');
-  assert.ok(client.includes('<PublicContentBanner />'), 'site name remains visible on every client tab');
-  assert.ok(banner.includes('{content.siteName ? <Text'), 'site name should render without a tab-specific hide flag');
-  assert.ok(banner.includes('const hasVisibleContent = content.siteName || content.maintenance'), 'empty banner wrapper should not render');
+  assert.ok(client.includes('<PublicContentBanner />'), 'public content banner remains available on client tabs');
+  assert.ok(!banner.includes('content.siteName'), 'redundant small site name must not render in the banner');
+  assert.ok(banner.includes('const hasVisibleContent = content.maintenance || content.announcement.trim() || content.faqs.length'), 'banner visibility should depend only on actual public content');
   assert.ok(banner.includes("api('/content')"));
   assert.ok(banner.includes('maintenanceMessage'));
   assert.ok(banner.includes('announcement'));
@@ -997,4 +1017,55 @@ test('password recovery also offers to update the saved password without retaini
   assert.ok(start >= 0 && end > start, 'password recovery handler should exist');
   const handler = app.slice(start, end);
   assert.ok(handler.includes('promptSavedPasswordUpdate(recoveryForm.role, recoveryForm.phone, recoveryForm.newPassword'));
+});
+
+
+test('public banner omits the redundant site name and referral promos pulse on both dashboards', () => {
+  const banner = fs.readFileSync(path.join(root, 'src/screens/shared/PublicContentBanner.js'), 'utf8');
+  const referral = fs.readFileSync(path.join(root, 'src/screens/shared/ReferralCard.js'), 'utf8');
+  const client = fs.readFileSync(path.join(root, 'src/screens/client/ClientDashboard.js'), 'utf8');
+  const technician = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianDashboard.js'), 'utf8');
+  assert.doesNotMatch(banner, /siteName|حمزاوي سات/);
+  assert.match(referral, /Animated\.loop\(Animated\.sequence/);
+  assert.match(referral, /toValue: 1\.035/);
+  assert.match(client, /<ReferralPromo onPress=/);
+  assert.match(technician, /<ReferralPromo onPress=/);
+});
+
+
+test('area and technician search tolerate spelling mistakes and rank the closest Arabic matches first', () => {
+  const helpers = fs.readFileSync(path.join(root, 'src/utils/area-helpers.js'), 'utf8');
+  const picker = fs.readFileSync(path.join(root, 'src/components/AreaPicker.js'), 'utf8');
+  const technician = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianDashboard.js'), 'utf8');
+  assert.match(helpers, /areaSearchEditDistance/);
+  assert.match(helpers, /areaMatchScore/);
+  assert.match(helpers, /\.sort\(\(a, b\) => a\.score - b\.score/);
+  assert.match(picker, /filterAreaOptions\(options, query\)/);
+  assert.match(technician, /matchesAreaSearch\(haystack, technicianSearch\)/);
+});
+
+test('client and technician quick actions place technical support last', () => {
+  const client = fs.readFileSync(path.join(root, 'src/screens/client/ClientDashboard.js'), 'utf8');
+  const technician = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianDashboard.js'), 'utf8');
+  for (const dashboard of [client, technician]) {
+    const start = dashboard.indexOf("label:'سجل");
+    const support = dashboard.indexOf("label:'طلب دعم فني'");
+    const end = dashboard.indexOf("].map((item,index)=><TouchableOpacity", support);
+    assert.ok(start !== -1 && support > start, 'support shortcut should follow the other quick actions');
+    assert.ok(end !== -1, 'quick actions should keep their existing rendering');
+    assert.ok(dashboard.slice(start, support).includes("label:'الإعدادات'"), 'settings should precede support');
+  }
+});
+
+
+test('client and technician header initial uses a light star mark instead of a navy circle', () => {
+  const app = fs.readFileSync(path.join(root, 'App.js'), 'utf8');
+  const styles = fs.readFileSync(path.join(root, 'src/theme/styles.js'), 'utf8');
+  assert.match(app, /brandHeaderAvatarStar/);
+  assert.match(app, /✦/);
+  const avatarStyle = styles.match(/brandHeaderAvatar: \{([^}]+)\}/);
+  assert.ok(avatarStyle, 'header initial wrapper style should exist');
+  assert.doesNotMatch(avatarStyle[1], /borderRadius|backgroundColor|borderWidth/);
+  assert.match(styles, /brandHeaderAvatarStar: \{[^}]*#8195E5/s);
+  assert.match(styles, /brandHeaderAvatarText: \{[^}]*fontStyle: 'italic'/s);
 });

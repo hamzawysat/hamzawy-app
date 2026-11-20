@@ -1,10 +1,25 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, Share, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Animated, Easing, Share, Text, TouchableOpacity, View } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import QRCode from 'react-native-qrcode-svg';
 import { api } from '../../services/api';
 import { COLORS } from '../../theme/colors';
 import { styles } from '../../theme/styles';
+
+export function ReferralPromo({ children, onPress, style }) {
+  const pulse = React.useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    const animation = Animated.loop(Animated.sequence([
+      Animated.timing(pulse, { toValue: 1.035, duration: 850, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      Animated.timing(pulse, { toValue: 1, duration: 850, easing: Easing.inOut(Easing.ease), useNativeDriver: true })
+    ]));
+    animation.start();
+    return () => animation.stop();
+  }, [pulse]);
+  return <Animated.View style={{ transform: [{ scale: pulse }] }}>
+    <TouchableOpacity onPress={onPress} activeOpacity={0.88} style={style}>{children}</TouchableOpacity>
+  </Animated.View>;
+}
 
 export default function ReferralCard({ session, kind, cardRef, expanded = false, onExpandedChange, showToggle = true }) {
   const [data, setData] = useState(null);
