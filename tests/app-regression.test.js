@@ -299,6 +299,14 @@ test('technician completed orders expose a manual client rating button only when
   assert.ok(app.includes("(item.ratings || []).some(r => r.reviewerRole === 'fanni')"));
 });
 
+test('client previous-order classification includes every completed status used by account history', () => {
+  const clientScreen = fs.readFileSync(path.join(root, 'src/screens/client/ClientDashboard.js'), 'utf8');
+  assert.match(clientScreen, /const CLIENT_PREVIOUS_ORDER_STATUSES = new Set\(\[.*'مكتمل'.*'مكتملة'.*'completed'.*'complete'.*'finished'/);
+  assert.match(clientScreen, /function isPreviousClientOrder\(order\)/);
+  assert.ok(clientScreen.includes('isPreviousClientOrder(order)'));
+  assert.ok(clientScreen.includes('isPreviousClientOrder(o)'));
+});
+
 test('client current orders tab is labeled الطلبات الجارية', () => {
   assert.ok(app.includes("{key:'current',label:'الطلبات الجارية'"));
   assert.ok(!app.includes("{key:'current',label:'جارية'"));
