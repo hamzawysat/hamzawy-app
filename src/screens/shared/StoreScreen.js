@@ -371,10 +371,10 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
               style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}
             >
               <Text style={styles.cardTitleSmall}>طلبات المتجر السابقة ({orders.length})</Text>
-              <Text style={{ color: COLORS.teal, fontSize: 18, fontWeight: '900' }}>{previousOrdersOpen ? '⌃' : '⌄'}</Text>
+              <Text style={{ color: COLORS.navy, fontSize: 18, fontWeight: '900' }}>{previousOrdersOpen ? '⌃' : '⌄'}</Text>
             </TouchableOpacity>
             <TouchableOpacity accessibilityRole="button" onPress={() => load(true)} disabled={loading || refreshing}>
-              <Text style={{ color: COLORS.teal, fontWeight: '900' }}>{refreshing ? '...' : 'تحديث'}</Text>
+              <Text style={{ color: COLORS.navy, fontWeight: '900' }}>{refreshing ? '...' : 'تحديث'}</Text>
             </TouchableOpacity>
           </View>
           {previousOrdersOpen ? (
@@ -397,11 +397,11 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
                   <Text style={styles.detailSmall}>{money(item.price)} × {item.quantity}</Text>
                 </View>
                 <TouchableOpacity accessibilityRole="button" accessibilityLabel={'تقليل كمية ' + item.name} onPress={() => updateCartQuantity(item.productId, Number(item.quantity) - 1)} style={{ padding: 8 }}>
-                  <Text style={{ color: COLORS.teal, fontSize: 18, fontWeight: '900' }}>−</Text>
+                  <Text style={{ color: COLORS.navy, fontSize: 18, fontWeight: '900' }}>−</Text>
                 </TouchableOpacity>
                 <Text style={{ color: COLORS.text, fontWeight: '900' }}>{item.quantity}</Text>
                 <TouchableOpacity accessibilityRole="button" accessibilityLabel={'زيادة كمية ' + item.name} onPress={() => updateCartQuantity(item.productId, Math.min(1000, Number(item.quantity) + 1))} style={{ padding: 8 }}>
-                  <Text style={{ color: COLORS.teal, fontSize: 18, fontWeight: '900' }}>+</Text>
+                  <Text style={{ color: COLORS.navy, fontSize: 18, fontWeight: '900' }}>+</Text>
                 </TouchableOpacity>
                 <TouchableOpacity accessibilityRole="button" accessibilityLabel={'حذف ' + item.name} onPress={() => updateCartQuantity(item.productId, 0)} style={{ padding: 6 }}>
                   <Text style={{ color: COLORS.red, fontSize: 11, fontWeight: '900' }}>حذف</Text>
@@ -411,10 +411,10 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
             <Text style={[styles.detailBold, { textAlign: 'right', marginTop: 12 }]}>الإجمالي: {money(cartTotal)}</Text>
             <Text style={[styles.sectionTitle, { marginTop: 10 }]}>طريقة الدفع</Text>
             <View style={{ flexDirection: 'row', gap: 8 }}>
-              <TouchableOpacity onPress={() => setCartPaymentMethod('wallet')} style={{ flex: 1, padding: 11, borderRadius: 10, borderWidth: 1, borderColor: cartPaymentMethod === 'wallet' ? COLORS.teal : COLORS.border, backgroundColor: cartPaymentMethod === 'wallet' ? COLORS.indigo50 : COLORS.white }}>
+              <TouchableOpacity onPress={() => setCartPaymentMethod('wallet')} style={{ flex: 1, padding: 11, borderRadius: 10, borderWidth: 1, borderColor: cartPaymentMethod === 'wallet' ? COLORS.navy : COLORS.border, backgroundColor: cartPaymentMethod === 'wallet' ? '#EEF2FF' : COLORS.white }}>
                 <Text style={{ textAlign: 'center', fontWeight: '900', color: COLORS.text }}>من المحفظة</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => setCartPaymentMethod('cash_on_delivery')} style={{ flex: 1, padding: 11, borderRadius: 10, borderWidth: 1, borderColor: cartPaymentMethod === 'cash_on_delivery' ? COLORS.teal : COLORS.border, backgroundColor: cartPaymentMethod === 'cash_on_delivery' ? COLORS.indigo50 : COLORS.white }}>
+              <TouchableOpacity onPress={() => setCartPaymentMethod('cash_on_delivery')} style={{ flex: 1, padding: 11, borderRadius: 10, borderWidth: 1, borderColor: cartPaymentMethod === 'cash_on_delivery' ? COLORS.navy : COLORS.border, backgroundColor: cartPaymentMethod === 'cash_on_delivery' ? '#EEF2FF' : COLORS.white }}>
                 <Text style={{ textAlign: 'center', fontWeight: '900', color: COLORS.text }}>عند الاستلام</Text>
               </TouchableOpacity>
             </View>
@@ -422,7 +422,7 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
             <Button title={cartSubmitting ? 'جاري إرسال الطلب...' : 'تأكيد الطلب المجمع'} onPress={submitCartOrder} disabled={cartSubmitting} />
           </View>
         ) : null}
-        {loading ? <ActivityIndicator color={COLORS.teal} size="large" /> : error ? <View style={styles.dataCard}><Text style={styles.errorText}>{error}</Text><Button title="إعادة المحاولة" onPress={() => load()} /></View> :
+        {loading ? <ActivityIndicator color={COLORS.navy} size="large" /> : error ? <View style={styles.dataCard}><Text style={styles.errorText}>{error}</Text><Button title="إعادة المحاولة" onPress={() => load()} /></View> :
           displayedProducts ? (
             <View style={{ marginBottom: 12 }}>
               {normalizedQuery ? (
@@ -431,7 +431,7 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                   <TouchableOpacity accessibilityRole="button" onPress={() => setSelectedCategory('')}
                     style={{ paddingHorizontal: 12, paddingVertical: 9, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.white }}>
-                    <Text style={{ color: COLORS.teal, fontSize: 12, fontWeight: '900' }}>← كل الأقسام</Text>
+                    <Text style={{ color: COLORS.navy, fontSize: 12, fontWeight: '900' }}>← كل الأقسام</Text>
                   </TouchableOpacity>
                   <View style={{ alignItems: 'flex-end' }}>
                     <Text style={styles.sectionTitle}>{selectedGroup?.category}</Text>
@@ -453,11 +453,11 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
                         onPress={() => setExpandedProductDetails(current => ({ ...current, [String(item._id || index)]: !current[String(item._id || index)] }))}
                         style={{ paddingVertical: 6 }}
                       >
-                        <Text style={{ color: COLORS.teal, fontSize: 11, fontWeight: '900' }}>
+                        <Text style={{ color: COLORS.navy, fontSize: 11, fontWeight: '900' }}>
                           تفاصيل المنتج {expandedProductDetails[String(item._id || index)] ? '⌃' : '⌄'}
                         </Text>
                       </TouchableOpacity>
-                      <TouchableOpacity accessibilityRole="button" onPress={() => addToCart(item)} style={{ backgroundColor: COLORS.teal, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9 }}>
+                      <TouchableOpacity accessibilityRole="button" onPress={() => addToCart(item)} style={{ backgroundColor: COLORS.navy, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9 }}>
                         <Text style={{ color: COLORS.white, fontWeight: '900', fontSize: 11 }}>{item.type === 'subscription' ? 'اطلب الاشتراك' : 'أضف للسلة'}</Text>
                       </TouchableOpacity>
                       {item.type !== 'subscription' ? <Button title="شراء مباشر" onPress={() => openPurchase(item)} /> : null}
@@ -488,7 +488,7 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
                     <View style={{ padding: 12 }}>
                       <Text numberOfLines={1} style={{ color: COLORS.navy, fontSize: 13, fontWeight: '900', textAlign: 'right' }}>{group.category}</Text>
                       <Text style={{ color: COLORS.muted, fontSize: 10, fontWeight: '700', textAlign: 'right', marginTop: 4 }}>{group.items.length} منتج</Text>
-                      <Text style={{ color: COLORS.teal, fontSize: 10, fontWeight: '900', textAlign: 'right', marginTop: 8 }}>عرض المنتجات ←</Text>
+                      <Text style={{ color: COLORS.navy, fontSize: 10, fontWeight: '900', textAlign: 'right', marginTop: 8 }}>عرض المنتجات ←</Text>
                     </View>
                   </TouchableOpacity>
                 );
@@ -506,8 +506,8 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
             {selected?.type !== 'subscription' ? <>
               <Text style={styles.sectionTitle}>طريقة الدفع</Text>
               <View style={{ flexDirection: 'row', gap: 8 }}>
-                <TouchableOpacity onPress={() => setPaymentMethod('wallet')} style={{ flex: 1, padding: 12, borderRadius: 10, borderWidth: 1, borderColor: paymentMethod === 'wallet' ? COLORS.teal : COLORS.border, backgroundColor: paymentMethod === 'wallet' ? COLORS.indigo50 : COLORS.white }}><Text style={{ textAlign: 'center', fontWeight: '900', color: COLORS.text }}>من المحفظة</Text></TouchableOpacity>
-                <TouchableOpacity onPress={() => setPaymentMethod('cash_on_delivery')} style={{ flex: 1, padding: 12, borderRadius: 10, borderWidth: 1, borderColor: paymentMethod === 'cash_on_delivery' ? COLORS.teal : COLORS.border, backgroundColor: paymentMethod === 'cash_on_delivery' ? COLORS.indigo50 : COLORS.white }}><Text style={{ textAlign: 'center', fontWeight: '900', color: COLORS.text }}>عند الاستلام</Text></TouchableOpacity>
+                <TouchableOpacity onPress={() => setPaymentMethod('wallet')} style={{ flex: 1, padding: 12, borderRadius: 10, borderWidth: 1, borderColor: paymentMethod === 'wallet' ? COLORS.navy : COLORS.border, backgroundColor: paymentMethod === 'wallet' ? '#EEF2FF' : COLORS.white }}><Text style={{ textAlign: 'center', fontWeight: '900', color: COLORS.text }}>من المحفظة</Text></TouchableOpacity>
+                <TouchableOpacity onPress={() => setPaymentMethod('cash_on_delivery')} style={{ flex: 1, padding: 12, borderRadius: 10, borderWidth: 1, borderColor: paymentMethod === 'cash_on_delivery' ? COLORS.navy : COLORS.border, backgroundColor: paymentMethod === 'cash_on_delivery' ? '#EEF2FF' : COLORS.white }}><Text style={{ textAlign: 'center', fontWeight: '900', color: COLORS.text }}>عند الاستلام</Text></TouchableOpacity>
               </View>
             </> : <Text style={styles.detail}>طلب الاشتراك لا يخصم أي مبلغ الآن؛ يتم تأكيده وفق إجراءات المتجر.</Text>}
             <Button title={submitting ? 'جاري إرسال الطلب...' : 'تأكيد طلب الشراء'} onPress={submitPurchase} disabled={submitting} />
