@@ -798,7 +798,7 @@ test('client and technician dashboards use the reference home layout without upp
     assert.match(source, /حمزاوي سات/);
     assert.match(source, /الإحصائيات/);
     assert.match(source, /إجراءات سريعة/);
-    assert.match(source, /paddingBottom:132/);
+    assert.match(source, /paddingBottom:\s*132/);
   }
   assert.match(client, /ادعُ صديقك واربح 50 جنيه/);
   assert.match(technician, /ادعُ صديقك واربح 150 جنيه/);
@@ -869,7 +869,7 @@ test('client and technician referral cards load server-issued invite links and r
   assert.match(card, /عن كل فني جديد يسجل من رابط دعوتك ويكمل 3 طلبات، تحصل أنت وهو على 150 جنيهًا مكافأة/);
   assert.match(card, /كل فني جديد يسجل من رابطك ويكمل 3 طلبات يمنحك ويمنحه 150 جنيهًا مكافأة/);
   assert.match(client, /ادعُ صديقك لتحصل على 50 جنيه مكافأة/);
-  assert.match(technician, /ادعُ صديقك لتحصل على 150 جنيه مكافأة/);
+  assert.match(technician, /ادعُ صديقك واربح 150 جنيه/);
   assert.match(card, /data\?\.referrals\) && data\.referrals\.length/);
   assert.match(card, /data\?\.enabled !== false/);
   assert.match(client, /<ReferralCard session=\{session\} kind="client"/);
