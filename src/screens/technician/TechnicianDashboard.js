@@ -100,7 +100,6 @@ export function TechnicianDashboard({ context }) {
         <View style={{flexDirection:'row',alignItems:'center',gap:8}}><Text style={{color:'#102A9B',fontSize:24,fontWeight:'900'}}>حمزاوي سات</Text><Text style={{fontSize:27}}>🛡️</Text></View>
       </View>
       {offerDraft ? <View style={styles.formCard}>
-      {offerDraft ? <View style={styles.formCard}>
         <Text style={styles.cardTitlePremium}>تقديم عرض على {offerDraft.order.service || 'الخدمة'} — {offerDraft.order.sn}</Text>
         <Field label="السعر بالجنيه" value={offerDraft.price} onChangeText={value => setOfferDraft(current => ({ ...current, price: value }))} keyboardType="numeric" />
         <Field label="رسالة للعميل" value={offerDraft.message} onChangeText={value => setOfferDraft(current => ({ ...current, message: value }))} multiline />
