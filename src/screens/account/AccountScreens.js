@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { styles } from '../../theme/styles';
 import { Button, Field } from '../../components/FormControls';
 import AreaPicker from '../../components/AreaPicker';
-export function AccountScreen({ session, clientData, techData, setScreen, beginProfileEdit, setRatingPrompt, getOrderSN, embedded = false }) {
+export function AccountScreen({ session, clientData, techData, setScreen, beginProfileEdit, setRatingPrompt, getOrderSN, onLogout, embedded = false }) {
     const isClientAccount = session?.role === 'client';
     const history = isClientAccount ? clientData.orders : session?.role === 'fanni' ? techData.offers : [];
     const completedHistory = (history || []).filter(item => ['تم الانتهاء', 'مكتمل', 'مكتملة', 'completed', 'complete', 'finished'].includes(String(item.status || item.orderStatus || '').trim().toLowerCase()));
@@ -37,6 +37,7 @@ export function AccountScreen({ session, clientData, techData, setScreen, beginP
           </View>;
         }) : <Text style={styles.detail}>لا توجد عمليات مكتملة لعرضها حاليًا.</Text>}
       </> : null}
+      { ['client', 'fanni'].includes(session?.role) && onLogout ? <View style={{ marginTop: 18 }}><Button title="تسجيل الخروج" secondary onPress={onLogout} /></View> : null}
     </>;
     return embedded
       ? <View style={styles.page}>{content}</View>
