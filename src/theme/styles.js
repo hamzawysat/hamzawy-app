@@ -159,7 +159,7 @@ export const styles = StyleSheet.create({
   voicePlaybackText: { color: COLORS.white, fontSize: 13, fontWeight: '900', textAlign: 'center' },
   serviceDescriptionBox: { backgroundColor: COLORS.indigo50, borderRightWidth: 4, borderRightColor: '#263DBB', borderRadius: 15, paddingVertical: 14, paddingHorizontal: 15, marginTop: 10, marginBottom: 8 },
   serviceDescriptionLabel: { color: '#172DAD', fontSize: 13, fontWeight: '900', textAlign: 'right', marginBottom: 7 },
-  serviceDescriptionText: { color: '#172554', fontSize: 16, fontWeight: '700', lineHeight: 27, textAlign: 'right' },
+  serviceDescriptionText: { color: COLORS.navy, fontSize: 18, fontWeight: '600', lineHeight: 28, textAlign: 'right' },
   detailBold: { color: COLORS.navy, fontSize: 13, fontWeight: '800', textAlign: 'right', marginTop: 6 },
   sectionTitleSmall: { color: '#102A9B', fontSize: 13, fontWeight: '900', textAlign: 'right', marginTop: 12, marginBottom: 6 },
   sectionTitle: { color: '#102A9B', fontSize: 16, fontWeight: '900', textAlign: 'right', marginTop: 14, marginBottom: 7 },
