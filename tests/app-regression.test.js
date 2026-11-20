@@ -1030,3 +1030,28 @@ test('public banner omits the redundant site name and referral promos pulse on b
   assert.match(client, /<ReferralPromo onPress=/);
   assert.match(technician, /<ReferralPromo onPress=/);
 });
+
+
+test('area and technician search tolerate spelling mistakes and rank the closest Arabic matches first', () => {
+  const helpers = fs.readFileSync(path.join(root, 'src/utils/area-helpers.js'), 'utf8');
+  const picker = fs.readFileSync(path.join(root, 'src/components/AreaPicker.js'), 'utf8');
+  const technician = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianDashboard.js'), 'utf8');
+  assert.match(helpers, /areaSearchEditDistance/);
+  assert.match(helpers, /areaMatchScore/);
+  assert.match(helpers, /\.sort\(\(a, b\) => a\.score - b\.score/);
+  assert.match(picker, /filterAreaOptions\(options, query\)/);
+  assert.match(technician, /matchesAreaSearch\(haystack, technicianSearch\)/);
+});
+
+test('client and technician quick actions place technical support last', () => {
+  const client = fs.readFileSync(path.join(root, 'src/screens/client/ClientDashboard.js'), 'utf8');
+  const technician = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianDashboard.js'), 'utf8');
+  for (const dashboard of [client, technician]) {
+    const start = dashboard.indexOf("label:'سجل");
+    const support = dashboard.indexOf("label:'طلب دعم فني'");
+    const end = dashboard.indexOf("].map((item,index)=><TouchableOpacity", support);
+    assert.ok(start !== -1 && support > start, 'support shortcut should follow the other quick actions');
+    assert.ok(end !== -1, 'quick actions should keep their existing rendering');
+    assert.ok(dashboard.slice(start, support).includes("label:'الإعدادات'"), 'settings should precede support');
+  }
+});
