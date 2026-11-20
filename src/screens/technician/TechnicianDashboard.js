@@ -115,8 +115,22 @@ export function TechnicianDashboard({ context }) {
                 <View style={{width:48,height:48,borderRadius:24,backgroundColor:'#102A9B',alignItems:'center',justifyContent:'center',marginLeft:9}}><Text style={{color:'#FFF',fontSize:23,fontWeight:'900'}}>{String(user.name||'ف').trim().charAt(0)}</Text></View>
                 <View style={{flex:1}}><Text style={{color:'#09145B',fontSize:16,fontWeight:'900',textAlign:'right'}}>مرحباً {user.name||'بك'}</Text><Text style={{color:'#46506B',fontSize:11,fontWeight:'700',textAlign:'right',marginTop:3}}>{user.level||'مبتدئ'} • معتمد • {Number(user.walletBalance||user.balance||0).toLocaleString('ar-EG')} جنيه</Text></View>
               </View>
-              <View style={{alignItems:'flex-start'}}><View style={{paddingHorizontal:9,paddingVertical:5,borderRadius:16,backgroundColor:acceptingOrders?'#E5F8EF':'#FFF3D6'}}><Text style={{color:acceptingOrders?'#16845B':'#946200',fontSize:10,fontWeight:'900'}}>{acceptingOrders?'● ON متصل الآن':'● غير متصل الآن'}</Text></View></View>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel={acceptingOrders ? 'إيقاف استقبال الطلبات' : 'تشغيل استقبال الطلبات'}
+                onPress={toggleOrderAvailability}
+                disabled={!isApproved || availabilitySaving}
+                activeOpacity={0.8}
+                style={{alignItems:'center',justifyContent:'center',paddingHorizontal:11,paddingVertical:8,borderRadius:18,backgroundColor:acceptingOrders?'#E5F8EF':'#FFF3D6',borderWidth:1,borderColor:acceptingOrders?'#9BDDBB':'#F0CE7A',opacity:(!isApproved || availabilitySaving)?0.6:1,minWidth:112}}
+              >
+                <Text style={{color:acceptingOrders?'#16845B':'#946200',fontSize:11,fontWeight:'900'}}>{availabilitySaving?'جارٍ التحديث...':acceptingOrders?'● ON · متصل الآن':'● OFF · غير متصل الآن'}</Text>
+                <Text style={{color:acceptingOrders?'#16845B':'#946200',fontSize:9,fontWeight:'700',marginTop:2}}>{acceptingOrders?'اضغط للإيقاف':'اضغط للتفعيل'}</Text>
+              </TouchableOpacity>
             </View>
+            {!acceptingOrders ? <View style={{marginBottom:8,paddingHorizontal:10,paddingVertical:8,borderRadius:10,backgroundColor:'#FFF4E5',borderWidth:1,borderColor:'#F2D39A',flexDirection:'row-reverse',alignItems:'center',gap:6}}>
+              <Text style={{fontSize:14}}>⚠️</Text>
+              <Text style={{flex:1,color:'#805500',fontSize:10,fontWeight:'800',textAlign:'right',lineHeight:16}}>أنت غير متصل ولن تستقبل طلبات جديدة. فعّل ON لاستقبال الطلبات.</Text>
+            </View> : null}
             <View style={{backgroundColor:'#092D9E',borderRadius:18,paddingHorizontal:13,paddingVertical:10,minHeight:88,marginBottom:6,overflow:'hidden',flexDirection:'row',alignItems:'center',gap:10}}>
               <View style={{flex:1,minWidth:0}}><Text style={{color:'#FFF',fontSize:15,fontWeight:'900',textAlign:'right'}}>فرص عمل متاحة</Text><Text style={{color:'#E3EAFF',fontSize:11,fontWeight:'700',textAlign:'right',marginTop:3,lineHeight:16}}>لديك فرص جديدة قريبة منك — تحقق الآن وابدأ مهمتك</Text><TouchableOpacity onPress={()=>setTechData(v=>({...v,tab:'available'}))} style={{alignSelf:'flex-start',backgroundColor:'#FFF',borderRadius:9,paddingHorizontal:11,paddingVertical:6,marginTop:7}}><Text style={{color:'#102A9B',fontSize:11,fontWeight:'900'}}>عرض الفرص ←</Text></TouchableOpacity></View>
               <View style={{width:44,height:44,borderRadius:22,backgroundColor:'#DCE6FF',alignItems:'center',justifyContent:'center',flexShrink:0}}><Text style={{fontSize:21}}>💼</Text></View>
