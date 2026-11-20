@@ -117,15 +117,16 @@ export default function ClientWalletScreen({ session, onBalanceChange }) {
 
   return (
     <View style={{ padding: 14, paddingBottom: 30 }}>
-      <View style={[styles.dataCard, { backgroundColor: COLORS.navy, borderColor: COLORS.navy }]}>
-        <Text style={{ color: '#DCEBFA', fontSize: 12, fontWeight: '800' }}>رصيد محفظتك</Text>
+      <View style={[styles.dataCard, { backgroundColor: '#101F9B', borderColor: '#101F9B', borderRadius: 23, padding: 19, marginTop: 4, marginBottom: 12, shadowColor: '#07136E', shadowOpacity: 0.2, shadowRadius: 14, elevation: 5 }]}>
+        <Text style={{ color: '#DCE5FF', fontSize: 12, fontWeight: '900', textAlign: 'right' }}>محفظة حمزاوي سات</Text>
+        <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '800', marginTop: 8 }}>رصيد محفظتك</Text>
         <Text style={{ color: '#FFFFFF', fontSize: 28, fontWeight: '900', marginTop: 6 }}>{wallet.balance.toLocaleString('ar-EG')} جنيه</Text>
         <Text style={{ color: '#E5F1FB', fontSize: 11, marginTop: 8, lineHeight: 19 }}>تقدر تدفع قيمة الخدمة من محفظتك بعد تعيين الفني، وتشترك في الباقات وتجددها مباشرة من رصيدك.</Text>
         <Button title={loading ? 'جاري التحديث...' : 'تحديث الرصيد والسجل'} secondary onPress={load} disabled={loading} />
       </View>
       {wallet.frozen ? <View style={styles.dataCard}><Text style={styles.errorText}>المحفظة مجمدة مؤقتًا. لا يمكن إرسال طلب شحن جديد حاليًا.</Text></View> : null}
       <View style={{ flexDirection: 'row', gap: 6, marginVertical: 12 }}>
-        {tabs.map(item => <TouchableOpacity key={item.id} onPress={() => setTab(item.id)} style={{ flex: 1, minHeight: 48, borderRadius: 10, padding: 8, justifyContent: 'center', backgroundColor: tab === item.id ? COLORS.navy : COLORS.white, borderWidth: 1, borderColor: tab === item.id ? COLORS.navy : COLORS.border }}>
+        {tabs.map(item => <TouchableOpacity key={item.id} onPress={() => setTab(item.id)} style={{ flex: 1, minHeight: 48, borderRadius: 14, padding: 9, justifyContent: 'center', backgroundColor: tab === item.id ? '#101F9B' : COLORS.white, borderWidth: 1, borderColor: tab === item.id ? '#101F9B' : '#E5E9F2' }}>
           <Text style={{ textAlign: 'center', fontSize: 10, fontWeight: '900', color: tab === item.id ? COLORS.white : COLORS.text }}>{item.label}</Text>
         </TouchableOpacity>)}
       </View>
