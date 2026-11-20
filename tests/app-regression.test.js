@@ -1056,3 +1056,16 @@ test('client and technician quick actions place technical support last', () => {
     assert.ok(dashboard.slice(start, support).includes("label:'الإعدادات'"), 'settings should precede support');
   }
 });
+
+
+test('client and technician header initial uses a light star mark instead of a navy circle', () => {
+  const app = fs.readFileSync(path.join(root, 'App.js'), 'utf8');
+  const styles = fs.readFileSync(path.join(root, 'src/theme/styles.js'), 'utf8');
+  assert.match(app, /brandHeaderAvatarStar/);
+  assert.match(app, /✦/);
+  const avatarStyle = styles.match(/brandHeaderAvatar: \{([^}]+)\}/);
+  assert.ok(avatarStyle, 'header initial wrapper style should exist');
+  assert.doesNotMatch(avatarStyle[1], /borderRadius|backgroundColor|borderWidth/);
+  assert.match(styles, /brandHeaderAvatarStar: \{[^}]*#8195E5/s);
+  assert.match(styles, /brandHeaderAvatarText: \{[^}]*fontStyle: 'italic'/s);
+});
