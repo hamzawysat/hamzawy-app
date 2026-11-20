@@ -446,7 +446,7 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
                   <View style={{ flex: 1 }}>
                     <Text style={styles.cardTitleSmall}>{item.name || 'منتج'}</Text>
                     <Text style={[styles.detail, { fontWeight: '900', color: COLORS.navy, marginTop: 6 }]}>{money(item.price)}</Text>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 10 }}>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 10 }}>
                       <TouchableOpacity
                         accessibilityRole="button"
                         accessibilityState={{ expanded: Boolean(expandedProductDetails[String(item._id || index)]) }}
@@ -460,7 +460,13 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
                       <TouchableOpacity accessibilityRole="button" onPress={() => addToCart(item)} style={{ backgroundColor: COLORS.navy, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9 }}>
                         <Text style={{ color: COLORS.white, fontWeight: '900', fontSize: 11 }}>{item.type === 'subscription' ? 'اطلب الاشتراك' : 'أضف للسلة'}</Text>
                       </TouchableOpacity>
-                      {item.type !== 'subscription' ? <Button title="شراء مباشر" onPress={() => openPurchase(item)} /> : null}
+                      {item.type !== 'subscription' ? <TouchableOpacity
+                        accessibilityRole="button"
+                        onPress={() => openPurchase(item)}
+                        style={{ maxWidth: '100%', flexShrink: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.blue, borderColor: COLORS.indigo700, borderWidth: 1, borderBottomWidth: 3, borderBottomColor: COLORS.indigo700, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 8, minHeight: 40 }}
+                      >
+                        <Text numberOfLines={1} style={{ color: COLORS.white, fontWeight: '800', fontSize: 12, textAlign: 'center' }}>شراء مباشر</Text>
+                      </TouchableOpacity> : null}
                     </View>
                     {expandedProductDetails[String(item._id || index)] ? (
                       <View style={{ marginTop: 8, padding: 10, borderRadius: 10, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: COLORS.border, gap: 6 }}>
