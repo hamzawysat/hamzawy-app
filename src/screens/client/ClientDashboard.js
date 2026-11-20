@@ -29,6 +29,11 @@ import ClientSubscriptionsScreen from './ClientSubscriptionsScreen';
 import PublicContentBanner from '../shared/PublicContentBanner';
 import { AccountScreen } from '../account/AccountScreens';
 
+const CLIENT_PREVIOUS_ORDER_STATUSES = new Set(['تم الانتهاء', 'منتهي', 'مكتمل', 'مكتملة', 'ملغي', 'مؤرشف', 'منتهي - اعتذار', 'completed', 'complete', 'finished']);
+function isPreviousClientOrder(order) {
+  return CLIENT_PREVIOUS_ORDER_STATUSES.has(String(order?.status || order?.orderStatus || '').trim().toLowerCase());
+}
+
 function technicianBadgeLabel(badge) {
   const key = typeof badge === 'string' ? badge : String(badge?.key || badge?.id || '');
   const labels = { trusted: 'فني موثوق', top_rated: 'الأعلى تقييمًا', verified: 'تم التحقق', fast_response: 'سريع الاستجابة', premium: 'فني مميز', gold: 'الشارة الذهبية' };
@@ -109,7 +114,7 @@ export function ClientDashboard({ context }) {
         </View>
       </View>
 
-      {!referralPageOpen ? <View style={styles.tabRowPremium}>{[{key:'home',label:'الرئيسية'},{key:'profile',label:'حسابي'},{key:'wallet',label:'المحفظة'},{key:'store',label:'المتجر'},{key:'complaint',label:'الدعم'},{key:'new',label:'طلب جديد',icon:'＋'},{key:'current',label:'الطلبات الجارية',count:clientData.orders.filter(o => !['تم الانتهاء','منتهي','ملغي','مؤرشف','منتهي - اعتذار'].includes(o.status)).length},{key:'previous',label:'الطلبات السابقة',count:clientData.orders.filter(o => ['تم الانتهاء','منتهي','ملغي','مؤرشف','منتهي - اعتذار'].includes(o.status)).length},{key:'track',label:'تتبع طلب'},{key:'subscriptions',label:'الاشتراكات'}].map(t => <TouchableOpacity key={t.key} onPress={() => { setClientTab(t.key); if (t.key === 'new') setClientNewRequestChoice(''); }} style={[styles.pillPremium, clientTab===t.key && styles.pillPremiumActive]}><Text style={[styles.pillPremiumText,clientTab===t.key && styles.pillPremiumTextActive]}>{t.icon ? t.icon + ' ' : ''}{t.label}{t.count ? ` (${t.count})` : ''}</Text></TouchableOpacity>)}</View> : null}
+      {!referralPageOpen ? <View style={styles.tabRowPremium}>{[{key:'home',label:'الرئيسية'},{key:'profile',label:'حسابي'},{key:'wallet',label:'المحفظة'},{key:'store',label:'المتجر'},{key:'complaint',label:'الدعم'},{key:'new',label:'طلب جديد',icon:'＋'},{key:'current',label:'الطلبات الجارية',count:clientData.orders.filter(o => !isPreviousClientOrder(o)).length},{key:'previous',label:'الطلبات السابقة',count:clientData.orders.filter(o => isPreviousClientOrder(o)).length},{key:'track',label:'تتبع طلب'},{key:'subscriptions',label:'الاشتراكات'}].map(t => <TouchableOpacity key={t.key} onPress={() => { setClientTab(t.key); if (t.key === 'new') setClientNewRequestChoice(''); }} style={[styles.pillPremium, clientTab===t.key && styles.pillPremiumActive]}><Text style={[styles.pillPremiumText,clientTab===t.key && styles.pillPremiumTextActive]}>{t.icon ? t.icon + ' ' : ''}{t.label}{t.count ? ` (${t.count})` : ''}</Text></TouchableOpacity>)}</View> : null}
       {!referralPageOpen ? <StoreAdBanner role="client" session={session} visible={clientTab !== 'store'} onOpenStore={() => setClientTab('store')} /> : null}
 
     <ScrollView ref={clientScrollRef} contentContainerStyle={[styles.page, { paddingBottom: 110 }]} showsVerticalScrollIndicator={false}>
@@ -131,8 +136,8 @@ export function ClientDashboard({ context }) {
         </TouchableOpacity>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
           <View style={{ flexGrow: 1, flexBasis: '45%', padding: 12, borderRadius: 12, backgroundColor: '#F1F5F9' }}><Text style={styles.detail}>إجمالي طلباتي</Text><Text style={styles.cardTitlePremium}>{clientData.orders.length}</Text><Button title="عرض الطلبات" secondary onPress={() => setClientTab('current')} /></View>
-          <View style={{ flexGrow: 1, flexBasis: '45%', padding: 12, borderRadius: 12, backgroundColor: '#F1F5F9' }}><Text style={styles.detail}>طلبات جارية</Text><Text style={styles.cardTitlePremium}>{clientData.orders.filter(order => !['تم الانتهاء','منتهي','ملغي','مؤرشف','منتهي - اعتذار'].includes(String(order.status || ''))).length}</Text><Button title="متابعة الجاري" secondary onPress={() => setClientTab('current')} /></View>
-          <View style={{ flexGrow: 1, flexBasis: '45%', padding: 12, borderRadius: 12, backgroundColor: '#F1F5F9' }}><Text style={styles.detail}>طلبات سابقة</Text><Text style={styles.cardTitlePremium}>{clientData.orders.filter(order => ['تم الانتهاء','منتهي','ملغي','مؤرشف','منتهي - اعتذار'].includes(String(order.status || ''))).length}</Text><Button title="عرض السابق" secondary onPress={() => setClientTab('previous')} /></View>
+          <View style={{ flexGrow: 1, flexBasis: '45%', padding: 12, borderRadius: 12, backgroundColor: '#F1F5F9' }}><Text style={styles.detail}>طلبات جارية</Text><Text style={styles.cardTitlePremium}>{clientData.orders.filter(order => !isPreviousClientOrder(order)).length}</Text><Button title="متابعة الجاري" secondary onPress={() => setClientTab('current')} /></View>
+          <View style={{ flexGrow: 1, flexBasis: '45%', padding: 12, borderRadius: 12, backgroundColor: '#F1F5F9' }}><Text style={styles.detail}>طلبات سابقة</Text><Text style={styles.cardTitlePremium}>{clientData.orders.filter(order => isPreviousClientOrder(order)).length}</Text><Button title="عرض السابق" secondary onPress={() => setClientTab('previous')} /></View>
           <View style={{ flexGrow: 1, flexBasis: '45%', padding: 12, borderRadius: 12, backgroundColor: '#F1F5F9' }}><Text style={styles.detail}>رصيد محفظتي</Text><Text style={styles.cardTitlePremium}>{walletBalance.toLocaleString('ar-EG')} ج</Text><Button title="فتح المحفظة" secondary onPress={() => setClientTab('wallet')} /></View>
         </View>
         <View style={{ marginTop: 12, padding: 12, borderRadius: 12, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: COLORS.border }}>
@@ -178,9 +183,9 @@ export function ClientDashboard({ context }) {
         <Button title={loginLoading ? 'جاري إرسال الطلب...' : '🚀 إرسال طلب الخدمة'} onPress={createOrder} disabled={loginLoading} /></View>
       </>}</> : null}
       {clientData.sn ? <View style={styles.codeRowPremium}><Text selectable style={styles.successText}>كود الطلب: {clientData.sn}</Text><Button title="نسخ" secondary onPress={() => copyOrderCode(clientData.sn)} /></View> : null}
-      {clientTab === 'current' && !clientData.orders.some(order => !['تم الانتهاء','منتهي','ملغي','مؤرشف','منتهي - اعتذار'].includes(order.status)) ? <View style={styles.formCard}><Text style={styles.emptyText}>لا توجد طلبات جارية لديك حاليًا.</Text></View> : null}
-      {clientTab === 'previous' && !clientData.orders.some(order => ['تم الانتهاء','منتهي','ملغي','مؤرشف','منتهي - اعتذار'].includes(order.status)) ? <View style={styles.formCard}><Text style={styles.emptyText}>لا توجد طلبات سابقة حتى الآن.</Text></View> : null}
-      {['current', 'previous'].includes(clientTab) ? clientData.orders.filter(order => clientTab === 'previous' ? ['تم الانتهاء','منتهي','ملغي','مؤرشف','منتهي - اعتذار'].includes(order.status) : !['تم الانتهاء','منتهي','ملغي','مؤرشف','منتهي - اعتذار'].includes(order.status)).map((order, i) => {
+      {clientTab === 'current' && !clientData.orders.some(order => !isPreviousClientOrder(order)) ? <View style={styles.formCard}><Text style={styles.emptyText}>لا توجد طلبات جارية لديك حاليًا.</Text></View> : null}
+      {clientTab === 'previous' && !clientData.orders.some(order => isPreviousClientOrder(order)) ? <View style={styles.formCard}><Text style={styles.emptyText}>لا توجد طلبات سابقة حتى الآن.</Text></View> : null}
+      {['current', 'previous'].includes(clientTab) ? clientData.orders.filter(order => clientTab === 'previous' ? isPreviousClientOrder(order) : !isPreviousClientOrder(order)).map((order, i) => {
         const sn = getOrderSN(order), expanded = Boolean(expandedClientOrders[sn]), rating = ratingDrafts[sn];
         return <View key={String(order._id || sn || i)} style={styles.orderCardPremium}>
           <TouchableOpacity onPress={() => setExpandedClientOrders(current => ({ ...current, [sn]: !current[sn] }))} style={styles.orderCardHeader}>
