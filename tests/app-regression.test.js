@@ -789,15 +789,19 @@ test('client and technician always start on their home tab after login and sessi
   assert.ok(!screens.includes("if (role === 'fanni') setTechData(current => ({ ...current, tab: 'offers' }))"));
 });
 
-test('client dashboard tab order and labels match the approved two-row RTL layout', () => {
+test('client and technician dashboards use the reference home layout without upper tabs', () => {
   const client = fs.readFileSync(path.join(root, 'src/screens/client/ClientDashboard.js'), 'utf8');
-  const start = client.indexOf('<View style={styles.tabRowPremium}>');
-  const end = client.indexOf('</View>', start);
-  const tabs = client.slice(start, end);
-  const expected = ["key:'home',label:'الرئيسية'", "key:'profile',label:'حسابي'", "key:'wallet',label:'المحفظة'", "key:'store',label:'المتجر'", "key:'complaint',label:'الدعم'", "key:'new',label:'طلب جديد'", "key:'current',label:'الطلبات الجارية'", "key:'previous',label:'الطلبات السابقة'", "key:'track',label:'تتبع طلب'", "key:'subscriptions',label:'الاشتراكات'"];
-  let cursor = -1;
-  for (const item of expected) { const next = tabs.indexOf(item); assert.ok(next > cursor, 'tab missing or out of order: ' + item); cursor = next; }
-  assert.ok(client.includes("setClientTab(t.key)"), 'tab navigation keys remain connected');
+  const technician = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianDashboard.js'), 'utf8');
+  for (const source of [client, technician]) {
+    assert.doesNotMatch(source, /tabRowPremium/);
+    assert.doesNotMatch(source, /floatingControls/);
+    assert.match(source, /حمزاوي سات/);
+    assert.match(source, /الإحصائيات/);
+    assert.match(source, /إجراءات سريعة/);
+    assert.match(source, /paddingBottom:\s*132/);
+  }
+  assert.match(client, /ادعُ صديقك واربح 50 جنيه/);
+  assert.match(technician, /ادعُ صديقك واربح 150 جنيه/);
 });
 
 test('native customer and technician stores use managed category artwork with product-image fallback', () => {
@@ -865,7 +869,7 @@ test('client and technician referral cards load server-issued invite links and r
   assert.match(card, /عن كل فني جديد يسجل من رابط دعوتك ويكمل 3 طلبات، تحصل أنت وهو على 150 جنيهًا مكافأة/);
   assert.match(card, /كل فني جديد يسجل من رابطك ويكمل 3 طلبات يمنحك ويمنحه 150 جنيهًا مكافأة/);
   assert.match(client, /ادعُ صديقك لتحصل على 50 جنيه مكافأة/);
-  assert.match(technician, /ادعُ صديقك لتحصل على 150 جنيه مكافأة/);
+  assert.match(technician, /ادعُ صديقك واربح 150 جنيه/);
   assert.match(card, /data\?\.referrals\) && data\.referrals\.length/);
   assert.match(card, /data\?\.enabled !== false/);
   assert.match(client, /<ReferralCard session=\{session\} kind="client"/);
