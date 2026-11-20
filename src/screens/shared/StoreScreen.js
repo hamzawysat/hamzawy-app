@@ -347,13 +347,20 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
   return (
     <View style={{ width: '100%' }}>
       <View style={{ padding: 14, paddingBottom: 28 }}>
+        <View style={{ backgroundColor: '#101F9B', borderRadius: 21, padding: 17, marginBottom: 13, shadowColor: '#07136E', shadowOpacity: 0.15, shadowRadius: 12, elevation: 4 }}>
+          <Text style={{ color: '#FFFFFF', fontSize: 20, fontWeight: '900', textAlign: 'right' }}>متجر حمزاوي سات</Text>
+          <Text style={{ color: '#E2E8FF', fontSize: 12, fontWeight: '700', textAlign: 'right', marginTop: 5 }}>منتجات وخدمات مختارة… اطلب بسهولة وتابع مشترياتك</Text>
+          <View style={{ alignSelf: 'flex-end', marginTop: 11, backgroundColor: '#FFFFFF', borderRadius: 11, paddingHorizontal: 12, paddingVertical: 7 }}>
+            <Text style={{ color: '#101F9B', fontSize: 11, fontWeight: '900' }}>تسوق الآن</Text>
+          </View>
+        </View>
         <TextInput
           value={searchQuery}
           onChangeText={setSearchQuery}
           placeholder="ابحث عن منتج أو قسم أو وصف..."
           placeholderTextColor={COLORS.muted}
           accessibilityLabel="البحث في منتجات المتجر"
-          style={{ backgroundColor: COLORS.white, borderWidth: 1, borderColor: COLORS.border, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, color: COLORS.text, textAlign: 'right', marginBottom: 12 }}
+          style={{ backgroundColor: COLORS.white, borderWidth: 1, borderColor: COLORS.border, borderRadius: 15, paddingHorizontal: 14, paddingVertical: 13, color: COLORS.text, textAlign: 'right', marginBottom: 12, borderColor: '#DDE3F3' }}
         />
         <View style={[styles.dataCard, { marginBottom: 12 }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -476,7 +483,7 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
                   <TouchableOpacity key={group.category} accessibilityRole="button"
                     accessibilityLabel={'فتح قسم ' + group.category}
                     onPress={() => setSelectedCategory(group.category)}
-                    style={{ width: '48%', marginBottom: 2, borderRadius: 16, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.white, overflow: 'hidden' }}>
+                    style={{ width: '48%', marginBottom: 2, borderRadius: 19, borderWidth: 1, borderColor: '#E5E9F2', backgroundColor: COLORS.white, overflow: 'hidden' }}>
                     <StoreImage value={group.imageUrl || coverProduct?.imageUrl} style={{ width: '100%', height: 112 }} />
                     <View style={{ padding: 12 }}>
                       <Text numberOfLines={1} style={{ color: COLORS.navy, fontSize: 13, fontWeight: '900', textAlign: 'right' }}>{group.category}</Text>
