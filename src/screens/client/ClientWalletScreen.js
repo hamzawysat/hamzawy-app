@@ -130,7 +130,7 @@ export default function ClientWalletScreen({ session, onBalanceChange }) {
           <Text style={{ textAlign: 'center', fontSize: 10, fontWeight: '900', color: tab === item.id ? COLORS.white : COLORS.text }}>{item.label}</Text>
         </TouchableOpacity>)}
       </View>
-      {loading ? <ActivityIndicator color={COLORS.teal} /> : null}
+      {loading ? <ActivityIndicator color={COLORS.navy} /> : null}
       {error ? <View style={styles.dataCard}><Text style={styles.errorText}>{error}</Text><Button title="إعادة المحاولة" secondary onPress={load} /></View> : null}
       {tab === 'topup' ? <View style={styles.dataCard}>
         <Text style={styles.cardTitlePremium}>شحن المحفظة</Text>
@@ -142,7 +142,7 @@ export default function ClientWalletScreen({ session, onBalanceChange }) {
         <Field label="المبلغ بالجنيه" value={amount} onChangeText={setAmount} keyboardType="numeric" />
         <Text style={styles.sectionTitle}>طريقة التحويل</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 7 }}>
-          {METHODS.map(item => <TouchableOpacity key={item.id} onPress={() => setMethod(item.id)} style={{ padding: 9, borderRadius: 9, borderWidth: 1, borderColor: method === item.id ? COLORS.teal : COLORS.border, backgroundColor: method === item.id ? COLORS.indigo50 : COLORS.white }}>
+          {METHODS.map(item => <TouchableOpacity key={item.id} onPress={() => setMethod(item.id)} style={{ padding: 9, borderRadius: 9, borderWidth: 1, borderColor: method === item.id ? COLORS.navy : COLORS.border, backgroundColor: method === item.id ? '#EEF2FF' : COLORS.white }}>
             <Text style={{ fontSize: 11, fontWeight: '800', color: COLORS.text }}>{item.label}</Text>
           </TouchableOpacity>)}
         </View>
