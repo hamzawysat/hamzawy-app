@@ -24,7 +24,7 @@ function StoreImage({ value, style }) {
     getMediaUrl(mediaId).then(url => { if (active) setResolved(url); }).catch(() => { if (active) setResolved(''); });
     return () => { active = false; };
   }, [value]);
-  return resolved ? <Image source={{ uri: resolved }} style={style} resizeMode="cover" /> : <View style={[style, { backgroundColor: '#EEF2F7', alignItems: 'center', justifyContent: 'center' }]}><Text style={{ fontSize: 28 }}>📦</Text></View>;
+  return resolved ? <Image source={{ uri: resolved }} style={style} resizeMode="contain" /> : <View style={[style, { backgroundColor: '#EEF2F7', alignItems: 'center', justifyContent: 'center' }]}><Text style={{ fontSize: 28 }}>📦</Text></View>;
 }
 
 function money(value) {
