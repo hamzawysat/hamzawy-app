@@ -441,35 +441,23 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
               )}
               {normalizedQuery && !displayedProducts.length ? <View style={styles.dataCard}><Text style={styles.emptyText}>ملقيناش منتجات مطابقة. جرّب كلمة أقصر أو كتابة مختلفة.</Text></View> : null}
               {displayedProducts.map(({ item, index }) => (
-                <View key={String(item._id || index)} style={[styles.dataCard, { marginBottom: 10, flexDirection: 'row', alignItems: 'flex-start', gap: 12 }]}>
-                  <StoreImage value={item.imageUrl} style={{ width: 96, height: 96, borderRadius: 12 }} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.cardTitleSmall}>{item.name || 'منتج'}</Text>
-                    <Text style={[styles.detail, { fontWeight: '900', color: COLORS.navy, marginTop: 6 }]}>{money(item.price)}</Text>
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 10 }}>
-                      <TouchableOpacity
-                        accessibilityRole="button"
-                        accessibilityState={{ expanded: Boolean(expandedProductDetails[String(item._id || index)]) }}
-                        onPress={() => setExpandedProductDetails(current => ({ ...current, [String(item._id || index)]: !current[String(item._id || index)] }))}
-                        style={{ paddingVertical: 6 }}
-                      >
-                        <Text style={{ color: COLORS.navy, fontSize: 11, fontWeight: '900' }}>
-                          تفاصيل المنتج {expandedProductDetails[String(item._id || index)] ? '⌃' : '⌄'}
-                        </Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity accessibilityRole="button" onPress={() => addToCart(item)} style={{ backgroundColor: COLORS.navy, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9 }}>
-                        <Text style={{ color: COLORS.white, fontWeight: '900', fontSize: 11 }}>{item.type === 'subscription' ? 'اطلب الاشتراك' : 'أضف للسلة'}</Text>
-                      </TouchableOpacity>
-                      {item.type !== 'subscription' ? <TouchableOpacity
-                        accessibilityRole="button"
-                        onPress={() => openPurchase(item)}
-                        style={{ maxWidth: '100%', flexShrink: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.blue, borderColor: COLORS.indigo700, borderWidth: 1, borderBottomWidth: 3, borderBottomColor: COLORS.indigo700, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 8, minHeight: 40 }}
-                      >
-                        <Text numberOfLines={1} style={{ color: COLORS.white, fontWeight: '800', fontSize: 12, textAlign: 'center' }}>شراء مباشر</Text>
-                      </TouchableOpacity> : null}
-                    </View>
+                <View key={String(item._id || index)} style={[styles.dataCard, { marginBottom: 10, flexDirection: 'column', alignItems: 'stretch', gap: 10, overflow: 'hidden' }]}>
+                  <StoreImage value={item.imageUrl} style={{ width: '100%', height: 180, borderRadius: 12, alignSelf: 'stretch' }} />
+                  <View style={{ width: '100%', minWidth: 0 }}>
+                    <Text style={[styles.cardTitleSmall, { textAlign: 'right' }]}>{item.name || 'منتج'}</Text>
+                    <Text style={[styles.detail, { fontWeight: '900', color: COLORS.navy, marginTop: 6, textAlign: 'right' }]}>{money(item.price)}</Text>
+                    <TouchableOpacity
+                      accessibilityRole="button"
+                      accessibilityState={{ expanded: Boolean(expandedProductDetails[String(item._id || index)]) }}
+                      onPress={() => setExpandedProductDetails(current => ({ ...current, [String(item._id || index)]: !current[String(item._id || index)] }))}
+                      style={{ alignSelf: 'flex-end', paddingVertical: 8, paddingHorizontal: 2, marginTop: 4 }}
+                    >
+                      <Text style={{ color: COLORS.navy, fontSize: 12, fontWeight: '900' }}>
+                        تفاصيل المنتج {expandedProductDetails[String(item._id || index)] ? '⌃' : '⌄'}
+                      </Text>
+                    </TouchableOpacity>
                     {expandedProductDetails[String(item._id || index)] ? (
-                      <View style={{ marginTop: 8, padding: 10, borderRadius: 10, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: COLORS.border, gap: 6 }}>
+                      <View style={{ marginTop: 4, padding: 10, borderRadius: 10, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: COLORS.border, gap: 6, width: '100%' }}>
                         <Text style={styles.detail}>النوع: {item.type === 'subscription' ? 'اشتراك / تجديد اشتراك' : 'منتج وبضاعة'}{item.subscriptionDuration ? ' • ' + item.subscriptionDuration : ''}</Text>
                         <Text style={styles.detail}>الوصف: {String(item.description || '').trim() || 'لا يوجد وصف'}</Text>
                         {String(item.details || '').trim() ? <Text style={styles.detail}>المواصفات: {item.details}</Text> : null}
@@ -477,6 +465,19 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
                         {item.offerText ? <Text style={[styles.detail, { color: COLORS.greenDark }]}>{item.offerText}</Text> : null}
                       </View>
                     ) : null}
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'stretch', gap: 8, marginTop: 8, width: '100%' }}>
+                      <TouchableOpacity accessibilityRole="button" onPress={() => addToCart(item)}
+                        style={{ flexGrow: 1, flexBasis: 0, minWidth: 112, alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.navy, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 11 }}>
+                        <Text style={{ color: COLORS.white, fontWeight: '900', fontSize: 12, textAlign: 'center' }}>{item.type === 'subscription' ? 'اطلب الاشتراك' : 'أضف للسلة'}</Text>
+                      </TouchableOpacity>
+                      {item.type !== 'subscription' ? <TouchableOpacity
+                        accessibilityRole="button"
+                        onPress={() => openPurchase(item)}
+                        style={{ flexGrow: 1, flexBasis: 0, minWidth: 112, alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.blue, borderColor: COLORS.indigo700, borderWidth: 1, borderBottomWidth: 3, borderBottomColor: COLORS.indigo700, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 10, minHeight: 42 }}
+                      >
+                        <Text style={{ color: COLORS.white, fontWeight: '800', fontSize: 12, textAlign: 'center' }}>شراء مباشر</Text>
+                      </TouchableOpacity> : null}
+                    </View>
                   </View>
                 </View>
               ))}
