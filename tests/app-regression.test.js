@@ -1069,3 +1069,13 @@ test('client and technician header initial uses a light star mark instead of a n
   assert.match(styles, /brandHeaderAvatarStar: \{[^}]*#8195E5/s);
   assert.match(styles, /brandHeaderAvatarText: \{[^}]*fontStyle: 'italic'/s);
 });
+
+
+test('OTA updates are checked periodically while the app stays in the foreground', () => {
+  const appEntry = fs.readFileSync(path.join(root, 'App.js'), 'utf8');
+  assert.match(appEntry, /setInterval\(\(\) => \{/);
+  assert.match(appEntry, /appState\.current === 'active' && !updateDownloaded\.current/);
+  assert.match(appEntry, /\}, 60 \* 1000\)/);
+  assert.match(appEntry, /clearInterval\(updateCheckInterval\)/);
+  assert.match(appEntry, /currentScreen !== 'home'/);
+});
