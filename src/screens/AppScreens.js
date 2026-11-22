@@ -1551,7 +1551,6 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         }
       }
       const result = await api('/password-recovery/request', { method: 'POST', body: { role: recoveryForm.role, phone } });
-      const savedKey = recoveryStorageKey(recoveryForm.role, phone);
       try { await SecureStore.setItemAsync(savedKey, JSON.stringify({ token: result.recoveryToken, id: result.requestId })); } catch (_) {}
       setRecoveryForm(v => ({ ...v, phone, token: result.recoveryToken, id: result.requestId, info: result.message, loading: false }));
     } catch (err) { setRecoveryForm(v => ({ ...v, loading: false, error: err.message || 'تعذر فتح طلب الدعم.' })); }
