@@ -43,13 +43,18 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
   const appState = useAppState();
   const [identityCardUploads, setIdentityCardUploads] = useState({
     front: { fileId: '', previewUri: '', uploading: false, status: '' },
-    back: { fileId: '', previewUri: '', uploading: false, status: '' }
+    back: { fileId: '', previewUri: '', uploading: false, status: '' },
+    profile: { fileId: '', previewUri: '', uploading: false, status: '' }
   });
   const [identityPreviewUri, setIdentityPreviewUri] = useState('');
   const [passwordChangeRequired, setPasswordChangeRequired] = useState(false);
 
   async function pickTechnicianIdentityImage(side, source) {
-    if (!['front', 'back'].includes(side) || identityCardUploads[side]?.uploading || loginLoading) return;
+    if (!['front', 'back', 'profile'].includes(side) || identityCardUploads[side]?.uploading || loginLoading) return;
+    if (side === 'profile' && source !== 'camera') {
+      Alert.alert('الصورة الشخصية', 'لازم تلتقط صورتك الشخصية بالكاميرا مباشرة.');
+      return;
+    }
     try {
       const permission = source === 'camera'
         ? await ImagePicker.requestCameraPermissionsAsync()
@@ -118,7 +123,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         ...current,
         [side]: { fileId: uploaded.fileId, previewUri: uploadUri, uploading: false, status: 'تم رفع الصورة بنجاح ✓' }
       }));
-      Alert.alert('تم رفع الصورة', side === 'front' ? 'تم رفع صورة الوجه الأمامي بنجاح.' : 'تم رفع صورة الوجه الخلفي بنجاح.');
+      Alert.alert('تم رفع الصورة', side === 'front' ? 'تم رفع صورة الوجه الأمامي بنجاح.' : side === 'back' ? 'تم رفع صورة الوجه الخلفي بنجاح.' : 'تم رفع صورتك الشخصية بنجاح.');
     } catch (error) {
       const message = error?.message || 'تعذر رفع الصورة. تحقق من الاتصال وحاول مرة أخرى.';
       setIdentityCardUploads(current => ({
@@ -615,9 +620,15 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
       Alert.alert('الموافقة مطلوبة', 'علّم على مربع قرأت وأوافق على ميثاق صُنّاع لإكمال التسجيل.');
       return;
     }
+    const nationalId = normalizePhoneDigits(form.nationalId || '');
+    if (!/^\\d{14}$/.test(nationalId)) {
+      Alert.alert('الرقم القومي', 'اكتب الرقم القومي المصري كاملًا، 14 رقمًا.');
+      return;
+    }
     if (!identityCardUploads.front.fileId || !identityCardUploads.back.fileId ||
-        identityCardUploads.front.uploading || identityCardUploads.back.uploading) {
-      Alert.alert('صور البطاقة مطلوبة', 'ارفع صورة الوجه الأمامي والخلفي وانتظر اكتمال رفع الصورتين قبل إرسال التسجيل.');
+        !identityCardUploads.profile.fileId ||
+        identityCardUploads.front.uploading || identityCardUploads.back.uploading || identityCardUploads.profile.uploading) {
+      Alert.alert('بيانات الهوية مطلوبة', 'ارفع صورتي البطاقة والتقط صورة شخصية بالكاميرا، وانتظر اكتمال رفع الصور الثلاث.');
       return;
     }
     setLoginLoading(true);
@@ -631,12 +642,15 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         guidelinesAccepted: true,
         identityCardFrontFileId: identityCardUploads.front.fileId,
         identityCardBackFileId: identityCardUploads.back.fileId,
+        profilePhotoFileId: identityCardUploads.profile.fileId,
+        nationalId,
         referralCode: String(form.referralCode || '').trim()
       } });
       Alert.alert('تم إرسال التسجيل', result.message || 'حسابك قيد مراجعة الإدارة.');
       setIdentityCardUploads({
         front: { fileId: '', previewUri: '', uploading: false, status: '' },
-        back: { fileId: '', previewUri: '', uploading: false, status: '' }
+        back: { fileId: '', previewUri: '', uploading: false, status: '' },
+        profile: { fileId: '', previewUri: '', uploading: false, status: '' }
       });
       setIdentityPreviewUri('');
       setUsername(form.phone); setPassword(''); setScreen('login'); setAuthMode('fanni');
@@ -1499,6 +1513,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         <AreaPicker label="مناطق العمل *" options={areas} multiple value={form.areas} onChange={value => updateForm('areas', value)} maxSelections={30} />
         <Text style={styles.detail}>اختار المناطق التي تستطيع العمل فيها من القائمة المعتمدة. يمكنك اختيار حتى 30 منطقة.</Text>
 
+        <Field label="الرقم القومي المصري (14 رقمًا) *" value={form.nationalId || ''} onChangeText={v => updateForm('nationalId', normalizePhoneDigits(v).slice(0, 14))} keyboardType="number-pad" maxLength={14} placeholder="اكتب الرقم القومي كما هو بالبطاقة" />
         <View style={{ backgroundColor: '#EFF6FF', borderColor: '#BFDBFE', borderWidth: 1, borderRadius: 16, padding: 12, marginTop: 12, gap: 10 }}>
           <View>
             <Text style={{ color: '#0F172A', fontSize: 14, fontWeight: '900', textAlign: 'right' }}>صورة بطاقة الرقم القومي *</Text>
@@ -1531,7 +1546,27 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
               <Text style={{ color: upload.fileId ? '#047857' : upload.uploading ? '#1D4ED8' : '#475569', fontSize: 10, fontWeight: '800', textAlign: 'right' }}>{upload.status || (upload.fileId ? 'تم رفع الصورة بنجاح.' : 'لم يتم رفع الصورة بعد.')}</Text>
             </View>;
           })}
-          <Text style={{ color: '#64748B', fontSize: 10, lineHeight: 18, textAlign: 'right' }}>الصيغ المقبولة: JPG وPNG وWebP — الحد الأقصى 15 ميجابايت لكل صورة.</Text>
+          <View style={{ backgroundColor: '#FFFFFF', borderColor: '#C7D2FE', borderWidth: 1, borderRadius: 12, padding: 10, gap: 9 }}>
+          <View style={{ flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Text style={{ color: '#1E293B', fontSize: 12, fontWeight: '900' }}>الصورة الشخصية للفني *</Text>
+            <Text style={{ color: identityCardUploads.profile.fileId ? '#047857' : identityCardUploads.profile.uploading ? '#1D4ED8' : '#DC2626', fontSize: 10, fontWeight: '900' }}>{identityCardUploads.profile.fileId ? 'تم الرفع ✓' : identityCardUploads.profile.uploading ? 'جاري الرفع...' : 'مطلوبة'}</Text>
+          </View>
+          <Text style={{ color: '#475569', fontSize: 11, lineHeight: 19, textAlign: 'right' }}>التقط صورة واضحة لوجهك بالكاميرا. ستظهر صورتك للعملاء بجوار عروضك بدل الحرف الأول من اسمك.</Text>
+          {identityCardUploads.profile.previewUri ? <Image source={{ uri: identityCardUploads.profile.previewUri }} resizeMode="cover" style={{ width: 116, height: 116, alignSelf: 'center', borderRadius: 58, backgroundColor: '#F8FAFC' }} /> : null}
+          <TouchableOpacity disabled={identityCardUploads.profile.uploading || loginLoading} onPress={() => pickTechnicianIdentityImage('profile', 'camera')} style={{ minHeight: 44, borderRadius: 10, borderWidth: 1, borderColor: '#C7D2FE', backgroundColor: '#EEF2FF', alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={{ color: '#102A9B', fontSize: 12, fontWeight: '900' }}>📷 {identityCardUploads.profile.fileId ? 'التقاط صورة شخصية جديدة' : 'التقاط صورة بالكاميرا'}</Text>
+          </TouchableOpacity>
+          {identityCardUploads.profile.previewUri ? <View style={{ flexDirection: 'row-reverse', gap: 8 }}>
+            <TouchableOpacity onPress={() => setIdentityPreviewUri(identityCardUploads.profile.previewUri)} style={{ flex: 1, minHeight: 38, borderRadius: 10, borderWidth: 1, borderColor: '#CBD5E1', backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ color: '#1E293B', fontSize: 11, fontWeight: '800' }}>معاينة الصورة</Text>
+            </TouchableOpacity>
+            <TouchableOpacity disabled={identityCardUploads.profile.uploading} onPress={() => clearTechnicianIdentityImage('profile')} style={{ minHeight: 38, paddingHorizontal: 14, borderRadius: 10, borderWidth: 1, borderColor: '#FECACA', backgroundColor: '#FEF2F2', alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ color: '#B91C1C', fontSize: 11, fontWeight: '800' }}>إزالة</Text>
+            </TouchableOpacity>
+          </View> : null}
+          <Text style={{ color: identityCardUploads.profile.fileId ? '#047857' : identityCardUploads.profile.uploading ? '#1D4ED8' : '#475569', fontSize: 10, fontWeight: '800', textAlign: 'right' }}>{identityCardUploads.profile.status || 'لم يتم التقاط الصورة الشخصية بعد.'}</Text>
+        </View>
+        <Text style={{ color: '#64748B', fontSize: 10, lineHeight: 18, textAlign: 'right' }}>الصيغ المقبولة: JPG وPNG وWebP — الحد الأقصى 15 ميجابايت لكل صورة.</Text>
         </View>
 
         <Text style={styles.sectionTitle}>ميثاق صُنّاع – التعامل المهني مع العملاء</Text>
