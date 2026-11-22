@@ -621,7 +621,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
       return;
     }
     const nationalId = normalizePhoneDigits(form.nationalId || '');
-    if (!/^\\d{14}$/.test(nationalId)) {
+    if (!/^\d{14}$/.test(nationalId)) {
       Alert.alert('الرقم القومي', 'اكتب الرقم القومي المصري كاملًا، 14 رقمًا.');
       return;
     }
@@ -653,6 +653,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         profile: { fileId: '', previewUri: '', uploading: false, status: '' }
       });
       setIdentityPreviewUri('');
+      updateForm('nationalId', '');
       setUsername(form.phone); setPassword(''); setScreen('login'); setAuthMode('fanni');
     } catch (err) { Alert.alert('تعذر تسجيل الفني', err.message || 'راجع البيانات وحاول مرة أخرى.'); }
     finally { setLoginLoading(false); }
