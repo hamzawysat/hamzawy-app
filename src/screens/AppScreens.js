@@ -7,6 +7,7 @@ import {
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
 import * as SecureStore from 'expo-secure-store';
+import * as Notifications from 'expo-notifications';
 import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
@@ -40,6 +41,7 @@ function normalizePhoneDigits(value) {
 
 function AppScreens({ onScreenChange, onAuthRestoringChange }) {
   const { screen, setScreenState, screenHistoryRef, screenRef, setScreen } = useScreenNavigation();
+  const offlineNotificationReplayRef = useRef('');
   const appState = useAppState();
   const [identityCardUploads, setIdentityCardUploads] = useState({
     front: { fileId: '', previewUri: '', uploading: false, status: '' },
@@ -429,13 +431,67 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     let mounted = true;
     let inFlight = false;
     const role = screen === 'client' ? 'client' : 'fanni';
+    let replayedOfflineNotifications = false;
     async function loadRoleNotifications(showLoading = false) {
       if (inFlight) return;
       inFlight = true;
       if (showLoading) setNotifications(current => ({ ...current, loading: true, error: '' }));
       try {
         const result = await api(`/notifications/${role}`, { token: session.token });
-        if (mounted) setNotifications({ items: toList(result, ['notifications']), unread: Number(result.unreadCount || 0), loading: false, error: '' });
+        if (mounted) {
+          const items = toList(result, ['notifications']);
+          setNotifications({ items, unread: Number(result.unreadCount || 0), loading: false, error: '' });
+          // A logged-out technician has no registered push token. Replay every
+          // unread notification returned by the server as a real local OS alert
+          // once after login, while keeping a per-account durable dedupe ledger.
+          if (role === 'fanni' && !replayedOfflineNotifications) {
+            replayedOfflineNotifications = true;
+            const accountId = String(session.user?._id || session.user?.id || session.user?.phone || 'fanni');
+            const ledgerKey = 'sonaa.offline.notifications.v1:' + accountId;
+            if (offlineNotificationReplayRef.current !== ledgerKey) {
+              offlineNotificationReplayRef.current = ledgerKey;
+              try {
+                if (Platform.OS === 'android') {
+                  await Notifications.setNotificationChannelAsync('hamzawy_official', {
+                    name: 'إشعارات حمزاوي سات',
+                    importance: Notifications.AndroidImportance.MAX,
+                    sound: 'hamzawy_sat_notification_v12_wow_loud.ogg',
+                    vibrationPattern: [0, 250, 250, 250],
+                    lightColor: COLORS.teal500,
+                  });
+                }
+                const permission = await Notifications.getPermissionsAsync();
+                if (permission.status === 'granted') {
+                  const stored = await SecureStore.getItemAsync(ledgerKey);
+                  const deliveredIds = new Set(JSON.parse(stored || '[]').map(String));
+                  const newlyUnread = items.filter(item => !(item.read || item.readAt))
+                    .filter(item => String(item.id || item._id || '') && !deliveredIds.has(String(item.id || item._id)));
+                  for (const item of newlyUnread) {
+                    const notificationId = String(item.id || item._id);
+                    try {
+                      await Notifications.scheduleNotificationAsync({
+                        content: {
+                          title: String(item.title || 'إشعار من حمزاوي سات'),
+                          body: String(item.message || ''),
+                          sound: 'hamzawy_sat_notification_v12_wow_loud.ogg',
+                          data: { type: String(item.type || 'general'), link: String(item.link || ''), notificationId },
+                        },
+                        trigger: null,
+                      });
+                      deliveredIds.add(notificationId);
+                    } catch (scheduleError) {
+                      console.warn('تعذر عرض إشعار محفوظ على الهاتف:', scheduleError?.message || scheduleError);
+                    }
+                  }
+                  await SecureStore.setItemAsync(ledgerKey, JSON.stringify(Array.from(deliveredIds).slice(-500)));
+                }
+              } catch (replayError) {
+                console.warn('تعذر استرجاع الإشعارات الفائتة:', replayError?.message || replayError);
+                offlineNotificationReplayRef.current = '';
+              }
+            }
+          }
+        }
       } catch (err) {
         if (mounted && showLoading) setNotifications(current => ({ ...current, loading: false, error: err.message || 'تعذر تحميل الإشعارات' }));
       } finally {
