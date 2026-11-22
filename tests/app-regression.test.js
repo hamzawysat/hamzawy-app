@@ -1093,3 +1093,18 @@ test('OTA updates are checked periodically while the app stays in the foreground
   assert.match(appEntry, /clearInterval\(updateCheckInterval\)/);
   assert.match(appEntry, /currentScreen !== 'home'/);
 });
+
+
+test('forgot-password reopens the same conversation from SecureStore on the next app visit', () => {
+  const screens = fs.readFileSync(path.join(root, 'src/screens/AppScreens.js'), 'utf8');
+  const authScreens = fs.readFileSync(path.join(root, 'src/screens/auth/AuthScreens.js'), 'utf8');
+  assert.match(screens, /sonaa\\.password-recovery\\.v1\\./);
+  assert.match(screens, /SecureStore\\.setItemAsync\\(savedKey/);
+  assert.match(screens, /SecureStore\\.getItemAsync\\(key/);
+  assert.match(screens, /X-Recovery-Token/);
+  assert.match(screens, /لديك طلب بالفعل، توجه إلى المحادثة/);
+  assert.match(screens, /openPasswordRecovery/);
+  assert.match(screens, /SecureStore\\.deleteItemAsync\\(recoveryStorageKey/);
+  assert.match(authScreens, /openPasswordRecovery/);
+  assert.match(authScreens, /onPress=\\{openPasswordRecovery\\}/);
+});
