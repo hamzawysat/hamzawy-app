@@ -112,7 +112,7 @@ export async function getApiUrl(path = '') {
 }
 
 export async function uploadRegistrationIdentity(side, uri, mimeType) {
-  if (!['front', 'back'].includes(side)) throw new Error('حدد وجه البطاقة الأمامي أو الخلفي.');
+  if (!['front', 'back', 'profile'].includes(side)) throw new Error('حدد نوع الصورة المطلوب رفعها.');
   if (!uri || !['image/jpeg', 'image/png', 'image/webp'].includes(mimeType)) {
     throw new Error('اختار صورة JPG أو PNG أو WebP صالحة.');
   }
