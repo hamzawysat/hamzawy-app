@@ -789,6 +789,8 @@ test('technician registration requires both private identity card uploads and se
   assert.ok(screens.includes("pickTechnicianIdentityImage('profile', 'camera')"));
   assert.ok(api.includes("!['front', 'back', 'profile'].includes(side)"));
   assert.ok(screens.includes('identityCardUploads.front.uploading') && screens.includes('identityCardUploads.back.uploading'));
+  assert.ok(screens.includes('identityCardUploads.profile.uploading'));
+  assert.ok(screens.includes('/^\\d{14}$/'));
   assert.ok(screens.indexOf('صورة بطاقة الرقم القومي *') < screens.indexOf('ميثاق صُنّاع – التعامل المهني مع العملاء'), 'ID card upload section must appear before the terms');
   assert.ok(screens.indexOf('ميثاق صُنّاع – التعامل المهني مع العملاء') < screens.indexOf('<TouchableOpacity disabled={!guidelinesReachedEnd}'), 'agreement checkbox must remain after the terms');
   assert.ok(api.includes('FileSystem.uploadAsync'));
