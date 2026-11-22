@@ -831,7 +831,8 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
       setClientTab('current');
       setForm(current => ({ ...current, area: '', address: '', description: '', voiceRecordingData: '', budget: '' }));
       setReloadKey(value => value + 1);
-      Alert.alert('تم استلام الطلب', `كود المتابعة: ${result.sn || result.order?.sn || '—'}\nسيتم مراجعته من الإدارة.`);
+      Alert.alert('تم استلام الطلب', `كود المتابعة: ${result.sn || result.order?.sn || '—'}
+سيتم مراجعته من الإدارة.`);
     } catch (err) { Alert.alert('تعذر إنشاء الطلب', err.message || 'راجع البيانات وحاول مرة أخرى.'); }
     finally { setLoginLoading(false); }
   }
@@ -1439,7 +1440,9 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     const normalizedPhone = normalizePhoneDigits(phone);
     if (!['client', 'fanni'].includes(role) || !normalizedPhone || !newPassword) return;
     const savedPasswordKey = `sonaa.auth.password.v1.${role}.${normalizedPhone}`;
-    Alert.alert('تحديث كلمة المرور المحفوظة', `${successMessage}\n\nتحب نحدّث كلمة المرور المحفوظة في الذاكرة علشان تستخدمها في تسجيل الدخول القادم؟`, [
+    Alert.alert('تحديث كلمة المرور المحفوظة', `${successMessage}
+
+تحب نحدّث كلمة المرور المحفوظة في الذاكرة علشان تستخدمها في تسجيل الدخول القادم؟`, [
       {
         text: 'لا، شكرًا',
         style: 'cancel',
@@ -1485,12 +1488,12 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
   }
 
   function recoveryStorageKey(role, phone) {
-    return 'sonaa.password-recovery.v1.' + role + '.' + normalizePhoneDigits(phone).replace(/\\D/g, '');
+    return 'sonaa.password-recovery.v1.' + role + '.' + normalizePhoneDigits(phone).replace(/\D/g, '');
   }
 
   async function openPasswordRecovery() {
     const role = authMode;
-    const phone = normalizePhoneDigits(username).replace(/\\D/g, '');
+    const phone = normalizePhoneDigits(username).replace(/\D/g, '');
     const emptyForm = { role, phone: username, token: '', id: '', messages: [], text: '', code: '', newPassword: '', confirmPassword: '', loading: false, error: '', info: '' };
     if (/^01[0125][0-9]{8}$/.test(phone)) {
       const key = recoveryStorageKey(role, phone);
@@ -1531,7 +1534,9 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     setRecoveryForm(v => ({ ...v, loading: true, error: '', info: '' }));
     try {
       const result = await api('/password-recovery/request', { method: 'POST', body: { role: recoveryForm.role, phone } });
-      const savedKey = recoveryStorageKey(recoveryForm.role, phone);\n      try { await SecureStore.setItemAsync(savedKey, JSON.stringify({ token: result.recoveryToken, id: result.requestId })); } catch (_) {}\n      setRecoveryForm(v => ({ ...v, phone, token: result.recoveryToken, id: result.requestId, info: result.message, loading: false }));
+      const savedKey = recoveryStorageKey(recoveryForm.role, phone);
+      try { await SecureStore.setItemAsync(savedKey, JSON.stringify({ token: result.recoveryToken, id: result.requestId })); } catch (_) {}
+      setRecoveryForm(v => ({ ...v, phone, token: result.recoveryToken, id: result.requestId, info: result.message, loading: false }));
     } catch (err) { setRecoveryForm(v => ({ ...v, loading: false, error: err.message || 'تعذر فتح طلب الدعم.' })); }
   }
 
@@ -1575,7 +1580,8 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     setRecoveryForm(v => ({ ...v, loading: true, error: '' }));
     try {
       const result = await api('/password-recovery/request/' + encodeURIComponent(recoveryForm.id) + '/reset-password', { method: 'POST', headers: { 'X-Recovery-Token': recoveryForm.token }, body: { newPassword: recoveryForm.newPassword, confirmPassword: recoveryForm.confirmPassword } });
-      await SecureStore.deleteItemAsync(recoveryStorageKey(recoveryForm.role, recoveryForm.phone)).catch(() => {});\n      promptSavedPasswordUpdate(recoveryForm.role, recoveryForm.phone, recoveryForm.newPassword, result.message || 'تم تغيير كلمة المرور بنجاح.');
+      await SecureStore.deleteItemAsync(recoveryStorageKey(recoveryForm.role, recoveryForm.phone)).catch(() => {});
+      promptSavedPasswordUpdate(recoveryForm.role, recoveryForm.phone, recoveryForm.newPassword, result.message || 'تم تغيير كلمة المرور بنجاح.');
       setRecoveryForm({ role: 'client', phone: '', token: '', id: '', messages: [], text: '', code: '', newPassword: '', confirmPassword: '', loading: false, error: '', info: '' });
       setScreen('login');
     } catch (err) { setRecoveryForm(v => ({ ...v, loading: false, error: err.message || 'تعذر تغيير كلمة المرور.' })); }
