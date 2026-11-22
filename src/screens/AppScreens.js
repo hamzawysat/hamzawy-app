@@ -563,6 +563,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
                         trigger: null,
                       });
                       deliveredIds.add(notificationId);
+                      await SecureStore.setItemAsync(ledgerKey, JSON.stringify(Array.from(deliveredIds).slice(-500)));
                     } catch (scheduleError) {
                       console.warn('تعذر عرض إشعار محفوظ على الهاتف:', scheduleError?.message || scheduleError);
                     }
