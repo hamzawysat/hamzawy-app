@@ -7,6 +7,7 @@ import {
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
 import * as SecureStore from 'expo-secure-store';
+import * as Notifications from 'expo-notifications';
 import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
@@ -47,6 +48,11 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     profile: { fileId: '', previewUri: '', uploading: false, status: '' }
   });
   const [identityPreviewUri, setIdentityPreviewUri] = useState('');
+  const [reviewUploads, setReviewUploads] = useState({
+    front: { fileId: '', previewUri: '', uploading: false, status: '' },
+    back: { fileId: '', previewUri: '', uploading: false, status: '' },
+    profile: { fileId: '', previewUri: '', uploading: false, status: '' }
+  });
   const [passwordChangeRequired, setPasswordChangeRequired] = useState(false);
 
   async function pickTechnicianIdentityImage(side, source) {
@@ -140,6 +146,80 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
       [side]: { fileId: '', previewUri: '', uploading: false, status: 'تم إزالة الصورة. اختار صورة بديلة.' }
     }));
   }
+  async function pickTechnicianResubmissionImage(side, source) {
+    if (!['front', 'back', 'profile'].includes(side) || !session?.token || reviewUploads[side]?.uploading) return;
+    if (side === 'profile' && source !== 'camera') {
+      Alert.alert('الصورة الشخصية', 'لازم تلتقط صورتك الشخصية بالكاميرا مباشرة.');
+      return;
+    }
+    try {
+      const permission = source === 'camera' ? await ImagePicker.requestCameraPermissionsAsync() : await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert('إذن مطلوب', source === 'camera' ? 'اسمح باستخدام الكاميرا لالتقاط الصورة.' : 'اسمح بالوصول إلى الصور لاختيار صورة البطاقة.');
+        return;
+      }
+      const picked = source === 'camera'
+        ? await ImagePicker.launchCameraAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, cameraType: side === 'profile' ? ImagePicker.CameraType.front : ImagePicker.CameraType.back, allowsEditing: false, quality: 1 })
+        : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: false, quality: 1 });
+      if (picked.canceled || !picked.assets?.[0]?.uri) return;
+      const asset = picked.assets[0];
+      const ext = String(asset.fileName || asset.uri).split('?')[0].split('.').pop().toLowerCase();
+      const mime = asset.mimeType || ({ jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' })[ext] || '';
+      if (!['image/jpeg', 'image/png', 'image/webp'].includes(mime)) throw new Error('الصيغ المقبولة JPG وPNG وWebP فقط.');
+      const info = await FileSystem.getInfoAsync(asset.uri);
+      if (Number(asset.fileSize || info.size || 0) > 15 * 1024 * 1024) throw new Error('الحد الأقصى لحجم الصورة 15 ميجابايت.');
+      setReviewUploads(current => ({ ...current, [side]: { fileId: '', previewUri: asset.uri, uploading: true, status: 'جاري تجهيز الصورة...' } }));
+      let uri = asset.uri, uploadMime = mime;
+      const width = Number(asset.width || 0), height = Number(asset.height || 0), largest = Math.max(width, height);
+      if (largest > 1920 || Number(asset.fileSize || info.size || 0) > 1200 * 1024) {
+        const scale = largest > 0 ? Math.min(1, 1920 / largest) : 1;
+        const resize = width >= height ? { width: Math.max(1, Math.round(width * scale)) } : { height: Math.max(1, Math.round(height * scale)) };
+        const optimized = await ImageManipulator.manipulateAsync(asset.uri, scale < 1 ? [{ resize }] : [], { compress: 0.82, format: ImageManipulator.SaveFormat.JPEG });
+        uri = optimized.uri; uploadMime = 'image/jpeg';
+      }
+      const uploaded = await uploadRegistrationIdentity(side, uri, uploadMime);
+      setReviewUploads(current => ({ ...current, [side]: { fileId: uploaded.fileId, previewUri: uri, uploading: false, status: 'تم رفع الصورة بنجاح ✓' } }));
+    } catch (error) {
+      const message = error?.message || 'تعذر رفع الصورة. حاول مرة أخرى.';
+      setReviewUploads(current => ({ ...current, [side]: { ...current[side], fileId: '', uploading: false, status: message } }));
+      Alert.alert('تعذر رفع الصورة', message);
+    }
+  }
+
+  async function submitTechnicianResubmission() {
+    if (!session?.token || session.role !== 'fanni') return;
+    const user = techData?.profile || session.user || {};
+    const imageType = ['front', 'back', 'both', 'profile'].includes(user.identityReviewImage) ? user.identityReviewImage : 'both';
+    try {
+      if (imageType === 'profile') {
+        const fileId = reviewUploads.profile.fileId;
+        if (!fileId || reviewUploads.profile.uploading) throw new Error('التقط وارفع الصورة الشخصية المطلوبة أولًا.');
+        const result = await api('/fanni/me/profile-photo', { method: 'PATCH', token: session.token, body: { profilePhotoFileId: fileId } });
+        Alert.alert('تم إرسال الصورة', result.message || 'تم إرسال الصورة الشخصية للمراجعة.');
+      } else {
+        const body = {}; // The encrypted national-ID ledger is retained; only the requested image is replaced.
+        if (['front', 'both'].includes(imageType)) {
+          if (!reviewUploads.front.fileId || reviewUploads.front.uploading) throw new Error('ارفع صورة الوجه الأمامي للبطاقة أولًا.');
+          body.identityCardFrontFileId = reviewUploads.front.fileId;
+        }
+        if (['back', 'both'].includes(imageType)) {
+          if (!reviewUploads.back.fileId || reviewUploads.back.uploading) throw new Error('ارفع صورة الوجه الخلفي للبطاقة أولًا.');
+          body.identityCardBackFileId = reviewUploads.back.fileId;
+        }
+        const result = await api('/fanni/me/identity-card', { method: 'PATCH', token: session.token, body });
+        Alert.alert('تم إرسال الصور', result.message || 'تم إرسال الصور للمراجعة.');
+      }
+      setReviewUploads({
+        front: { fileId: '', previewUri: '', uploading: false, status: '' },
+        back: { fileId: '', previewUri: '', uploading: false, status: '' },
+        profile: { fileId: '', previewUri: '', uploading: false, status: '' }
+      });
+      setReloadKey(value => value + 1);
+    } catch (error) {
+      Alert.alert('تعذر إرسال الصور', error?.message || 'راجع الصور وحاول مرة أخرى.');
+    }
+  }
+
   const { categories, setCategories, areas, setAreas, areaTechnicianCounts, setAreaTechnicianCounts, selected, setSelected, servicesLoading, setServicesLoading, servicesError, setServicesError, reloadKey, setReloadKey, session, setSession, authRestoring, setAuthRestoring, username, setUsername, password, setPassword, loginLoading, setLoginLoading, authMode, setAuthMode, form, setForm, clientData, setClientData, techData, setTechData, walletTransferNumbers, setWalletTransferNumbers, assignedDetails, setAssignedDetails, technicianSearch, setTechnicianSearch, technicianServiceFilter, setTechnicianServiceFilter, guidelinesChecked, setGuidelinesChecked, guidelinesReachedEnd, setGuidelinesReachedEnd, guidelinesViewportHeight, setGuidelinesViewportHeight, topup, setTopup, clientTab, setClientTab, clientServiceSearch, setClientServiceSearch, servicePickerOpen, setServicePickerOpen, subservicePickerOpen, setSubservicePickerOpen, ratingPrompt, setRatingPrompt, dismissedRatings, setDismissedRatings, ratingDismissalsLoaded, setRatingDismissalsLoaded, ratingDismissalsLoadedFor, setRatingDismissalsLoadedFor, clientTrackSN, setClientTrackSN, clientTrackedOrder, setClientTrackedOrder, clientTrackError, setClientTrackError, clientTrackLoading, setClientTrackLoading, clientComplaint, setClientComplaint, clientComplaintTrack, setClientComplaintTrack, expandedClientOrders, setExpandedClientOrders, expandedTechnicianOrders, setExpandedTechnicianOrders, notificationsOpen, setNotificationsOpen, offerDraft, setOfferDraft, notifications, setNotifications, orderChats, setOrderChats, chatDrafts, setChatDrafts, priceDrafts, setPriceDrafts, ratingDrafts, setRatingDrafts, ratingSubmitting, setRatingSubmitting, supportCases, setSupportCases, supportCase, setSupportCase, supportDraft, setSupportDraft, supportSubject, setSupportSubject, supportLoading, setSupportLoading, supportError, setSupportError, accountPasswordForm, setAccountPasswordForm, profileEditForm, setProfileEditForm, profileEditOpenCategory, setProfileEditOpenCategory, recoveryForm, setRecoveryForm, registrationNameRef, registrationPhoneRef, registrationPasswordRef, registrationConfirmPasswordRef, clientAreaInputRef, clientAddressInputRef, clientDescriptionInputRef, clientBudgetInputRef, clientServiceDetailYRef, clientFormYRef, clientScrollRef, chatScrollRef, clientChatScrollRefs, clientChatAtBottomRef, ratingSubmittingRef, orderChatsRef, acceptedChatAutoOpenedRef, dismissedRatingsRef, ratingHandledRef, ratingStatusSnapshotRef, services, updateForm } = appState;
   const handlePushNotificationResponse = response => {
     const data = response?.notification?.request?.content?.data || {};
@@ -429,13 +509,72 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     let mounted = true;
     let inFlight = false;
     const role = screen === 'client' ? 'client' : 'fanni';
+    let replayedOfflineNotifications = false;
     async function loadRoleNotifications(showLoading = false) {
       if (inFlight) return;
       inFlight = true;
       if (showLoading) setNotifications(current => ({ ...current, loading: true, error: '' }));
       try {
         const result = await api(`/notifications/${role}`, { token: session.token });
-        if (mounted) setNotifications({ items: toList(result, ['notifications']), unread: Number(result.unreadCount || 0), loading: false, error: '' });
+        if (mounted) {
+          const items = toList(result, ['notifications']);
+          setNotifications({ items, unread: Number(result.unreadCount || 0), loading: false, error: '' });
+          // A logged-out technician has no registered push token. Replay every
+          // unread notification returned by the server as a real local OS alert
+          // once after login, while keeping a per-account durable dedupe ledger.
+          if (role === 'fanni' && !replayedOfflineNotifications) {
+            replayedOfflineNotifications = true;
+            const accountId = String(session.user?._id || session.user?.id || session.user?.phone || 'fanni');
+            const ledgerKey = 'sonaa.offline.notifications.v1:' + accountId;
+            try {
+                if (Platform.OS === 'android') {
+                  await Notifications.setNotificationChannelAsync('hamzawy_official', {
+                    name: 'إشعارات حمزاوي سات',
+                    importance: Notifications.AndroidImportance.MAX,
+                    sound: 'hamzawy_sat_notification_v12_wow_loud.ogg',
+                    vibrationPattern: [0, 250, 250, 250],
+                    lightColor: COLORS.teal500,
+                  });
+                }
+                let permission = await Notifications.getPermissionsAsync();
+                if (permission.status !== 'granted') permission = await Notifications.requestPermissionsAsync();
+                if (permission.status === 'granted') {
+                  const stored = await SecureStore.getItemAsync(ledgerKey);
+                  const deliveredIds = new Set(JSON.parse(stored || '[]').map(String));
+                  // A remote push may already be visible in the system tray. Do
+                  // not create a second local alert for the same notification.
+                  const presented = await Notifications.getPresentedNotificationsAsync().catch(() => []);
+                  for (const entry of presented || []) {
+                    const existingId = entry?.request?.content?.data?.notificationId;
+                    if (existingId) deliveredIds.add(String(existingId));
+                  }
+                  const newlyUnread = items.filter(item => !(item.read || item.readAt))
+                    .filter(item => String(item.id || item._id || '') && !deliveredIds.has(String(item.id || item._id)));
+                  for (const item of newlyUnread) {
+                    const notificationId = String(item.id || item._id);
+                    try {
+                      await Notifications.scheduleNotificationAsync({
+                        content: {
+                          title: String(item.title || 'إشعار من حمزاوي سات'),
+                          body: String(item.message || ''),
+                          sound: 'hamzawy_sat_notification_v12_wow_loud.ogg',
+                          data: { type: String(item.type || 'general'), link: String(item.link || ''), notificationId },
+                        },
+                        trigger: null,
+                      });
+                      deliveredIds.add(notificationId);
+                      await SecureStore.setItemAsync(ledgerKey, JSON.stringify(Array.from(deliveredIds).slice(-500)));
+                    } catch (scheduleError) {
+                      console.warn('تعذر عرض إشعار محفوظ على الهاتف:', scheduleError?.message || scheduleError);
+                    }
+                  }
+                  await SecureStore.setItemAsync(ledgerKey, JSON.stringify(Array.from(deliveredIds).slice(-500)));
+                }
+            } catch (replayError) {
+              console.warn('تعذر استرجاع الإشعارات الفائتة:', replayError?.message || replayError);
+            }
+          }
+        }
       } catch (err) {
         if (mounted && showLoading) setNotifications(current => ({ ...current, loading: false, error: err.message || 'تعذر تحميل الإشعارات' }));
       } finally {
@@ -1433,6 +1572,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     setClientData({ orders: [], loading: false, error: '', sn: '', clientToken: '' });
     setTechData({ profile: null, orders: [], offers: [], wallet: [], loading: false, error: '', tab: 'home' });
     setNotifications({ items: [], unread: 0, loading: false, error: '' });
+    setReviewUploads({ front: { fileId: '', previewUri: '', uploading: false, status: '' }, back: { fileId: '', previewUri: '', uploading: false, status: '' }, profile: { fileId: '', previewUri: '', uploading: false, status: '' } });
   }
 
   function logout() {
@@ -1458,7 +1598,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
   };
   const toggleArray = (key, value) => updateForm(key, form[key].includes(value) ? form[key].filter(item => item !== value) : [...form[key], value]);
 
-  const screenContext = { screen, setScreenState, screenHistoryRef, screenRef, pushTokenRef, setScreen, categories, setCategories, areas, setAreas, areaTechnicianCounts, setAreaTechnicianCounts, selected, setSelected, servicesLoading, setServicesLoading, servicesError, setServicesError, reloadKey, setReloadKey, session, setSession, authRestoring, setAuthRestoring, username, setUsername, password, setPassword, loginLoading, setLoginLoading, authMode, setAuthMode, form, setForm, registrationNameRef, registrationPhoneRef, registrationPasswordRef, registrationConfirmPasswordRef, clientAreaInputRef, clientAddressInputRef, clientDescriptionInputRef, clientBudgetInputRef, clientServiceDetailYRef, clientFormYRef, clientData, setClientData, techData, setTechData, walletTransferNumbers, setWalletTransferNumbers, assignedDetails, setAssignedDetails, technicianSearch, setTechnicianSearch, technicianServiceFilter, setTechnicianServiceFilter, guidelinesChecked, setGuidelinesChecked, guidelinesReachedEnd, setGuidelinesReachedEnd, guidelinesViewportHeight, setGuidelinesViewportHeight, topup, setTopup, clientTab, setClientTab, clientServiceSearch, setClientServiceSearch, servicePickerOpen, setServicePickerOpen, subservicePickerOpen, setSubservicePickerOpen, ratingPrompt, setRatingPrompt, dismissedRatings, setDismissedRatings, ratingDismissalsLoaded, setRatingDismissalsLoaded, ratingDismissalsLoadedFor, setRatingDismissalsLoadedFor, clientTrackSN, setClientTrackSN, clientTrackedOrder, setClientTrackedOrder, clientTrackError, setClientTrackError, clientTrackLoading, setClientTrackLoading, clientComplaint, setClientComplaint, clientComplaintTrack, setClientComplaintTrack, expandedClientOrders, setExpandedClientOrders, expandedTechnicianOrders, setExpandedTechnicianOrders, notificationsOpen, setNotificationsOpen, clientScrollRef, chatScrollRef, clientChatScrollRefs, clientChatAtBottomRef, ratingSubmittingRef, offerDraft, setOfferDraft, notifications, setNotifications, orderChats, setOrderChats, orderChatsRef, acceptedChatAutoOpenedRef, chatDrafts, setChatDrafts, priceDrafts, setPriceDrafts, ratingDrafts, setRatingDrafts, ratingSubmitting, setRatingSubmitting, dismissedRatingsRef, ratingHandledRef, ratingStatusSnapshotRef, supportCases, setSupportCases, supportCase, setSupportCase, supportDraft, setSupportDraft, supportSubject, setSupportSubject, supportLoading, setSupportLoading, supportError, setSupportError, accountPasswordForm, setAccountPasswordForm, profileEditForm, setProfileEditForm, profileEditOpenCategory, setProfileEditOpenCategory, recoveryForm, setRecoveryForm, services, updateForm, ratingAccountId, ratingStorageKey, previousRatingStorageKey, legacyRatingStorageKey, oldestRatingStorageKey, markNotificationRead, markAllNotificationsRead, handleLogin, registerClient, registerTechnician, createOrder, trackClientOrder, submitClientComplaint, trackClientComplaints, sendOffer, submitOffer, cancelClientOrder, acceptClientOffer, completeTechnicianOrder, getOrderSN, uniqueByOrderSN, orderToken, refreshVisibleData, refreshOrderChat, toggleOrderChat, sendOrderChat, requestOrderPriceChange, decideOrderPrice, setOrderRatingStars, renderRatingStars, submitOrderRating, saveRatingDismissal, renderRatingModal, acceptTechnicianGuidelines, submitTopup, loadSupportCases, startSupportCase, openSupportCase, sendSupportMessage, beginProfileEdit, toggleProfileEditSpecialty, saveProfileEdits, changeAccountPassword, startPasswordRecovery, refreshPasswordRecovery, sendRecoveryMessage, verifyRecoveryCode, resetRecoveredPassword, copyOrderCode, openWhatsAppSupport, performLogout, logout, goLogin, toggleArray };
+  const screenContext = { reviewUploads, pickTechnicianResubmissionImage, submitTechnicianResubmission, screen, setScreenState, screenHistoryRef, screenRef, pushTokenRef, setScreen, categories, setCategories, areas, setAreas, areaTechnicianCounts, setAreaTechnicianCounts, selected, setSelected, servicesLoading, setServicesLoading, servicesError, setServicesError, reloadKey, setReloadKey, session, setSession, authRestoring, setAuthRestoring, username, setUsername, password, setPassword, loginLoading, setLoginLoading, authMode, setAuthMode, form, setForm, registrationNameRef, registrationPhoneRef, registrationPasswordRef, registrationConfirmPasswordRef, clientAreaInputRef, clientAddressInputRef, clientDescriptionInputRef, clientBudgetInputRef, clientServiceDetailYRef, clientFormYRef, clientData, setClientData, techData, setTechData, walletTransferNumbers, setWalletTransferNumbers, assignedDetails, setAssignedDetails, technicianSearch, setTechnicianSearch, technicianServiceFilter, setTechnicianServiceFilter, guidelinesChecked, setGuidelinesChecked, guidelinesReachedEnd, setGuidelinesReachedEnd, guidelinesViewportHeight, setGuidelinesViewportHeight, topup, setTopup, clientTab, setClientTab, clientServiceSearch, setClientServiceSearch, servicePickerOpen, setServicePickerOpen, subservicePickerOpen, setSubservicePickerOpen, ratingPrompt, setRatingPrompt, dismissedRatings, setDismissedRatings, ratingDismissalsLoaded, setRatingDismissalsLoaded, ratingDismissalsLoadedFor, setRatingDismissalsLoadedFor, clientTrackSN, setClientTrackSN, clientTrackedOrder, setClientTrackedOrder, clientTrackError, setClientTrackError, clientTrackLoading, setClientTrackLoading, clientComplaint, setClientComplaint, clientComplaintTrack, setClientComplaintTrack, expandedClientOrders, setExpandedClientOrders, expandedTechnicianOrders, setExpandedTechnicianOrders, notificationsOpen, setNotificationsOpen, clientScrollRef, chatScrollRef, clientChatScrollRefs, clientChatAtBottomRef, ratingSubmittingRef, offerDraft, setOfferDraft, notifications, setNotifications, orderChats, setOrderChats, orderChatsRef, acceptedChatAutoOpenedRef, chatDrafts, setChatDrafts, priceDrafts, setPriceDrafts, ratingDrafts, setRatingDrafts, ratingSubmitting, setRatingSubmitting, dismissedRatingsRef, ratingHandledRef, ratingStatusSnapshotRef, supportCases, setSupportCases, supportCase, setSupportCase, supportDraft, setSupportDraft, supportSubject, setSupportSubject, supportLoading, setSupportLoading, supportError, setSupportError, accountPasswordForm, setAccountPasswordForm, profileEditForm, setProfileEditForm, profileEditOpenCategory, setProfileEditOpenCategory, recoveryForm, setRecoveryForm, services, updateForm, ratingAccountId, ratingStorageKey, previousRatingStorageKey, legacyRatingStorageKey, oldestRatingStorageKey, markNotificationRead, markAllNotificationsRead, handleLogin, registerClient, registerTechnician, createOrder, trackClientOrder, submitClientComplaint, trackClientComplaints, sendOffer, submitOffer, cancelClientOrder, acceptClientOffer, completeTechnicianOrder, getOrderSN, uniqueByOrderSN, orderToken, refreshVisibleData, refreshOrderChat, toggleOrderChat, sendOrderChat, requestOrderPriceChange, decideOrderPrice, setOrderRatingStars, renderRatingStars, submitOrderRating, saveRatingDismissal, renderRatingModal, acceptTechnicianGuidelines, submitTopup, loadSupportCases, startSupportCase, openSupportCase, sendSupportMessage, beginProfileEdit, toggleProfileEditSpecialty, saveProfileEdits, changeAccountPassword, startPasswordRecovery, refreshPasswordRecovery, sendRecoveryMessage, verifyRecoveryCode, resetRecoveredPassword, copyOrderCode, openWhatsAppSupport, performLogout, logout, goLogin, toggleArray };
 
   if (authRestoring) return <SafeAreaView style={styles.safe}><View style={styles.center}><ActivityIndicator size="large" color={COLORS.blue} /><Text style={styles.statusText}>جاري استعادة حسابك...</Text></View></SafeAreaView>;
 

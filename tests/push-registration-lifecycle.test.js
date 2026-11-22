@@ -19,3 +19,16 @@ test('native push registration cleanup keeps device token; logout explicitly unr
   assert.doesNotMatch(cleanup, /push-token/);
   assert.match(screens, /api\('\/notifications\/'\s*\+\s*activeSession\.role\s*\+\s*'\/push-token'/);
 });
+
+test('technician unread notifications replay as deduplicated native alerts after login', () => {
+  const screens = fs.readFileSync(path.join(root, 'src/screens/AppScreens.js'), 'utf8');
+  const dashboard = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianDashboard.js'), 'utf8');
+  assert.match(screens, /api\(\`\/notifications\/\$\{role\}\`/);
+  assert.match(screens, /items\.filter\(item => !\(item\.read \|\| item\.readAt\)\)/);
+  assert.match(screens, /Notifications\.scheduleNotificationAsync/);
+  assert.match(screens, /SecureStore\.getItemAsync\(ledgerKey\)/);
+  assert.match(screens, /getPresentedNotificationsAsync/);
+  assert.match(screens, /hamzawy_sat_notification_v12_wow_loud\.ogg/);
+  assert.match(dashboard, /مطلوب تعديل صورة قبل اعتماد الحساب/);
+  assert.match(dashboard, /submitTechnicianResubmission/);
+});
