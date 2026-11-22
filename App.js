@@ -68,8 +68,20 @@ function AppContent() {
         else void checkAndDownloadUpdate();
       }
     });
+
+    // Check for OTA updates periodically while the app remains in the foreground.
+    // A downloaded update is applied only when the app is safely on the home screen.
+    const updateCheckInterval = setInterval(() => {
+      if (appState.current === 'active' && !updateDownloaded.current) {
+        void checkAndDownloadUpdate();
+      }
+    }, 60 * 1000);
+
     void checkAndDownloadUpdate();
-    return () => subscription.remove();
+    return () => {
+      subscription.remove();
+      clearInterval(updateCheckInterval);
+    };
   }, [applyDownloadedUpdate, checkAndDownloadUpdate]);
 
   useEffect(() => {
