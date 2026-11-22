@@ -1098,13 +1098,14 @@ test('OTA updates are checked periodically while the app stays in the foreground
 test('forgot-password reopens the same conversation from SecureStore on the next app visit', () => {
   const screens = fs.readFileSync(path.join(root, 'src/screens/AppScreens.js'), 'utf8');
   const authScreens = fs.readFileSync(path.join(root, 'src/screens/auth/AuthScreens.js'), 'utf8');
-  assert.match(screens, /sonaa\\.password-recovery\\.v1\\./);
-  assert.match(screens, /SecureStore\\.setItemAsync\\(savedKey/);
-  assert.match(screens, /SecureStore\\.getItemAsync\\(key/);\n  assert.match(screens, /const previous = await api\\('\\/password-recovery\\/request\\/');
-  assert.match(screens, /X-Recovery-Token/);
-  assert.match(screens, /لديك طلب بالفعل، توجه إلى المحادثة/);
-  assert.match(screens, /openPasswordRecovery/);
-  assert.match(screens, /SecureStore\\.deleteItemAsync\\(recoveryStorageKey/);
-  assert.match(authScreens, /openPasswordRecovery/);
+  assert.ok(screens.includes('sonaa.password-recovery.v1.'));
+  assert.ok(screens.includes('SecureStore.setItemAsync(savedKey'));
+  assert.ok(screens.includes('SecureStore.getItemAsync(key'));
+  assert.ok(screens.includes("const previous = await api('/password-recovery/request/'"));
+  assert.ok(screens.includes('X-Recovery-Token'));
+  assert.ok(screens.includes('لديك طلب بالفعل، توجه إلى المحادثة.'));
+  assert.ok(screens.includes('openPasswordRecovery'));
+  assert.ok(screens.includes('SecureStore.deleteItemAsync(recoveryStorageKey'));
+  assert.ok(authScreens.includes('openPasswordRecovery'));
   assert.ok(authScreens.includes('onPress={openPasswordRecovery}'));
 });
