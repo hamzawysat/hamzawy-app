@@ -54,7 +54,7 @@ export function TechnicianDashboard({ context }) {
       areas: Array.isArray(user.areas) ? user.areas.filter(value => Array.isArray(areas) && areas.includes(value)) : []
     });
     setReviewDataOpenCategory('');
-  }, [user.name, user.phone, JSON.stringify(user.specialties || []), JSON.stringify(user.areas || [])]);
+  }, [user.name, user.phone, JSON.stringify(user.specialties || []), JSON.stringify(user.areas || []), JSON.stringify(categories || []), JSON.stringify(areas || [])]);
 
   const [profilePhotoUri, setProfilePhotoUri] = useState('');
   useEffect(() => {
