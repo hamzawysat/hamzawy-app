@@ -776,6 +776,9 @@ test('native client and technician dashboards use fixed bottom navigation withou
 test('technician registration requires both private identity card uploads and sends backend file IDs', () => {
   const screens = fs.readFileSync(path.join(root, 'src/screens/AppScreens.js'), 'utf8');
   const api = fs.readFileSync(path.join(root, 'src/services/api.js'), 'utf8');
+  const state = fs.readFileSync(path.join(root, 'src/hooks/useAppState.js'), 'utf8');
+  const client = fs.readFileSync(path.join(root, 'src/screens/client/ClientDashboard.js'), 'utf8');
+  const technician = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianDashboard.js'), 'utf8');
   const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
   assert.ok(screens.includes("import * as ImagePicker from 'expo-image-picker'")); 
   assert.ok(screens.includes("import * as ImageManipulator from 'expo-image-manipulator'"));
@@ -783,7 +786,18 @@ test('technician registration requires both private identity card uploads and se
   assert.ok(screens.includes('uploadRegistrationIdentity(side, uploadUri, uploadMime)'));
   assert.ok(screens.includes('identityCardFrontFileId: identityCardUploads.front.fileId'));
   assert.ok(screens.includes('identityCardBackFileId: identityCardUploads.back.fileId'));
+  assert.ok(screens.includes('profilePhotoFileId: identityCardUploads.profile.fileId'));
+  assert.ok(screens.includes('nationalId,'));
+  assert.ok(screens.includes('الرقم القومي المصري (14 رقمًا) *'));
+  assert.ok(screens.includes("pickTechnicianIdentityImage('profile', 'camera')"));
+  assert.ok(screens.includes('updateForm(\'nationalId\', \'\')'));
+  assert.ok(state.includes("nationalId: ''"));
+  assert.ok(client.includes('offerPhotoUrls[offer.fanniPhotoUrl]'));
+  assert.ok(technician.includes('profilePhotoUri ? <Image'));
+  assert.ok(api.includes("!['front', 'back', 'profile'].includes(side)"));
   assert.ok(screens.includes('identityCardUploads.front.uploading') && screens.includes('identityCardUploads.back.uploading'));
+  assert.ok(screens.includes('identityCardUploads.profile.uploading'));
+  assert.ok(screens.includes('/^\\d{14}$/'));
   assert.ok(screens.indexOf('صورة بطاقة الرقم القومي *') < screens.indexOf('ميثاق صُنّاع – التعامل المهني مع العملاء'), 'ID card upload section must appear before the terms');
   assert.ok(screens.indexOf('ميثاق صُنّاع – التعامل المهني مع العملاء') < screens.indexOf('<TouchableOpacity disabled={!guidelinesReachedEnd}'), 'agreement checkbox must remain after the terms');
   assert.ok(api.includes('FileSystem.uploadAsync'));
