@@ -791,8 +791,6 @@ test('technician registration requires both private identity card uploads and se
   assert.ok(screens.includes('الرقم القومي المصري (14 رقمًا) *'));
   assert.ok(screens.includes("pickTechnicianIdentityImage('profile', 'camera')"));
   assert.ok(screens.includes('updateForm(\'nationalId\', \'\')'));
-  assert.ok(screens.includes('profilePhotoUri ? <Image'));
-  assert.ok(screens.includes('offerPhotoUrls[offer.fanniPhotoUrl]'));
   assert.ok(state.includes("nationalId: ''"));
   assert.ok(client.includes('offerPhotoUrls[offer.fanniPhotoUrl]'));
   assert.ok(technician.includes('profilePhotoUri ? <Image'));
