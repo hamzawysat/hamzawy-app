@@ -1109,3 +1109,16 @@ test('forgot-password reopens the same conversation from SecureStore on the next
   assert.ok(authScreens.includes('openPasswordRecovery'));
   assert.ok(authScreens.includes('onPress={openPasswordRecovery}'));
 });
+
+test('technician identity resubmission uses approved API pickers instead of free-text service and area fields', () => {
+  const screens = fs.readFileSync(path.join(root, 'src/screens/AppScreens.js'), 'utf8');
+  const technician = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianDashboard.js'), 'utf8');
+  assert.match(technician, /<AreaPicker label="اختار مناطق العمل" options={areas \|\| \[\]} multiple/);
+  assert.match(technician, /categories \|\| \[\]/);
+  assert.match(technician, /reviewDataDraft\.specialties/);
+  assert.match(screens, /approvedServices = new Set\(\(categories \|\| \[\]\)\.flatMap/);
+  assert.match(screens, /approvedAreas = new Set\(\(areas \|\| \[\]\)/);
+  assert.match(screens, /filter\(value => approvedServices\.has\(value\)\)/);
+  assert.match(screens, /filter\(value => approvedAreas\.has\(value\)\)/);
+  assert.doesNotMatch(technician, /افصل بين الاختيارات بعلامة/);
+});
