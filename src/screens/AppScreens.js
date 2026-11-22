@@ -1532,7 +1532,24 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     const phone = recoveryForm.phone.replace(/[^0-9]/g, '');
     if (!/^01[0125][0-9]{8}$/.test(phone)) { setRecoveryForm(v => ({ ...v, error: 'اكتب رقم الهاتف المسجل بالحساب بشكل صحيح.' })); return; }
     setRecoveryForm(v => ({ ...v, loading: true, error: '', info: '' }));
+    const savedKey = recoveryStorageKey(recoveryForm.role, phone);
     try {
+      const savedRaw = await SecureStore.getItemAsync(savedKey);
+      const saved = savedRaw ? JSON.parse(savedRaw) : null;
+      if (saved?.token && saved?.id) {
+        try {
+          const previous = await api('/password-recovery/request/' + encodeURIComponent(saved.id), { headers: { 'X-Recovery-Token': saved.token } });
+          setRecoveryForm(v => ({ ...v, phone, token: saved.token, id: saved.id, messages: previous.recovery?.messages || [], info: 'لديك طلب بالفعل، توجه إلى المحادثة.', loading: false, error: '' }));
+          return;
+        } catch (error) {
+          if (error?.status === 403) {
+            setRecoveryForm(v => ({ ...v, loading: false, error: error.message || 'حسابك موقوف ولا يمكنك استخدام دعم استعادة كلمة المرور.' }));
+            return;
+          }
+          if (![400, 401, 404, 410].includes(error?.status)) throw error;
+          await SecureStore.deleteItemAsync(savedKey).catch(() => {});
+        }
+      }
       const result = await api('/password-recovery/request', { method: 'POST', body: { role: recoveryForm.role, phone } });
       const savedKey = recoveryStorageKey(recoveryForm.role, phone);
       try { await SecureStore.setItemAsync(savedKey, JSON.stringify({ token: result.recoveryToken, id: result.requestId })); } catch (_) {}
