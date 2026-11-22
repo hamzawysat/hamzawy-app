@@ -101,7 +101,8 @@ function AppContent() {
         <Animated.Image source={require("./assets/LOGO_UPLOAD_HERE/logo.png")} style={[splashStyles.logo, { transform: [{ rotate: logoRotation }] }]} resizeMode="contain" />
       </View>
       <Text style={splashStyles.title}>حمزاوي سات</Text>
-      <Text style={splashStyles.caption}>{updateStatus || 'الدش • كاميرات المراقبة • الشاشات'}</Text>
+      <Text style={splashStyles.caption}>الدش • كاميرات المراقبة • الشاشات</Text>
+      {updateStatus ? <Text style={{ color: '#FFFFFF', marginTop: 8, fontSize: 13, fontWeight: '900' }}>{updateStatus}</Text> : null}
       <View style={splashStyles.loadingTrack}><View style={splashStyles.loadingFill} /></View>
     </View> : null}
     {updateStatus && !showSplash ? <View pointerEvents="none" style={{ position: 'absolute', left: 16, right: 16, bottom: 22, paddingVertical: 12, paddingHorizontal: 16, borderRadius: 14, backgroundColor: '#102A9B', elevation: 8 }}>
