@@ -41,7 +41,6 @@ function normalizePhoneDigits(value) {
 
 function AppScreens({ onScreenChange, onAuthRestoringChange }) {
   const { screen, setScreenState, screenHistoryRef, screenRef, setScreen } = useScreenNavigation();
-  const offlineNotificationReplayRef = useRef('');
   const appState = useAppState();
   const [identityCardUploads, setIdentityCardUploads] = useState({
     front: { fileId: '', previewUri: '', uploading: false, status: '' },
@@ -531,7 +530,6 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
             replayedOfflineNotifications = true;
             const accountId = String(session.user?._id || session.user?.id || session.user?.phone || 'fanni');
             const ledgerKey = 'sonaa.offline.notifications.v1:' + accountId;
-            offlineNotificationReplayRef.current = ledgerKey;
             try {
                 if (Platform.OS === 'android') {
                   await Notifications.setNotificationChannelAsync('hamzawy_official', {
@@ -547,6 +545,13 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
                 if (permission.status === 'granted') {
                   const stored = await SecureStore.getItemAsync(ledgerKey);
                   const deliveredIds = new Set(JSON.parse(stored || '[]').map(String));
+                  // A remote push may already be visible in the system tray. Do
+                  // not create a second local alert for the same notification.
+                  const presented = await Notifications.getPresentedNotificationsAsync().catch(() => []);
+                  for (const entry of presented || []) {
+                    const existingId = entry?.request?.content?.data?.notificationId;
+                    if (existingId) deliveredIds.add(String(existingId));
+                  }
                   const newlyUnread = items.filter(item => !(item.read || item.readAt))
                     .filter(item => String(item.id || item._id || '') && !deliveredIds.has(String(item.id || item._id)));
                   for (const item of newlyUnread) {
@@ -570,7 +575,6 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
                 }
             } catch (replayError) {
               console.warn('تعذر استرجاع الإشعارات الفائتة:', replayError?.message || replayError);
-              offlineNotificationReplayRef.current = '';
             }
           }
         }
