@@ -448,9 +448,8 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
             replayedOfflineNotifications = true;
             const accountId = String(session.user?._id || session.user?.id || session.user?.phone || 'fanni');
             const ledgerKey = 'sonaa.offline.notifications.v1:' + accountId;
-            if (offlineNotificationReplayRef.current !== ledgerKey) {
-              offlineNotificationReplayRef.current = ledgerKey;
-              try {
+            offlineNotificationReplayRef.current = ledgerKey;
+            try {
                 if (Platform.OS === 'android') {
                   await Notifications.setNotificationChannelAsync('hamzawy_official', {
                     name: 'إشعارات حمزاوي سات',
@@ -485,10 +484,9 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
                   }
                   await SecureStore.setItemAsync(ledgerKey, JSON.stringify(Array.from(deliveredIds).slice(-500)));
                 }
-              } catch (replayError) {
-                console.warn('تعذر استرجاع الإشعارات الفائتة:', replayError?.message || replayError);
-                offlineNotificationReplayRef.current = '';
-              }
+            } catch (replayError) {
+              console.warn('تعذر استرجاع الإشعارات الفائتة:', replayError?.message || replayError);
+              offlineNotificationReplayRef.current = '';
             }
           }
         }
