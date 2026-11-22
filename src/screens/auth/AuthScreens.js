@@ -3,7 +3,7 @@ import { View, Text, Image, TouchableOpacity, ScrollView, KeyboardAvoidingView, 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { styles } from '../../theme/styles';
 import { Button, Field } from '../../components/FormControls';
-export function LoginScreen({ authMode, username, setUsername, password, setPassword, handleLogin, loginLoading, setRecoveryForm, setScreen }) {
+export function LoginScreen({ authMode, username, setUsername, password, setPassword, handleLogin, loginLoading, openPasswordRecovery, setScreen }) {
   return <SafeAreaView style={styles.loginSafe}>
     <KeyboardAvoidingView style={styles.loginPage} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <TouchableOpacity accessibilityRole="button" onPress={() => setScreen('home')} style={styles.loginBackButton}>
@@ -27,7 +27,7 @@ export function LoginScreen({ authMode, username, setUsername, password, setPass
       <View style={styles.loginForm}>
         <Field label="رقم الهاتف" value={username} onChangeText={setUsername} placeholder="اكتب رقم الهاتف" keyboardType="phone-pad" />
         <Field label="كلمة السر" value={password} onChangeText={setPassword} secureTextEntry placeholder="اكتب كلمة السر" returnKeyType="go" onSubmitEditing={handleLogin} blurOnSubmit />
-        <TouchableOpacity accessibilityRole="button" onPress={() => { setRecoveryForm({ role: authMode, phone: username, token: '', id: '', messages: [], text: '', code: '', newPassword: '', confirmPassword: '', loading: false, error: '', info: '' }); setScreen('passwordRecovery'); }} style={styles.recoveryLink}>
+        <TouchableOpacity accessibilityRole="button" onPress={openPasswordRecovery} style={styles.recoveryLink}>
           <Text style={styles.recoveryLinkText}>نسيت كلمة السر؟ استعادة</Text>
         </TouchableOpacity>
         <TouchableOpacity accessibilityRole="button" onPress={handleLogin} disabled={loginLoading} style={[styles.loginGradientButton, loginLoading && styles.disabledButton]}>

@@ -831,7 +831,8 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
       setClientTab('current');
       setForm(current => ({ ...current, area: '', address: '', description: '', voiceRecordingData: '', budget: '' }));
       setReloadKey(value => value + 1);
-      Alert.alert('تم استلام الطلب', `كود المتابعة: ${result.sn || result.order?.sn || '—'}\nسيتم مراجعته من الإدارة.`);
+      Alert.alert('تم استلام الطلب', `كود المتابعة: ${result.sn || result.order?.sn || '—'}
+سيتم مراجعته من الإدارة.`);
     } catch (err) { Alert.alert('تعذر إنشاء الطلب', err.message || 'راجع البيانات وحاول مرة أخرى.'); }
     finally { setLoginLoading(false); }
   }
@@ -1439,7 +1440,9 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     const normalizedPhone = normalizePhoneDigits(phone);
     if (!['client', 'fanni'].includes(role) || !normalizedPhone || !newPassword) return;
     const savedPasswordKey = `sonaa.auth.password.v1.${role}.${normalizedPhone}`;
-    Alert.alert('تحديث كلمة المرور المحفوظة', `${successMessage}\n\nتحب نحدّث كلمة المرور المحفوظة في الذاكرة علشان تستخدمها في تسجيل الدخول القادم؟`, [
+    Alert.alert('تحديث كلمة المرور المحفوظة', `${successMessage}
+
+تحب نحدّث كلمة المرور المحفوظة في الذاكرة علشان تستخدمها في تسجيل الدخول القادم؟`, [
       {
         text: 'لا، شكرًا',
         style: 'cancel',
@@ -1484,12 +1487,71 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     }
   }
 
+  function recoveryStorageKey(role, phone) {
+    return 'sonaa.password-recovery.v1.' + role + '.' + normalizePhoneDigits(phone).replace(/\D/g, '');
+  }
+
+  async function openPasswordRecovery() {
+    const role = authMode;
+    const phone = normalizePhoneDigits(username).replace(/\D/g, '');
+    const emptyForm = { role, phone: username, token: '', id: '', messages: [], text: '', code: '', newPassword: '', confirmPassword: '', loading: false, error: '', info: '' };
+    if (/^01[0125][0-9]{8}$/.test(phone)) {
+      const key = recoveryStorageKey(role, phone);
+      try {
+        const savedRaw = await SecureStore.getItemAsync(key);
+        const saved = savedRaw ? JSON.parse(savedRaw) : null;
+        if (saved?.token && saved?.id) {
+          try {
+            const result = await api('/password-recovery/request/' + encodeURIComponent(saved.id), { headers: { 'X-Recovery-Token': saved.token } });
+            setRecoveryForm({ ...emptyForm, phone, token: saved.token, id: saved.id, messages: result.recovery?.messages || [], info: 'لديك طلب بالفعل، توجه إلى المحادثة.' });
+            setScreen('passwordRecovery');
+            return;
+          } catch (error) {
+            if (error?.status === 403) {
+              setRecoveryForm({ ...emptyForm, phone, token: saved.token, id: saved.id, error: error.message || 'حسابك موقوف ولا يمكنك استخدام دعم استعادة كلمة المرور.' });
+              setScreen('passwordRecovery');
+              return;
+            }
+            if (![400, 401, 404, 410].includes(error?.status)) throw error;
+            await SecureStore.deleteItemAsync(key).catch(() => {});
+          }
+        }
+      } catch (error) {
+        if (error?.status === 403) {
+          setRecoveryForm({ ...emptyForm, phone, error: error.message || 'حسابك موقوف ولا يمكنك استخدام دعم استعادة كلمة المرور.' });
+          setScreen('passwordRecovery');
+          return;
+        }
+      }
+    }
+    setRecoveryForm(emptyForm);
+    setScreen('passwordRecovery');
+  }
+
   async function startPasswordRecovery() {
     const phone = recoveryForm.phone.replace(/[^0-9]/g, '');
     if (!/^01[0125][0-9]{8}$/.test(phone)) { setRecoveryForm(v => ({ ...v, error: 'اكتب رقم الهاتف المسجل بالحساب بشكل صحيح.' })); return; }
     setRecoveryForm(v => ({ ...v, loading: true, error: '', info: '' }));
+    const savedKey = recoveryStorageKey(recoveryForm.role, phone);
     try {
+      const savedRaw = await SecureStore.getItemAsync(savedKey);
+      const saved = savedRaw ? JSON.parse(savedRaw) : null;
+      if (saved?.token && saved?.id) {
+        try {
+          const previous = await api('/password-recovery/request/' + encodeURIComponent(saved.id), { headers: { 'X-Recovery-Token': saved.token } });
+          setRecoveryForm(v => ({ ...v, phone, token: saved.token, id: saved.id, messages: previous.recovery?.messages || [], info: 'لديك طلب بالفعل، توجه إلى المحادثة.', loading: false, error: '' }));
+          return;
+        } catch (error) {
+          if (error?.status === 403) {
+            setRecoveryForm(v => ({ ...v, loading: false, error: error.message || 'حسابك موقوف ولا يمكنك استخدام دعم استعادة كلمة المرور.' }));
+            return;
+          }
+          if (![400, 401, 404, 410].includes(error?.status)) throw error;
+          await SecureStore.deleteItemAsync(savedKey).catch(() => {});
+        }
+      }
       const result = await api('/password-recovery/request', { method: 'POST', body: { role: recoveryForm.role, phone } });
+      try { await SecureStore.setItemAsync(savedKey, JSON.stringify({ token: result.recoveryToken, id: result.requestId })); } catch (_) {}
       setRecoveryForm(v => ({ ...v, phone, token: result.recoveryToken, id: result.requestId, info: result.message, loading: false }));
     } catch (err) { setRecoveryForm(v => ({ ...v, loading: false, error: err.message || 'تعذر فتح طلب الدعم.' })); }
   }
@@ -1499,7 +1561,15 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     try {
       const result = await api('/password-recovery/request/' + encodeURIComponent(recoveryForm.id), { headers: { 'X-Recovery-Token': recoveryForm.token } });
       setRecoveryForm(v => ({ ...v, messages: result.recovery?.messages || v.messages, info: result.recovery?.status ? 'حالة الطلب: ' + result.recovery.status : v.info }));
-    } catch (_) {}
+    } catch (error) {
+      if ([400, 401, 404, 410].includes(error?.status)) {
+        const key = recoveryStorageKey(recoveryForm.role, recoveryForm.phone);
+        await SecureStore.deleteItemAsync(key).catch(() => {});
+        setRecoveryForm(v => ({ ...v, token: '', id: '', messages: [], error: 'انتهت صلاحية طلب الاستعادة السابق. يمكنك فتح طلب جديد.' }));
+      } else if (error?.status === 403) {
+        setRecoveryForm(v => ({ ...v, error: error.message || 'حسابك موقوف ولا يمكنك استخدام دعم استعادة كلمة المرور.' }));
+      }
+    }
   }
 
   async function sendRecoveryMessage() {
@@ -1526,6 +1596,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     setRecoveryForm(v => ({ ...v, loading: true, error: '' }));
     try {
       const result = await api('/password-recovery/request/' + encodeURIComponent(recoveryForm.id) + '/reset-password', { method: 'POST', headers: { 'X-Recovery-Token': recoveryForm.token }, body: { newPassword: recoveryForm.newPassword, confirmPassword: recoveryForm.confirmPassword } });
+      await SecureStore.deleteItemAsync(recoveryStorageKey(recoveryForm.role, recoveryForm.phone)).catch(() => {});
       promptSavedPasswordUpdate(recoveryForm.role, recoveryForm.phone, recoveryForm.newPassword, result.message || 'تم تغيير كلمة المرور بنجاح.');
       setRecoveryForm({ role: 'client', phone: '', token: '', id: '', messages: [], text: '', code: '', newPassword: '', confirmPassword: '', loading: false, error: '', info: '' });
       setScreen('login');
@@ -1607,7 +1678,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
 
   if (authRestoring) return <SafeAreaView style={styles.safe}><View style={styles.center}><ActivityIndicator size="large" color={COLORS.blue} /><Text style={styles.statusText}>جاري استعادة حسابك...</Text></View></SafeAreaView>;
 
-  if (screen === 'login') return <LoginScreen authMode={authMode} username={username} setUsername={setUsername} password={password} setPassword={setPassword} handleLogin={handleLogin} loginLoading={loginLoading} setRecoveryForm={setRecoveryForm} setScreen={setScreen} />;
+  if (screen === 'login') return <LoginScreen authMode={authMode} username={username} setUsername={setUsername} password={password} setPassword={setPassword} handleLogin={handleLogin} loginLoading={loginLoading} openPasswordRecovery={openPasswordRecovery} setScreen={setScreen} />;
 
   if (screen === 'account') return <AccountScreen session={session} clientData={clientData} techData={techData} setScreen={setScreen} beginProfileEdit={beginProfileEdit} setRatingPrompt={setRatingPrompt} getOrderSN={getOrderSN} onOpenStore={() => { setClientTab('store'); setScreen('client'); }} />;
 
