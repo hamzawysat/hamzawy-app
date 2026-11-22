@@ -29,6 +29,9 @@ test('technician unread notifications replay as deduplicated native alerts after
   assert.match(screens, /SecureStore\.getItemAsync\(ledgerKey\)/);
   assert.match(screens, /getPresentedNotificationsAsync/);
   assert.match(screens, /hamzawy_sat_notification_v12_wow_loud\.ogg/);
-  assert.match(dashboard, /مطلوب تعديل صورة قبل اعتماد الحساب/);
+  assert.match(dashboard, /مطلوب استكمال بيانات حسابك/);
+  assert.match(dashboard, /reviewFields\.map/);
+  assert.match(dashboard, /reviewImages\.map/);
+  assert.match(dashboard, /submitTechnicianResubmission\(reviewDataDraft\)/);
   assert.match(dashboard, /submitTechnicianResubmission/);
 });

@@ -30,6 +30,7 @@ export function TechnicianDashboard({ context }) {
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
   const [loadingMoreAvailable, setLoadingMoreAvailable] = useState(false);
   const [availabilitySaving, setAvailabilitySaving] = useState(false);
+  const [reviewDataDraft, setReviewDataDraft] = useState({});
   const referralScrollRef = useRef(null);
   const [referralPageOpen, setReferralPageOpen] = useState(false);
   useEffect(() => { if (!referralPageOpen) return undefined; const subscription = BackHandler.addEventListener('hardwareBackPress', () => { setReferralPageOpen(false); return true; }); return () => subscription.remove(); }, [referralPageOpen]);
@@ -39,6 +40,19 @@ export function TechnicianDashboard({ context }) {
   const technicianOrdersPagination = techData?.ordersPagination || null;
   const notificationItems = Array.isArray(notifications?.items) ? notifications.items : [];
   const user = techData?.profile || session?.user || {};
+  const reviewFields = (Array.isArray(user.identityReviewFields) ? user.identityReviewFields : []).filter(field => ['name', 'phone', 'specialties', 'areas'].includes(field));
+  const reviewImages = Array.isArray(user.identityReviewImages) && user.identityReviewImages.length
+    ? user.identityReviewImages.filter(side => ['profile', 'front', 'back'].includes(side))
+    : (user.identityReviewImage === 'both' ? ['front', 'back'] : ['profile', 'front', 'back'].includes(user.identityReviewImage) ? [user.identityReviewImage] : []);
+  useEffect(() => {
+    setReviewDataDraft({
+      name: String(user.name || ''),
+      phone: String(user.phone || ''),
+      specialties: Array.isArray(user.specialties) ? user.specialties.join('، ') : '',
+      areas: Array.isArray(user.areas) ? user.areas.join('، ') : ''
+    });
+  }, [user.name, user.phone, JSON.stringify(user.specialties || []), JSON.stringify(user.areas || [])]);
+
   const [profilePhotoUri, setProfilePhotoUri] = useState('');
   useEffect(() => {
     let cancelled = false;
@@ -110,28 +124,38 @@ export function TechnicianDashboard({ context }) {
         <TouchableOpacity onPress={()=>{setNotificationsOpen(v=>!v);setReloadKey(v=>v+1);}} style={{width:42,height:42,alignItems:'center',justifyContent:'center'}}><Svg width={22} height={22} viewBox="0 0 24 24"><Path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" fill="none" stroke="#8A94A6" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" /></Svg>{notifications.unread>0?<View style={{position:'absolute',top:1,left:1,minWidth:17,height:17,borderRadius:9,backgroundColor:'#E5484D',alignItems:'center',justifyContent:'center'}}><Text style={{color:'#FFF',fontSize:10,fontWeight:'900'}}>{notifications.unread}</Text></View>:null}</TouchableOpacity>
         <View style={{flexDirection:'row',alignItems:'center',gap:8}}><Text style={{color:'#102A9B',fontSize:24,fontWeight:'900'}}>حمزاوي سات</Text><Svg width={30} height={32} viewBox="0 0 30 32"><Path d="M5 6c8.2.7 14.3 6.8 15 15-8.2-.7-14.3-6.8-15-15Z" fill="#102A9B"/><Path d="M5 6a17 17 0 0 1 15 15m-4-2 7 7m-7-7 2-5m5 12 3 2M10 29h15m-8-4v4" fill="none" stroke="#102A9B" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"/></Svg></View>
       </View>
-      {String(user.identityReviewStatus || '') === 'needs_resubmission' ? <View style={{ margin: 12, marginTop: 10, padding: 14, borderRadius: 16, borderWidth: 2, borderColor: '#D97706', backgroundColor: '#FFFBEB', gap: 10 }}>
-        <Text style={{ color: '#92400E', fontSize: 16, fontWeight: '900', textAlign: 'right' }}>مطلوب تعديل صورة قبل اعتماد الحساب</Text>
-        <Text style={{ color: '#78350F', fontSize: 13, lineHeight: 22, textAlign: 'right' }}>{user.identityReviewReason || 'يرجى إعادة رفع الصورة المطلوبة لتستكمل الإدارة مراجعة حسابك.'}</Text>
-        {String(user.identityReviewImage || 'both') === 'profile' ? <View style={{ gap: 8 }}>
-          <Text style={{ color: '#78350F', fontSize: 12, fontWeight: '800', textAlign: 'right' }}>الصورة المطلوبة: الصورة الشخصية</Text>
-          {reviewUploads?.profile?.previewUri ? <Image source={{ uri: reviewUploads.profile.previewUri }} resizeMode="cover" style={{ width: 104, height: 104, borderRadius: 52, alignSelf: 'center' }} /> : null}
-          <Button title={reviewUploads?.profile?.uploading ? 'جاري رفع الصورة...' : '📷 التقاط صورة شخصية جديدة'} secondary onPress={() => pickTechnicianResubmissionImage('profile', 'camera')} disabled={Boolean(reviewUploads?.profile?.uploading)} />
-          <Text style={styles.detail}>{reviewUploads?.profile?.status || 'التقط صورة واضحة لوجهك بالكاميرا.'}</Text>
-        </View> : <View style={{ gap: 9 }}>
-          <Text style={{ color: '#78350F', fontSize: 12, fontWeight: '800', textAlign: 'right' }}>الصورة المطلوبة: {user.identityReviewImage === 'front' ? 'الوجه الأمامي للبطاقة' : user.identityReviewImage === 'back' ? 'الوجه الخلفي للبطاقة' : 'وجها البطاقة الأمامي والخلفي'}</Text>
-          {['front', 'back'].filter(side => ['both', side].includes(user.identityReviewImage || 'both')).map(side => <View key={side} style={{ backgroundColor: '#FFFFFF', borderRadius: 12, padding: 10, gap: 7 }}>
-            <Text style={{ color: '#1E293B', fontSize: 12, fontWeight: '900', textAlign: 'right' }}>{side === 'front' ? 'الوجه الأمامي' : 'الوجه الخلفي'}</Text>
-            {reviewUploads?.[side]?.previewUri ? <Image source={{ uri: reviewUploads[side].previewUri }} resizeMode="contain" style={{ width: '100%', height: 120 }} /> : null}
+      {String(user.identityReviewStatus || '') === 'needs_resubmission' ? <View style={{ margin: 12, marginTop: 10, padding: 16, borderRadius: 18, borderWidth: 2, borderColor: '#D97706', backgroundColor: '#FFFBEB', gap: 12 }}>
+        <Text style={{ color: '#92400E', fontSize: 19, fontWeight: '900', textAlign: 'right' }}>مطلوب استكمال بيانات حسابك</Text>
+        <View style={{ backgroundColor: '#FEF3C7', borderRadius: 14, borderWidth: 1, borderColor: '#F59E0B', padding: 14 }}>
+          <Text style={{ color: '#9A3412', fontSize: 18, lineHeight: 29, fontWeight: '900', textAlign: 'right' }}>{user.identityReviewReason || 'يرجى تنفيذ المطلوب لاستكمال مراجعة حسابك.'}</Text>
+        </View>
+        {reviewFields.length ? <View style={{ backgroundColor: '#FFFFFF', borderRadius: 14, padding: 12, gap: 10 }}>
+          <Text style={{ color: '#1E293B', fontSize: 15, fontWeight: '900', textAlign: 'right' }}>عدّل البيانات المطلوبة هنا</Text>
+          {reviewFields.map(field => <View key={field} style={{ gap: 5 }}>
+            <Text style={{ color: '#334155', fontSize: 13, fontWeight: '900', textAlign: 'right' }}>{field === 'name' ? 'الاسم' : field === 'phone' ? 'رقم الهاتف' : field === 'specialties' ? 'التخصصات' : 'مناطق العمل'}</Text>
+            <Field
+              value={String(reviewDataDraft[field] ?? (field === 'specialties' ? (user.specialties || []).join('، ') : field === 'areas' ? (user.areas || []).join('، ') : user[field] || ''))}
+              onChangeText={value => setReviewDataDraft(current => ({ ...current, [field]: value }))}
+              keyboardType={field === 'phone' ? 'phone-pad' : 'default'}
+              placeholder={field === 'areas' || field === 'specialties' ? 'افصل بين الاختيارات بعلامة ،' : ''}
+            />
+            {field === 'areas' || field === 'specialties' ? <Text style={{ color: '#64748B', fontSize: 10, textAlign: 'right' }}>اكتب القيم المعتمدة وافصل بينها بفاصلة.</Text> : null}
+          </View>)}
+        </View> : null}
+        {reviewImages.length ? <View style={{ gap: 9 }}>
+          <Text style={{ color: '#78350F', fontSize: 14, fontWeight: '900', textAlign: 'right' }}>ارفع الصور التي طلبتها الإدارة فقط</Text>
+          {reviewImages.map(side => <View key={side} style={{ backgroundColor: '#FFFFFF', borderRadius: 12, padding: 10, gap: 7 }}>
+            <Text style={{ color: '#1E293B', fontSize: 13, fontWeight: '900', textAlign: 'right' }}>{side === 'profile' ? 'الصورة الشخصية' : side === 'front' ? 'البطاقة – الوجه الأمامي' : 'البطاقة – الوجه الخلفي'}</Text>
+            {reviewUploads?.[side]?.previewUri ? <Image source={{ uri: reviewUploads[side].previewUri }} resizeMode={side === 'profile' ? 'cover' : 'contain'} style={side === 'profile' ? { width: 104, height: 104, borderRadius: 52, alignSelf: 'center' } : { width: '100%', height: 120 }} /> : null}
             <View style={{ flexDirection: 'row-reverse', gap: 8 }}>
-              <Button title="اختيار من المعرض" secondary onPress={() => pickTechnicianResubmissionImage(side, 'gallery')} disabled={Boolean(reviewUploads?.[side]?.uploading)} />
-              <Button title="📷 الكاميرا" secondary onPress={() => pickTechnicianResubmissionImage(side, 'camera')} disabled={Boolean(reviewUploads?.[side]?.uploading)} />
+              {side !== 'profile' ? <Button title="اختيار من المعرض" secondary onPress={() => pickTechnicianResubmissionImage(side, 'gallery')} disabled={Boolean(reviewUploads?.[side]?.uploading)} /> : null}
+              <Button title={side === 'profile' ? '📷 التقاط صورة شخصية' : '📷 الكاميرا'} secondary onPress={() => pickTechnicianResubmissionImage(side, 'camera')} disabled={Boolean(reviewUploads?.[side]?.uploading)} />
             </View>
             <Text style={styles.detail}>{reviewUploads?.[side]?.status || 'لم يتم رفع الصورة المطلوبة بعد.'}</Text>
           </View>)}
-        </View>}
-        <Button title="إرسال الصور للإدارة للمراجعة" onPress={submitTechnicianResubmission} disabled={Boolean(reviewUploads?.front?.uploading || reviewUploads?.back?.uploading || reviewUploads?.profile?.uploading)} />
-        <Text style={{ color: '#92400E', fontSize: 10, lineHeight: 18, textAlign: 'right' }}>سيظل هذا التنبيه ظاهرًا حتى إرسال الصورة المطلوبة، ثم تنتظر مراجعة الإدارة.</Text>
+        </View> : null}
+        <Button title="إرسال التعديلات والصور للإدارة" onPress={() => submitTechnicianResubmission(reviewDataDraft)} disabled={Boolean(reviewUploads?.front?.uploading || reviewUploads?.back?.uploading || reviewUploads?.profile?.uploading)} />
+        <Text style={{ color: '#92400E', fontSize: 11, lineHeight: 19, textAlign: 'right' }}>سيظل حسابك قيد المراجعة حتى تراجع الإدارة ما أرسلته.</Text>
       </View> : null}
       {offerDraft ? <View style={styles.formCard}>
         <Text style={styles.cardTitlePremium}>تقديم عرض على {offerDraft.order.service || 'الخدمة'} — {offerDraft.order.sn}</Text>

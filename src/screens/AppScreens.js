@@ -186,29 +186,34 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     }
   }
 
-  async function submitTechnicianResubmission() {
+  async function submitTechnicianResubmission(draft = {}) {
     if (!session?.token || session.role !== 'fanni') return;
     const user = techData?.profile || session.user || {};
-    const imageType = ['front', 'back', 'both', 'profile'].includes(user.identityReviewImage) ? user.identityReviewImage : 'both';
-    try {
-      if (imageType === 'profile') {
-        const fileId = reviewUploads.profile.fileId;
-        if (!fileId || reviewUploads.profile.uploading) throw new Error('التقط وارفع الصورة الشخصية المطلوبة أولًا.');
-        const result = await api('/fanni/me/profile-photo', { method: 'PATCH', token: session.token, body: { profilePhotoFileId: fileId } });
-        Alert.alert('تم إرسال الصورة', result.message || 'تم إرسال الصورة الشخصية للمراجعة.');
-      } else {
-        const body = {}; // The encrypted national-ID ledger is retained; only the requested image is replaced.
-        if (['front', 'both'].includes(imageType)) {
-          if (!reviewUploads.front.fileId || reviewUploads.front.uploading) throw new Error('ارفع صورة الوجه الأمامي للبطاقة أولًا.');
-          body.identityCardFrontFileId = reviewUploads.front.fileId;
-        }
-        if (['back', 'both'].includes(imageType)) {
-          if (!reviewUploads.back.fileId || reviewUploads.back.uploading) throw new Error('ارفع صورة الوجه الخلفي للبطاقة أولًا.');
-          body.identityCardBackFileId = reviewUploads.back.fileId;
-        }
-        const result = await api('/fanni/me/identity-card', { method: 'PATCH', token: session.token, body });
-        Alert.alert('تم إرسال الصور', result.message || 'تم إرسال الصور للمراجعة.');
+    const requiredFields = Array.isArray(user.identityReviewFields) ? user.identityReviewFields : [];
+    const requiredImages = Array.isArray(user.identityReviewImages) && user.identityReviewImages.length
+      ? user.identityReviewImages
+      : (user.identityReviewImage === 'both' ? ['front', 'back'] : user.identityReviewImage ? [user.identityReviewImage] : []);
+    const splitValues = value => String(value || '').split(/[،,]/).map(item => item.trim()).filter(Boolean);
+    const fields = {};
+    for (const key of requiredFields) {
+      if (key === 'name' || key === 'phone') fields[key] = String(draft[key] || '').trim();
+      if (key === 'areas' || key === 'specialties') fields[key] = Array.isArray(draft[key]) ? draft[key] : splitValues(draft[key]);
+    }
+    const images = {};
+    for (const side of requiredImages) {
+      const fileId = reviewUploads[side]?.fileId;
+      if (!fileId || reviewUploads[side]?.uploading) {
+        const label = side === 'profile' ? 'الصورة الشخصية' : side === 'front' ? 'الوجه الأمامي للبطاقة' : 'الوجه الخلفي للبطاقة';
+        Alert.alert('صورة مطلوبة', 'ارفع ' + label + ' التي طلبتها الإدارة أولًا.');
+        return;
       }
+      images[side] = fileId;
+    }
+    try {
+      const result = await api('/fanni/me/review-resubmission', {
+        method: 'PATCH', token: session.token, body: { fields, images }
+      });
+      Alert.alert('تم إرسال المطلوب', result.message || 'تم إرسال تعديلاتك وصورك المطلوبة للإدارة.');
       setReviewUploads({
         front: { fileId: '', previewUri: '', uploading: false, status: '' },
         back: { fileId: '', previewUri: '', uploading: false, status: '' },
@@ -216,7 +221,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
       });
       setReloadKey(value => value + 1);
     } catch (error) {
-      Alert.alert('تعذر إرسال الصور', error?.message || 'راجع الصور وحاول مرة أخرى.');
+      Alert.alert('تعذر إرسال التعديلات', error?.message || 'راجع البيانات والصور وحاول مرة أخرى.');
     }
   }
 
