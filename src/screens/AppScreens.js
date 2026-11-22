@@ -193,11 +193,21 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     const requiredImages = Array.isArray(user.identityReviewImages) && user.identityReviewImages.length
       ? user.identityReviewImages
       : (user.identityReviewImage === 'both' ? ['front', 'back'] : user.identityReviewImage ? [user.identityReviewImage] : []);
-    const splitValues = value => String(value || '').split(/[،,]/).map(item => item.trim()).filter(Boolean);
+    const approvedServices = new Set((categories || []).flatMap(category => Array.isArray(category.services) ? category.services : []).map(value => String(value || '').trim()).filter(Boolean));
+    const approvedAreas = new Set((areas || []).filter(value => !isReservedAreaLabel(value)).map(value => String(value || '').trim()).filter(Boolean));
     const fields = {};
     for (const key of requiredFields) {
       if (key === 'name' || key === 'phone') fields[key] = String(draft[key] || '').trim();
-      if (key === 'areas' || key === 'specialties') fields[key] = Array.isArray(draft[key]) ? draft[key] : splitValues(draft[key]);
+      if (key === 'areas') fields.areas = [...new Set((Array.isArray(draft.areas) ? draft.areas : []).map(value => String(value || '').trim()).filter(value => approvedAreas.has(value)))];
+      if (key === 'specialties') fields.specialties = [...new Set((Array.isArray(draft.specialties) ? draft.specialties : []).map(value => String(value || '').trim()).filter(value => approvedServices.has(value)))];
+    }
+    if (requiredFields.includes('areas') && !fields.areas?.length) {
+      Alert.alert('مناطق العمل مطلوبة', 'اختار منطقة واحدة على الأقل من قائمة المناطق المعتمدة.');
+      return;
+    }
+    if (requiredFields.includes('specialties') && !fields.specialties?.length) {
+      Alert.alert('الخدمات مطلوبة', 'اختار خدمة واحدة على الأقل من قائمة الخدمات المعتمدة.');
+      return;
     }
     const images = {};
     for (const side of requiredImages) {
