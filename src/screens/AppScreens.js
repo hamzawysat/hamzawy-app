@@ -66,7 +66,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         return;
       }
       const result = source === 'camera'
-        ? await ImagePicker.launchCameraAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: false, quality: 1 })
+        ? await ImagePicker.launchCameraAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, cameraType: side === 'profile' ? ImagePicker.CameraType.front : ImagePicker.CameraType.back, allowsEditing: false, quality: 1 })
         : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: false, quality: 1 });
       if (result.canceled || !result.assets?.[0]?.uri) return;
 
