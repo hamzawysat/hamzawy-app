@@ -200,7 +200,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         Alert.alert('تم إرسال الصورة', result.message || 'تم إرسال الصورة الشخصية للمراجعة.');
       } else {
         const nationalId = normalizePhoneDigits(reviewNationalId);
-        if (!/^\\d{14}$/.test(nationalId)) throw new Error('اكتب الرقم القومي كاملًا، 14 رقمًا.');
+        if (!/^\d{14}$/.test(nationalId)) throw new Error('اكتب الرقم القومي كاملًا، 14 رقمًا.');
         const body = { nationalId };
         if (['front', 'both'].includes(imageType)) {
           if (!reviewUploads.front.fileId || reviewUploads.front.uploading) throw new Error('ارفع صورة الوجه الأمامي للبطاقة أولًا.');
@@ -542,7 +542,8 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
                     lightColor: COLORS.teal500,
                   });
                 }
-                const permission = await Notifications.getPermissionsAsync();
+                let permission = await Notifications.getPermissionsAsync();
+                if (permission.status !== 'granted') permission = await Notifications.requestPermissionsAsync();
                 if (permission.status === 'granted') {
                   const stored = await SecureStore.getItemAsync(ledgerKey);
                   const deliveredIds = new Set(JSON.parse(stored || '[]').map(String));
@@ -1570,6 +1571,8 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     setClientData({ orders: [], loading: false, error: '', sn: '', clientToken: '' });
     setTechData({ profile: null, orders: [], offers: [], wallet: [], loading: false, error: '', tab: 'home' });
     setNotifications({ items: [], unread: 0, loading: false, error: '' });
+    setReviewUploads({ front: { fileId: '', previewUri: '', uploading: false, status: '' }, back: { fileId: '', previewUri: '', uploading: false, status: '' }, profile: { fileId: '', previewUri: '', uploading: false, status: '' } });
+    setReviewNationalId('');
   }
 
   function logout() {
