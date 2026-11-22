@@ -49,6 +49,12 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     profile: { fileId: '', previewUri: '', uploading: false, status: '' }
   });
   const [identityPreviewUri, setIdentityPreviewUri] = useState('');
+  const [reviewUploads, setReviewUploads] = useState({
+    front: { fileId: '', previewUri: '', uploading: false, status: '' },
+    back: { fileId: '', previewUri: '', uploading: false, status: '' },
+    profile: { fileId: '', previewUri: '', uploading: false, status: '' }
+  });
+  const [reviewNationalId, setReviewNationalId] = useState('');
   const [passwordChangeRequired, setPasswordChangeRequired] = useState(false);
 
   async function pickTechnicianIdentityImage(side, source) {
@@ -142,6 +148,83 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
       [side]: { fileId: '', previewUri: '', uploading: false, status: 'تم إزالة الصورة. اختار صورة بديلة.' }
     }));
   }
+  async function pickTechnicianResubmissionImage(side, source) {
+    if (!['front', 'back', 'profile'].includes(side) || !session?.token || reviewUploads[side]?.uploading) return;
+    if (side === 'profile' && source !== 'camera') {
+      Alert.alert('الصورة الشخصية', 'لازم تلتقط صورتك الشخصية بالكاميرا مباشرة.');
+      return;
+    }
+    try {
+      const permission = source === 'camera' ? await ImagePicker.requestCameraPermissionsAsync() : await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert('إذن مطلوب', source === 'camera' ? 'اسمح باستخدام الكاميرا لالتقاط الصورة.' : 'اسمح بالوصول إلى الصور لاختيار صورة البطاقة.');
+        return;
+      }
+      const picked = source === 'camera'
+        ? await ImagePicker.launchCameraAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, cameraType: side === 'profile' ? ImagePicker.CameraType.front : ImagePicker.CameraType.back, allowsEditing: false, quality: 1 })
+        : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: false, quality: 1 });
+      if (picked.canceled || !picked.assets?.[0]?.uri) return;
+      const asset = picked.assets[0];
+      const ext = String(asset.fileName || asset.uri).split('?')[0].split('.').pop().toLowerCase();
+      const mime = asset.mimeType || ({ jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' })[ext] || '';
+      if (!['image/jpeg', 'image/png', 'image/webp'].includes(mime)) throw new Error('الصيغ المقبولة JPG وPNG وWebP فقط.');
+      const info = await FileSystem.getInfoAsync(asset.uri);
+      if (Number(asset.fileSize || info.size || 0) > 15 * 1024 * 1024) throw new Error('الحد الأقصى لحجم الصورة 15 ميجابايت.');
+      setReviewUploads(current => ({ ...current, [side]: { fileId: '', previewUri: asset.uri, uploading: true, status: 'جاري تجهيز الصورة...' } }));
+      let uri = asset.uri, uploadMime = mime;
+      const width = Number(asset.width || 0), height = Number(asset.height || 0), largest = Math.max(width, height);
+      if (largest > 1920 || Number(asset.fileSize || info.size || 0) > 1200 * 1024) {
+        const scale = largest > 0 ? Math.min(1, 1920 / largest) : 1;
+        const resize = width >= height ? { width: Math.max(1, Math.round(width * scale)) } : { height: Math.max(1, Math.round(height * scale)) };
+        const optimized = await ImageManipulator.manipulateAsync(asset.uri, scale < 1 ? [{ resize }] : [], { compress: 0.82, format: ImageManipulator.SaveFormat.JPEG });
+        uri = optimized.uri; uploadMime = 'image/jpeg';
+      }
+      const uploaded = await uploadRegistrationIdentity(side, uri, uploadMime);
+      setReviewUploads(current => ({ ...current, [side]: { fileId: uploaded.fileId, previewUri: uri, uploading: false, status: 'تم رفع الصورة بنجاح ✓' } }));
+    } catch (error) {
+      const message = error?.message || 'تعذر رفع الصورة. حاول مرة أخرى.';
+      setReviewUploads(current => ({ ...current, [side]: { ...current[side], fileId: '', uploading: false, status: message } }));
+      Alert.alert('تعذر رفع الصورة', message);
+    }
+  }
+
+  async function submitTechnicianResubmission() {
+    if (!session?.token || session.role !== 'fanni') return;
+    const user = techData?.profile || session.user || {};
+    const imageType = ['front', 'back', 'both', 'profile'].includes(user.identityReviewImage) ? user.identityReviewImage : 'both';
+    try {
+      if (imageType === 'profile') {
+        const fileId = reviewUploads.profile.fileId;
+        if (!fileId || reviewUploads.profile.uploading) throw new Error('التقط وارفع الصورة الشخصية المطلوبة أولًا.');
+        const result = await api('/fanni/me/profile-photo', { method: 'PATCH', token: session.token, body: { profilePhotoFileId: fileId } });
+        Alert.alert('تم إرسال الصورة', result.message || 'تم إرسال الصورة الشخصية للمراجعة.');
+      } else {
+        const nationalId = normalizePhoneDigits(reviewNationalId);
+        if (!/^\\d{14}$/.test(nationalId)) throw new Error('اكتب الرقم القومي كاملًا، 14 رقمًا.');
+        const body = { nationalId };
+        if (['front', 'both'].includes(imageType)) {
+          if (!reviewUploads.front.fileId || reviewUploads.front.uploading) throw new Error('ارفع صورة الوجه الأمامي للبطاقة أولًا.');
+          body.identityCardFrontFileId = reviewUploads.front.fileId;
+        }
+        if (['back', 'both'].includes(imageType)) {
+          if (!reviewUploads.back.fileId || reviewUploads.back.uploading) throw new Error('ارفع صورة الوجه الخلفي للبطاقة أولًا.');
+          body.identityCardBackFileId = reviewUploads.back.fileId;
+        }
+        const result = await api('/fanni/me/identity-card', { method: 'PATCH', token: session.token, body });
+        Alert.alert('تم إرسال الصور', result.message || 'تم إرسال الصور للمراجعة.');
+      }
+      setReviewUploads({
+        front: { fileId: '', previewUri: '', uploading: false, status: '' },
+        back: { fileId: '', previewUri: '', uploading: false, status: '' },
+        profile: { fileId: '', previewUri: '', uploading: false, status: '' }
+      });
+      setReviewNationalId('');
+      setReloadKey(value => value + 1);
+    } catch (error) {
+      Alert.alert('تعذر إرسال الصور', error?.message || 'راجع الصور وحاول مرة أخرى.');
+    }
+  }
+
   const { categories, setCategories, areas, setAreas, areaTechnicianCounts, setAreaTechnicianCounts, selected, setSelected, servicesLoading, setServicesLoading, servicesError, setServicesError, reloadKey, setReloadKey, session, setSession, authRestoring, setAuthRestoring, username, setUsername, password, setPassword, loginLoading, setLoginLoading, authMode, setAuthMode, form, setForm, clientData, setClientData, techData, setTechData, walletTransferNumbers, setWalletTransferNumbers, assignedDetails, setAssignedDetails, technicianSearch, setTechnicianSearch, technicianServiceFilter, setTechnicianServiceFilter, guidelinesChecked, setGuidelinesChecked, guidelinesReachedEnd, setGuidelinesReachedEnd, guidelinesViewportHeight, setGuidelinesViewportHeight, topup, setTopup, clientTab, setClientTab, clientServiceSearch, setClientServiceSearch, servicePickerOpen, setServicePickerOpen, subservicePickerOpen, setSubservicePickerOpen, ratingPrompt, setRatingPrompt, dismissedRatings, setDismissedRatings, ratingDismissalsLoaded, setRatingDismissalsLoaded, ratingDismissalsLoadedFor, setRatingDismissalsLoadedFor, clientTrackSN, setClientTrackSN, clientTrackedOrder, setClientTrackedOrder, clientTrackError, setClientTrackError, clientTrackLoading, setClientTrackLoading, clientComplaint, setClientComplaint, clientComplaintTrack, setClientComplaintTrack, expandedClientOrders, setExpandedClientOrders, expandedTechnicianOrders, setExpandedTechnicianOrders, notificationsOpen, setNotificationsOpen, offerDraft, setOfferDraft, notifications, setNotifications, orderChats, setOrderChats, chatDrafts, setChatDrafts, priceDrafts, setPriceDrafts, ratingDrafts, setRatingDrafts, ratingSubmitting, setRatingSubmitting, supportCases, setSupportCases, supportCase, setSupportCase, supportDraft, setSupportDraft, supportSubject, setSupportSubject, supportLoading, setSupportLoading, supportError, setSupportError, accountPasswordForm, setAccountPasswordForm, profileEditForm, setProfileEditForm, profileEditOpenCategory, setProfileEditOpenCategory, recoveryForm, setRecoveryForm, registrationNameRef, registrationPhoneRef, registrationPasswordRef, registrationConfirmPasswordRef, clientAreaInputRef, clientAddressInputRef, clientDescriptionInputRef, clientBudgetInputRef, clientServiceDetailYRef, clientFormYRef, clientScrollRef, chatScrollRef, clientChatScrollRefs, clientChatAtBottomRef, ratingSubmittingRef, orderChatsRef, acceptedChatAutoOpenedRef, dismissedRatingsRef, ratingHandledRef, ratingStatusSnapshotRef, services, updateForm } = appState;
   const handlePushNotificationResponse = response => {
     const data = response?.notification?.request?.content?.data || {};
@@ -1512,7 +1595,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
   };
   const toggleArray = (key, value) => updateForm(key, form[key].includes(value) ? form[key].filter(item => item !== value) : [...form[key], value]);
 
-  const screenContext = { screen, setScreenState, screenHistoryRef, screenRef, pushTokenRef, setScreen, categories, setCategories, areas, setAreas, areaTechnicianCounts, setAreaTechnicianCounts, selected, setSelected, servicesLoading, setServicesLoading, servicesError, setServicesError, reloadKey, setReloadKey, session, setSession, authRestoring, setAuthRestoring, username, setUsername, password, setPassword, loginLoading, setLoginLoading, authMode, setAuthMode, form, setForm, registrationNameRef, registrationPhoneRef, registrationPasswordRef, registrationConfirmPasswordRef, clientAreaInputRef, clientAddressInputRef, clientDescriptionInputRef, clientBudgetInputRef, clientServiceDetailYRef, clientFormYRef, clientData, setClientData, techData, setTechData, walletTransferNumbers, setWalletTransferNumbers, assignedDetails, setAssignedDetails, technicianSearch, setTechnicianSearch, technicianServiceFilter, setTechnicianServiceFilter, guidelinesChecked, setGuidelinesChecked, guidelinesReachedEnd, setGuidelinesReachedEnd, guidelinesViewportHeight, setGuidelinesViewportHeight, topup, setTopup, clientTab, setClientTab, clientServiceSearch, setClientServiceSearch, servicePickerOpen, setServicePickerOpen, subservicePickerOpen, setSubservicePickerOpen, ratingPrompt, setRatingPrompt, dismissedRatings, setDismissedRatings, ratingDismissalsLoaded, setRatingDismissalsLoaded, ratingDismissalsLoadedFor, setRatingDismissalsLoadedFor, clientTrackSN, setClientTrackSN, clientTrackedOrder, setClientTrackedOrder, clientTrackError, setClientTrackError, clientTrackLoading, setClientTrackLoading, clientComplaint, setClientComplaint, clientComplaintTrack, setClientComplaintTrack, expandedClientOrders, setExpandedClientOrders, expandedTechnicianOrders, setExpandedTechnicianOrders, notificationsOpen, setNotificationsOpen, clientScrollRef, chatScrollRef, clientChatScrollRefs, clientChatAtBottomRef, ratingSubmittingRef, offerDraft, setOfferDraft, notifications, setNotifications, orderChats, setOrderChats, orderChatsRef, acceptedChatAutoOpenedRef, chatDrafts, setChatDrafts, priceDrafts, setPriceDrafts, ratingDrafts, setRatingDrafts, ratingSubmitting, setRatingSubmitting, dismissedRatingsRef, ratingHandledRef, ratingStatusSnapshotRef, supportCases, setSupportCases, supportCase, setSupportCase, supportDraft, setSupportDraft, supportSubject, setSupportSubject, supportLoading, setSupportLoading, supportError, setSupportError, accountPasswordForm, setAccountPasswordForm, profileEditForm, setProfileEditForm, profileEditOpenCategory, setProfileEditOpenCategory, recoveryForm, setRecoveryForm, services, updateForm, ratingAccountId, ratingStorageKey, previousRatingStorageKey, legacyRatingStorageKey, oldestRatingStorageKey, markNotificationRead, markAllNotificationsRead, handleLogin, registerClient, registerTechnician, createOrder, trackClientOrder, submitClientComplaint, trackClientComplaints, sendOffer, submitOffer, cancelClientOrder, acceptClientOffer, completeTechnicianOrder, getOrderSN, uniqueByOrderSN, orderToken, refreshVisibleData, refreshOrderChat, toggleOrderChat, sendOrderChat, requestOrderPriceChange, decideOrderPrice, setOrderRatingStars, renderRatingStars, submitOrderRating, saveRatingDismissal, renderRatingModal, acceptTechnicianGuidelines, submitTopup, loadSupportCases, startSupportCase, openSupportCase, sendSupportMessage, beginProfileEdit, toggleProfileEditSpecialty, saveProfileEdits, changeAccountPassword, startPasswordRecovery, refreshPasswordRecovery, sendRecoveryMessage, verifyRecoveryCode, resetRecoveredPassword, copyOrderCode, openWhatsAppSupport, performLogout, logout, goLogin, toggleArray };
+  const screenContext = { reviewUploads, pickTechnicianResubmissionImage, submitTechnicianResubmission, reviewNationalId, setReviewNationalId, screen, setScreenState, screenHistoryRef, screenRef, pushTokenRef, setScreen, categories, setCategories, areas, setAreas, areaTechnicianCounts, setAreaTechnicianCounts, selected, setSelected, servicesLoading, setServicesLoading, servicesError, setServicesError, reloadKey, setReloadKey, session, setSession, authRestoring, setAuthRestoring, username, setUsername, password, setPassword, loginLoading, setLoginLoading, authMode, setAuthMode, form, setForm, registrationNameRef, registrationPhoneRef, registrationPasswordRef, registrationConfirmPasswordRef, clientAreaInputRef, clientAddressInputRef, clientDescriptionInputRef, clientBudgetInputRef, clientServiceDetailYRef, clientFormYRef, clientData, setClientData, techData, setTechData, walletTransferNumbers, setWalletTransferNumbers, assignedDetails, setAssignedDetails, technicianSearch, setTechnicianSearch, technicianServiceFilter, setTechnicianServiceFilter, guidelinesChecked, setGuidelinesChecked, guidelinesReachedEnd, setGuidelinesReachedEnd, guidelinesViewportHeight, setGuidelinesViewportHeight, topup, setTopup, clientTab, setClientTab, clientServiceSearch, setClientServiceSearch, servicePickerOpen, setServicePickerOpen, subservicePickerOpen, setSubservicePickerOpen, ratingPrompt, setRatingPrompt, dismissedRatings, setDismissedRatings, ratingDismissalsLoaded, setRatingDismissalsLoaded, ratingDismissalsLoadedFor, setRatingDismissalsLoadedFor, clientTrackSN, setClientTrackSN, clientTrackedOrder, setClientTrackedOrder, clientTrackError, setClientTrackError, clientTrackLoading, setClientTrackLoading, clientComplaint, setClientComplaint, clientComplaintTrack, setClientComplaintTrack, expandedClientOrders, setExpandedClientOrders, expandedTechnicianOrders, setExpandedTechnicianOrders, notificationsOpen, setNotificationsOpen, clientScrollRef, chatScrollRef, clientChatScrollRefs, clientChatAtBottomRef, ratingSubmittingRef, offerDraft, setOfferDraft, notifications, setNotifications, orderChats, setOrderChats, orderChatsRef, acceptedChatAutoOpenedRef, chatDrafts, setChatDrafts, priceDrafts, setPriceDrafts, ratingDrafts, setRatingDrafts, ratingSubmitting, setRatingSubmitting, dismissedRatingsRef, ratingHandledRef, ratingStatusSnapshotRef, supportCases, setSupportCases, supportCase, setSupportCase, supportDraft, setSupportDraft, supportSubject, setSupportSubject, supportLoading, setSupportLoading, supportError, setSupportError, accountPasswordForm, setAccountPasswordForm, profileEditForm, setProfileEditForm, profileEditOpenCategory, setProfileEditOpenCategory, recoveryForm, setRecoveryForm, services, updateForm, ratingAccountId, ratingStorageKey, previousRatingStorageKey, legacyRatingStorageKey, oldestRatingStorageKey, markNotificationRead, markAllNotificationsRead, handleLogin, registerClient, registerTechnician, createOrder, trackClientOrder, submitClientComplaint, trackClientComplaints, sendOffer, submitOffer, cancelClientOrder, acceptClientOffer, completeTechnicianOrder, getOrderSN, uniqueByOrderSN, orderToken, refreshVisibleData, refreshOrderChat, toggleOrderChat, sendOrderChat, requestOrderPriceChange, decideOrderPrice, setOrderRatingStars, renderRatingStars, submitOrderRating, saveRatingDismissal, renderRatingModal, acceptTechnicianGuidelines, submitTopup, loadSupportCases, startSupportCase, openSupportCase, sendSupportMessage, beginProfileEdit, toggleProfileEditSpecialty, saveProfileEdits, changeAccountPassword, startPasswordRecovery, refreshPasswordRecovery, sendRecoveryMessage, verifyRecoveryCode, resetRecoveredPassword, copyOrderCode, openWhatsAppSupport, performLogout, logout, goLogin, toggleArray };
 
   if (authRestoring) return <SafeAreaView style={styles.safe}><View style={styles.center}><ActivityIndicator size="large" color={COLORS.blue} /><Text style={styles.statusText}>جاري استعادة حسابك...</Text></View></SafeAreaView>;
 
