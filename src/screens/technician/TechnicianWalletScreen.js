@@ -51,6 +51,10 @@ export default function TechnicianWalletScreen({ session, user, transferNumbers,
     catch (_) {}
   };
 
+  const validTransferNumbers = [1, 2]
+    .map(index => String(transferNumbers?.['walletPhone' + index] || '').trim())
+    .filter(number => /^01[0-9]{9}$/.test(number));
+
   return (
     <ScrollView contentContainerStyle={styles.technicianPage} showsVerticalScrollIndicator={false}>
       <View style={[styles.walletCard, { backgroundColor: '#101F9B', borderColor: '#101F9B', borderRadius: 23, padding: 19, shadowColor: '#07136E', shadowOpacity: 0.2, shadowRadius: 14, elevation: 5 }]}>
@@ -69,14 +73,12 @@ export default function TechnicianWalletScreen({ session, user, transferNumbers,
       {loading ? <ActivityIndicator color={COLORS.navy} /> : null}
       {tab === 'topup' ? <View style={styles.dataCard}>
         <Text style={styles.cardTitlePremium}>أرقام التحويل المعتمدة</Text>
-        {[1, 2].map(index => {
-          const number = String(transferNumbers?.['walletPhone' + index] || '').trim();
-          const valid = /^01[0-9]{9}$/.test(number);
-          return <View key={index} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 10, borderRadius: 10, borderWidth: 1, borderColor: COLORS.border, marginTop: 8 }}>
-            <Text style={styles.detailBold}>{valid ? number : 'رقم التحويل ' + index + ': غير متاح'}</Text>
-            {valid ? <Button title="نسخ الرقم" secondary onPress={() => copy(number)} /> : null}
-          </View>;
-        })}
+        {validTransferNumbers.length ? validTransferNumbers.map((number, index) =>
+          <View key={number + '-' + index} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 10, borderRadius: 10, borderWidth: 1, borderColor: COLORS.border, marginTop: 8 }}>
+            <Text style={styles.detailBold}>{number}</Text>
+            <Button title="نسخ الرقم" secondary onPress={() => copy(number)} />
+          </View>
+        ) : <Text style={[styles.detail, { marginTop: 8 }]}>أرقام التحويل غير متاحة حاليًا. تواصل مع خدمة العملاء قبل التحويل.</Text>}
         <Text style={styles.detail}>راجع الرقم وبيانات التحويل قبل إرسال أي مبلغ. طلب الشحن يحتاج مراجعة الإدارة.</Text>
         <Field label="مبلغ الشحن بالجنيه" value={topup.amount} onChangeText={value => setTopup(current => ({ ...current, amount: value }))} keyboardType="numeric" />
         <Field label="رقم الهاتف المحوّل منه" value={topup.fromPhone} onChangeText={value => setTopup(current => ({ ...current, fromPhone: value }))} keyboardType="phone-pad" />
