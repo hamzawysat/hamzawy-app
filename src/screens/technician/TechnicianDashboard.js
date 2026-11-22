@@ -44,7 +44,7 @@ export function TechnicianDashboard({ context }) {
     let cancelled = false;
     const path = String(user.profilePhotoUrl || '').trim();
     if (!path) { setProfilePhotoUri(''); return undefined; }
-    getApiUrl(path.replace(/^\\/api(?=\\/)/, '')).then(uri => {
+    getApiUrl((path.startsWith('/api/') ? path.slice(4) : path)).then(uri => {
       if (!cancelled) setProfilePhotoUri(uri);
     }).catch(() => { if (!cancelled) setProfilePhotoUri(''); });
     return () => { cancelled = true; };
