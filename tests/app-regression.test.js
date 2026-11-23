@@ -911,7 +911,8 @@ test('mobile registration forwards referral codes and existing wallet screens la
   const screens = fs.readFileSync(path.join(root, 'src/screens/AppScreens.js'), 'utf8');
   const clientWallet = fs.readFileSync(path.join(root, 'src/screens/client/ClientWalletScreen.js'), 'utf8');
   const technicianWallet = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianWalletScreen.js'), 'utf8');
-  assert.match(screens, /referralCode: String\(form\.referralCode \|\| ''\)\.trim\(\)/);
+  assert.match(screens, /const referralCode = \/\^T-\[A-F0-9\]\{24\}-\[A-F0-9\]\{12\}\$\/i\.test\(referralCandidate\)/);
+  assert.match(screens, /referralCode,\s*referralClaimToken/);
   assert.match(clientWallet, /referral_reward: 'مكافأة دعوة'/);
   assert.match(technicianWallet, /referral_reward: 'مكافأة دعوة'/);
   assert.match(clientWallet, /item\.referralNumber/);
@@ -1163,8 +1164,26 @@ test('client referral codes are captured from the first-launch clipboard and per
   assert.match(screens, /SecureStore\.getItemAsync\(CLIENT_REFERRAL_CODE_STORAGE_KEY\)/);
   assert.match(screens, /SecureStore\.setItemAsync\(CLIENT_REFERRAL_CODE_STORAGE_KEY, code\)/);
   assert.match(screens, /void captureClientReferralCode\(\)/);
-  assert.match(screens, /const referralCode = String\(capturedReferralCode \|\| clientReferralCodeRef\.current \|\| form\.referralCode \|\| ''\)\.trim\(\)/);
+  assert.match(screens, /const referralCandidate = String\(capturedReferralCode \|\| clientReferralCodeRef\.current \|\| form\.referralCode \|\| ''\)\.trim\(\)/);
+  assert.match(screens, /const referralCode = \/\^C-\[A-F0-9\]\{24\}-\[A-F0-9\]\{12\}\$\/i\.test\(referralCandidate\)/);
   assert.ok(screens.indexOf('await captureClientReferralCode()') < screens.indexOf("api('/client/register'"));
+});
+
+test('referral clipboard capture retries during registration handoff and isolates client and technician invite types', () => {
+  const screens = fs.readFileSync(path.join(root, 'src/screens/AppScreens.js'), 'utf8');
+  assert.match(screens, /import[^;]*AppState/);
+  assert.match(screens, /attempt < 8 && !token/);
+  assert.match(screens, /attempt < 8 && !code/);
+  assert.match(screens, /AppState\.addEventListener\('change'/);
+  assert.match(screens, /screenRef\.current === 'clientRegister'/);
+  assert.match(screens, /screenRef\.current === 'technicianRegister'/);
+  assert.match(screens, /SecureStore\.deleteItemAsync\(CLIENT_REFERRAL_CODE_STORAGE_KEY\)/);
+  assert.match(screens, /SecureStore\.deleteItemAsync\(TECHNICIAN_REFERRAL_CLAIM_STORAGE_KEY\)/);
+  const start = screens.indexOf('async function registerTechnician()');
+  const end = screens.indexOf('async function createOrder()', start);
+  const registration = screens.slice(start, end);
+  assert.match(registration, /\^T-\[A-F0-9\]\{24\}-\[A-F0-9\]\{12\}\$/);
+  assert.doesNotMatch(registration, /referralCode: String\(form\.referralCode/);
 });
 
 test('client referral credentials clear only after successful client registration and remain on request failure', () => {
