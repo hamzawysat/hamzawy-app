@@ -1153,3 +1153,29 @@ test('technician referral claim is persisted on app startup and awaited before t
   assert.ok(registration.indexOf('await captureReferralClaim()') < registration.indexOf("api('/fanni/register'"));
   assert.match(registration, /SecureStore\.deleteItemAsync\(TECHNICIAN_REFERRAL_CLAIM_STORAGE_KEY\)/);
 });
+
+
+test('client referral codes are captured from the first-launch clipboard and persisted independently from technician claims', () => {
+  const screens = fs.readFileSync(path.join(root, 'src/screens/AppScreens.js'), 'utf8');
+  assert.match(screens, /CLIENT_REFERRAL_CODE_STORAGE_KEY/);
+  assert.match(screens, /HAMZAWY_CLIENT_REFERRAL:/);
+  assert.match(screens, /C-\[A-F0-9\]\{24\}-\[A-F0-9\]\{12\}/);
+  assert.match(screens, /SecureStore\.getItemAsync\(CLIENT_REFERRAL_CODE_STORAGE_KEY\)/);
+  assert.match(screens, /SecureStore\.setItemAsync\(CLIENT_REFERRAL_CODE_STORAGE_KEY, code\)/);
+  assert.match(screens, /void captureClientReferralCode\(\)/);
+  assert.match(screens, /const referralCode = String\(capturedReferralCode \|\| clientReferralCodeRef\.current \|\| form\.referralCode \|\| ''\)\.trim\(\)/);
+  assert.ok(screens.indexOf('await captureClientReferralCode()') < screens.indexOf("api('/client/register'"));
+});
+
+test('client referral credentials clear only after successful client registration and remain on request failure', () => {
+  const screens = fs.readFileSync(path.join(root, 'src/screens/AppScreens.js'), 'utf8');
+  const start = screens.indexOf('async function registerClient()');
+  const end = screens.indexOf('async function registerTechnician()', start);
+  const registration = screens.slice(start, end);
+  assert.ok(registration.indexOf("api('/client/register'") < registration.indexOf('SecureStore.deleteItemAsync(CLIENT_REFERRAL_CODE_STORAGE_KEY)'));
+  assert.match(registration, /if \(referralCode && \/\^C-/);
+  assert.match(registration, /catch \(err\) \{ Alert\.alert\('تعذر إنشاء الحساب'/);
+  assert.match(registration, /updateForm\('referralCode', ''\)/);
+  assert.match(screens, /referralClaimTokenRef/);
+  assert.match(screens, /TECHNICIAN_REFERRAL_CLAIM_STORAGE_KEY/);
+});

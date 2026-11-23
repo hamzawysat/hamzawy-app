@@ -40,6 +40,7 @@ function normalizePhoneDigits(value) {
 }
 
 const TECHNICIAN_REFERRAL_CLAIM_STORAGE_KEY = 'sonaa.fanni.referral-claim.v1';
+const CLIENT_REFERRAL_CODE_STORAGE_KEY = 'sonaa.client.referral-code.v1';
 
 function AppScreens({ onScreenChange, onAuthRestoringChange }) {
   const { screen, setScreenState, screenHistoryRef, screenRef, setScreen } = useScreenNavigation();
@@ -47,6 +48,8 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
   const pendingAppActionRef = useRef(null);
   const referralClaimTokenRef = useRef('');
   const referralClaimCapturePromiseRef = useRef(null);
+  const clientReferralCodeRef = useRef('');
+  const clientReferralCapturePromiseRef = useRef(null);
 
   const captureReferralClaim = useCallback(async () => {
     if (referralClaimTokenRef.current) return referralClaimTokenRef.current;
@@ -75,6 +78,41 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     })().finally(() => { referralClaimCapturePromiseRef.current = null; });
     return referralClaimCapturePromiseRef.current;
   }, [appState.setForm]);
+
+  const captureClientReferralCode = useCallback(async () => {
+    if (clientReferralCodeRef.current) return clientReferralCodeRef.current;
+    if (clientReferralCapturePromiseRef.current) return clientReferralCapturePromiseRef.current;
+    clientReferralCapturePromiseRef.current = (async () => {
+      let code = '';
+      const isClientCode = value => /^C-[A-F0-9]{24}-[A-F0-9]{12}$/i.test(String(value || '').trim());
+      try {
+        const saved = String(await SecureStore.getItemAsync(CLIENT_REFERRAL_CODE_STORAGE_KEY) || '').trim().toUpperCase();
+        if (isClientCode(saved)) code = saved;
+      } catch (_) {}
+      if (!code) {
+        try {
+          const clipboard = String(await Clipboard.getStringAsync() || '').trim();
+          const marker = clipboard.match(/^HAMZAWY_CLIENT_REFERRAL:(C-[A-F0-9]{24}-[A-F0-9]{12})$/i);
+          if (marker) code = marker[1].toUpperCase();
+          else if (isClientCode(clipboard)) code = clipboard.toUpperCase();
+          else {
+            const referral = clipboard.match(/[?&]ref=(C-[A-F0-9]{24}-[A-F0-9]{12})(?:&|$)/i);
+            if (referral) code = referral[1].toUpperCase();
+          }
+        } catch (_) {}
+      }
+      if (code) {
+        clientReferralCodeRef.current = code;
+        try { await SecureStore.setItemAsync(CLIENT_REFERRAL_CODE_STORAGE_KEY, code); } catch (_) {}
+        appState.setForm(current => current.referralCode
+          ? current
+          : { ...current, referralCode: code });
+      }
+      return code;
+    })().finally(() => { clientReferralCapturePromiseRef.current = null; });
+    return clientReferralCapturePromiseRef.current;
+  }, [appState.setForm]);
+
   const handleTechnicianAppLink = useCallback((url) => {
     if (!url) return;
     try {
@@ -115,6 +153,14 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
   useEffect(() => {
     void captureReferralClaim();
   }, [captureReferralClaim]);
+
+  useEffect(() => {
+    void captureClientReferralCode();
+  }, [captureClientReferralCode]);
+
+  useEffect(() => {
+    if (screen === 'clientRegister' && !appState.form?.referralCode) void captureClientReferralCode();
+  }, [screen, appState.form?.referralCode, captureClientReferralCode]);
 
   useEffect(() => {
     if (screen === 'technicianRegister' && !appState.form?.referralClaimToken) void captureReferralClaim();
@@ -867,8 +913,15 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     if (form.password !== form.confirmPassword) { Alert.alert('كلمة السر', 'كلمتا السر غير متطابقتين.'); return; }
     setLoginLoading(true);
     try {
-      const result = await api('/client/register', { method: 'POST', body: { name: form.name.trim(), phone: form.phone.trim(), password: form.password, confirmPassword: form.confirmPassword, referralCode: String(form.referralCode || '').trim() } });
+      const capturedReferralCode = await captureClientReferralCode();
+      const referralCode = String(capturedReferralCode || clientReferralCodeRef.current || form.referralCode || '').trim();
+      const result = await api('/client/register', { method: 'POST', body: { name: form.name.trim(), phone: form.phone.trim(), password: form.password, confirmPassword: form.confirmPassword, referralCode } });
       if (!result.token || !result.client) throw new Error('تم التسجيل لكن استجابة الخادم غير مكتملة.');
+      if (referralCode && /^C-[A-F0-9]{24}-[A-F0-9]{12}$/i.test(referralCode)) {
+        clientReferralCodeRef.current = '';
+        try { await SecureStore.deleteItemAsync(CLIENT_REFERRAL_CODE_STORAGE_KEY); } catch (_) {}
+        updateForm('referralCode', '');
+      }
       const nextSession = { token: result.token, user: result.client, role: 'client' };
       await SecureStore.setItemAsync('sonaa.auth.session.v1', JSON.stringify(nextSession));
       setSession(nextSession);
