@@ -1,7 +1,9 @@
 name: Publish Android OTA Update
 
 on:
-  # Validate every pull request; production publishing remains manual only.
+  push:
+    branches: [main]
+  # Validate every pull request; production publishing also runs after main updates.
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -41,7 +43,7 @@ jobs:
   publish:
     name: Publish production OTA
     needs: validate
-    if: ${{ needs.validate.result == 'success' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' }}
+    if: ${{ needs.validate.result == 'success' && (github.event_name == 'workflow_dispatch' || github.event_name == 'push') && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
