@@ -66,10 +66,11 @@ export default function ReferralCard({ session, kind, cardRef, expanded = false,
             '',
             '📲 تحميل التطبيق:',
             downloadUrl.toString()
-          ].join('\\n');
+          ].join('\n');
         })()
-      : '💰 انضم لفريق فنيين حمزاوي سات واكسب 150 جنيه مكافأة بعد إكمال أول 3 طلبات ليك! 🎉 سجّل دلوقتي وابدأ شغلك معانا.\\n' + data.url;
-    if (!invitationMessage) { Alert.alert('تعذر المشاركة', 'كود الدعوة غير صالح. حدّث بيانات الدعوة وحاول مرة أخرى.'); return; }\n    try { await Share.share({ message: invitationMessage }); }
+      : '💰 انضم لفريق فنيين حمزاوي سات واكسب 150 جنيه مكافأة بعد إكمال أول 3 طلبات ليك! 🎉 سجّل دلوقتي وابدأ شغلك معانا.\n' + data.url;
+    if (!invitationMessage) { Alert.alert('تعذر المشاركة', 'كود الدعوة غير صالح. حدّث بيانات الدعوة وحاول مرة أخرى.'); return; }
+    try { await Share.share({ message: invitationMessage }); }
     catch (e) { Alert.alert('تعذر المشاركة', e.message || 'حاول مرة أخرى.'); }
   };
   return <View ref={cardRef} collapsable={false} style={[styles.dataCard, { borderWidth: 1, borderColor: COLORS.navy, marginTop: 12 }]}>
