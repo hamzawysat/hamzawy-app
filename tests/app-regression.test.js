@@ -1131,7 +1131,7 @@ test('technician referral claims are captured from app deep links or the downloa
   assert.match(screens, /params\.claim/);
   assert.match(screens, /HAMZAWY_FANNI_CLAIM:/);
   assert.match(screens, /Clipboard\.getStringAsync\(\)/);
-  assert.match(screens, /referralClaimToken: String\(form\.referralClaimToken \|\| referralClaimTokenRef\.current \|\| await captureReferralClaim\(\) \|\| ''\)\.trim\(\)/);
+  assert.match(screens, /const referralClaimToken = String\(form\.referralClaimToken \|\| referralClaimTokenRef\.current \|\| await captureReferralClaim\(\) \|\| ''\)\.trim\(\)/);\n  assert.match(screens, /^\\s*referralClaimToken\\s*$/m);
   assert.match(screens, /تم حفظ كود الدعوة تلقائيًا/);
   assert.match(state, /referralClaimToken: ''/);
 });
