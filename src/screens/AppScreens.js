@@ -39,10 +39,42 @@ function normalizePhoneDigits(value) {
   }).replace(/\D/g, '');
 }
 
+const TECHNICIAN_REFERRAL_CLAIM_STORAGE_KEY = 'sonaa.fanni.referral-claim.v1';
+
 function AppScreens({ onScreenChange, onAuthRestoringChange }) {
   const { screen, setScreenState, screenHistoryRef, screenRef, setScreen } = useScreenNavigation();
   const appState = useAppState();
   const pendingAppActionRef = useRef(null);
+  const referralClaimTokenRef = useRef('');
+  const referralClaimCapturePromiseRef = useRef(null);
+
+  const captureReferralClaim = useCallback(async () => {
+    if (referralClaimTokenRef.current) return referralClaimTokenRef.current;
+    if (referralClaimCapturePromiseRef.current) return referralClaimCapturePromiseRef.current;
+    referralClaimCapturePromiseRef.current = (async () => {
+      let token = '';
+      try {
+        const saved = String(await SecureStore.getItemAsync(TECHNICIAN_REFERRAL_CLAIM_STORAGE_KEY) || '').trim();
+        if (/^[A-Za-z0-9_-]{40,64}$/.test(saved)) token = saved;
+      } catch (_) {}
+      if (!token) {
+        try {
+          const clipboard = String(await Clipboard.getStringAsync() || '').trim();
+          const match = clipboard.match(/^HAMZAWY_FANNI_CLAIM:([A-Za-z0-9_-]{40,64})$/);
+          if (match) token = match[1];
+        } catch (_) {}
+      }
+      if (token) {
+        referralClaimTokenRef.current = token;
+        try { await SecureStore.setItemAsync(TECHNICIAN_REFERRAL_CLAIM_STORAGE_KEY, token); } catch (_) {}
+        appState.setForm(current => current.referralClaimToken
+          ? current
+          : { ...current, referralClaimToken: token, referralCode: '' });
+      }
+      return token;
+    })().finally(() => { referralClaimCapturePromiseRef.current = null; });
+    return referralClaimCapturePromiseRef.current;
+  }, [appState.setForm]);
   const handleTechnicianAppLink = useCallback((url) => {
     if (!url) return;
     try {
@@ -57,14 +89,21 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
       if (action === 'topup') pendingAppActionRef.current = { action, started: false };
       else if (action === 'register') {
         const claimToken = String(params.claim || '').trim();
-        if (/^[A-Za-z0-9_-]{40,64}$/.test(claimToken)) pendingAppActionRef.current = { action, claimToken, started: false };
+        if (/^[A-Za-z0-9_-]{40,64}$/.test(claimToken)) {
+          referralClaimTokenRef.current = claimToken;
+          void SecureStore.setItemAsync(TECHNICIAN_REFERRAL_CLAIM_STORAGE_KEY, claimToken).catch(() => {});
+          appState.setForm(current => current.referralClaimToken
+            ? current
+            : { ...current, referralClaimToken: claimToken, referralCode: '' });
+          pendingAppActionRef.current = { action, claimToken, started: false };
+        }
       }
       else if (action === 'offer') {
         const sn = String(params.sn || '').trim().toUpperCase();
         if (sn) pendingAppActionRef.current = { action, sn, started: false };
       }
     } catch (_) {}
-  }, []);
+  }, [appState.setForm]);
 
   useEffect(() => {
     let mounted = true;
@@ -74,18 +113,12 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
   }, [handleTechnicianAppLink]);
 
   useEffect(() => {
-    if (screen !== 'technicianRegister' || appState.form?.referralClaimToken) return;
-    let mounted = true;
-    Clipboard.getStringAsync().then(value => {
-      const match = String(value || '').trim().match(/^HAMZAWY_FANNI_CLAIM:([A-Za-z0-9_-]{40,64})$/);
-      if (mounted && match) {
-        appState.setForm(current => current.referralClaimToken
-          ? current
-          : { ...current, referralClaimToken: match[1], referralCode: '' });
-      }
-    }).catch(() => {});
-    return () => { mounted = false; };
-  }, [screen, appState.form?.referralClaimToken, appState.setForm]);
+    void captureReferralClaim();
+  }, [captureReferralClaim]);
+
+  useEffect(() => {
+    if (screen === 'technicianRegister' && !appState.form?.referralClaimToken) void captureReferralClaim();
+  }, [screen, appState.form?.referralClaimToken, captureReferralClaim]);
 
   const [identityCardUploads, setIdentityCardUploads] = useState({
     front: { fileId: '', previewUri: '', uploading: false, status: '' },
@@ -874,6 +907,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     }
     setLoginLoading(true);
     try {
+      const referralClaimToken = String(form.referralClaimToken || referralClaimTokenRef.current || await captureReferralClaim() || '').trim();
       const result = await api('/fanni/register', { method: 'POST', body: {
         name: form.name.trim(),
         phone: form.phone.trim(),
@@ -886,13 +920,15 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         profilePhotoFileId: identityCardUploads.profile.fileId,
         nationalId,
         referralCode: String(form.referralCode || '').trim(),
-        referralClaimToken: String(form.referralClaimToken || '').trim()
+        referralClaimToken
       } });
-      const consumedClaimToken = String(form.referralClaimToken || '').trim();
+      const consumedClaimToken = referralClaimToken;
       if (consumedClaimToken) {
         try {
           if (await Clipboard.getStringAsync() === 'HAMZAWY_FANNI_CLAIM:' + consumedClaimToken) await Clipboard.setStringAsync('');
         } catch (_) {}
+        referralClaimTokenRef.current = '';
+        try { await SecureStore.deleteItemAsync(TECHNICIAN_REFERRAL_CLAIM_STORAGE_KEY); } catch (_) {}
         updateForm('referralClaimToken', '');
       }
       Alert.alert('تم إرسال التسجيل', result.message || 'حسابك قيد مراجعة الإدارة.');

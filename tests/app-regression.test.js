@@ -1131,7 +1131,25 @@ test('technician referral claims are captured from app deep links or the downloa
   assert.match(screens, /params\.claim/);
   assert.match(screens, /HAMZAWY_FANNI_CLAIM:/);
   assert.match(screens, /Clipboard\.getStringAsync\(\)/);
-  assert.match(screens, /referralClaimToken: String\(form\.referralClaimToken \|\| ''\)\.trim\(\)/);
+  assert.match(screens, /const referralClaimToken = String\(form\.referralClaimToken \|\| referralClaimTokenRef\.current \|\| await captureReferralClaim\(\) \|\| ''\)\.trim\(\)/);
+  assert.match(screens, /^\s*referralClaimToken\s*$/m);
   assert.match(screens, /تم حفظ كود الدعوة تلقائيًا/);
   assert.match(state, /referralClaimToken: ''/);
+});
+
+
+
+test('technician referral claim is persisted on app startup and awaited before the first registration request', () => {
+  const screens = fs.readFileSync(path.join(root, 'src/screens/AppScreens.js'), 'utf8');
+  assert.match(screens, /TECHNICIAN_REFERRAL_CLAIM_STORAGE_KEY/);
+  assert.match(screens, /SecureStore\.getItemAsync\(TECHNICIAN_REFERRAL_CLAIM_STORAGE_KEY\)/);
+  assert.match(screens, /SecureStore\.setItemAsync\(TECHNICIAN_REFERRAL_CLAIM_STORAGE_KEY, token\)/);
+  assert.match(screens, /useEffect\(\(\) => \{\s*void captureReferralClaim\(\);/);
+  const registerStart = screens.indexOf('async function registerTechnician()');
+  const registerEnd = screens.indexOf('async function createOrder()', registerStart);
+  const registration = screens.slice(registerStart, registerEnd);
+  assert.match(registration, /await captureReferralClaim\(\)/);
+  assert.match(registration, /referralClaimToken\s*\n\s*\}\s*\}\);/);
+  assert.ok(registration.indexOf('await captureReferralClaim()') < registration.indexOf("api('/fanni/register'"));
+  assert.match(registration, /SecureStore\.deleteItemAsync\(TECHNICIAN_REFERRAL_CLAIM_STORAGE_KEY\)/);
 });
