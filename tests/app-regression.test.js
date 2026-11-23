@@ -894,8 +894,8 @@ test('client and technician referral cards load server-issued invite links and r
   assert.match(card, /Clipboard\.setStringAsync/);
   assert.match(card, /Share\.share/);
   assert.match(card, /سجّل حسابك الجديد في حمزاوي سات واستمتع بخدماتنا ومتجرنا وأسعاره المميزة/);
-  assert.match(card, /downloadUrl\\.searchParams\\.set\\('ref', referralCode\\)/);
-  assert.match(card, /referralUrl\\.pathname = '\\/client'/);
+  assert.match(card, /downloadUrl\.searchParams\.set\('ref', referralCode\)/);
+  assert.match(card, /referralUrl\.pathname = '\/client'/);
   assert.match(card, /كود الدعوة غير صالح/);
   assert.match(card, /💰 انضم لفريق فنيين حمزاوي سات واكسب 150 جنيه مكافأة بعد إكمال أول 3 طلبات ليك! 🎉 سجّل دلوقتي وابدأ شغلك معانا\./);
   assert.match(card, /invitationMessage \+ '\\n' \+ data\.url/);
