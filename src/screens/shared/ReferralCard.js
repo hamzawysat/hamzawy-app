@@ -45,21 +45,31 @@ export default function ReferralCard({ session, kind, cardRef, expanded = false,
   const share = async () => {
     if (!data?.url) return;
     const invitationMessage = isClient
-      ? [
-          'سجّل حسابك الجديد في حمزاوي سات واستمتع بخدماتنا ومتجرنا وأسعاره المميزة 🛍️',
-          '',
-          '🎁 50 جنيه مكافأة بعد إتمام أول طلب ليك، و50 جنيه إضافية عن كل شخص تدعوه ويسجل ويكمل أول طلب له!',
-          '',
-          '📝 تسجيل عميل جديد:',
-          'https://www.hamzawy-sat.dynv6.net/client',
-          '',
-          '📲 تحميل التطبيق:',
-          'https://www.hamzawy-sat.dynv6.net/download',
-          '',
-          '🔗 رابط دعوتك الخاص:',
-          data.url
-        ].join('\n')
+      ? (() => {
+          let referralUrl;
+          try { referralUrl = new URL(String(data.url)); } catch (_) { return ''; }
+          const referralCode = String(data.code || referralUrl.searchParams.get('ref') || '').trim().toUpperCase();
+          if (!/^C-[A-F0-9]{24}-[A-F0-9]{12}$/.test(referralCode)) return '';
+          referralUrl.pathname = '/client';
+          referralUrl.search = '';
+          referralUrl.searchParams.set('ref', referralCode);
+          const registrationUrl = referralUrl.toString();
+          const downloadUrl = new URL('/download', referralUrl.origin);
+          downloadUrl.searchParams.set('ref', referralCode);
+          return [
+            'سجّل حسابك الجديد في حمزاوي سات واستمتع بخدماتنا ومتجرنا وأسعاره المميزة 🛍️',
+            '',
+            '🎁 50 جنيه مكافأة بعد إتمام أول طلب ليك، و50 جنيه إضافية عن كل شخص تدعوه ويسجل ويكمل أول طلب له!',
+            '',
+            '📝 تسجيل عميل جديد:',
+            registrationUrl,
+            '',
+            '📲 تحميل التطبيق:',
+            downloadUrl.toString()
+          ].join('\n');
+        })()
       : '💰 انضم لفريق فنيين حمزاوي سات واكسب 150 جنيه مكافأة بعد إكمال أول 3 طلبات ليك! 🎉 سجّل دلوقتي وابدأ شغلك معانا.\n' + data.url;
+    if (!invitationMessage) { Alert.alert('تعذر المشاركة', 'كود الدعوة غير صالح. حدّث بيانات الدعوة وحاول مرة أخرى.'); return; }
     try { await Share.share({ message: invitationMessage }); }
     catch (e) { Alert.alert('تعذر المشاركة', e.message || 'حاول مرة أخرى.'); }
   };
