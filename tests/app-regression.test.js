@@ -754,7 +754,7 @@ test('APK workflow builds only the requested Modern ARM64 artifact and runs regr
   assert.ok(workflow.includes('run: npm test'));
   assert.ok(workflow.includes('build-modern:'));
   assert.ok(workflow.includes('reactNativeArchitectures=arm64-v8a'));
-  assert.ok(workflow.includes('path: hamzawy-sat-modern.apk'));
+  assert.ok(workflow.includes('path: HSsat.apk'));
   assert.ok(!workflow.includes('build-lite:'));
   assert.ok(!workflow.includes('armeabi-v7a'));
 });
