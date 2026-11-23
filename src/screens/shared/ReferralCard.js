@@ -58,8 +58,8 @@ export default function ReferralCard({ session, kind, cardRef, expanded = false,
           '',
           '🔗 رابط دعوتك الخاص:',
           data.url
-        ].join('\\n')
-      : '💰 انضم لفريق فنيين حمزاوي سات واكسب 150 جنيه مكافأة بعد إكمال أول 3 طلبات ليك! 🎉 سجّل دلوقتي وابدأ شغلك معانا.\\n' + data.url;
+        ].join('\n')
+      : '💰 انضم لفريق فنيين حمزاوي سات واكسب 150 جنيه مكافأة بعد إكمال أول 3 طلبات ليك! 🎉 سجّل دلوقتي وابدأ شغلك معانا.\n' + data.url;
     try { await Share.share({ message: invitationMessage }); }
     catch (e) { Alert.alert('تعذر المشاركة', e.message || 'حاول مرة أخرى.'); }
   };
