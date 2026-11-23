@@ -69,34 +69,6 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     return () => { mounted = false; subscription.remove(); };
   }, [handleTechnicianAppLink]);
 
-  useEffect(() => {
-    const pending = pendingAppActionRef.current;
-    if (!pending || authRestoring || !session || session.role !== 'fanni') return;
-    if (pending.action === 'topup') {
-      setTechData(current => ({ ...current, tab: 'wallet' }));
-      setScreen('technician');
-      pendingAppActionRef.current = null;
-      return;
-    }
-    if (!pending.started) {
-      pending.started = true;
-      setTechData(current => ({ ...current, tab: 'available', loading: true }));
-      setScreen('technician');
-      return;
-    }
-    if (screen !== 'technician' || techData.loading) return;
-    const order = (Array.isArray(techData.orders) ? techData.orders : []).find(item =>
-      String(item?.sn || item?.orderSn || item?.order?.sn || '').trim().toUpperCase() === pending.sn
-    );
-    pendingAppActionRef.current = null;
-    if (order) {
-      setTechData(current => ({ ...current, tab: 'available' }));
-      setOfferDraft({ order, price: '', message: '' });
-    } else {
-      Alert.alert('الطلب غير متاح', 'تعذر العثور على الطلب المطلوب. افتح الطلبات المتاحة وحاول مرة أخرى.');
-    }
-  }, [authRestoring, session, screen, techData.loading, techData.orders, setScreen, setTechData, setOfferDraft]);
-
   const [identityCardUploads, setIdentityCardUploads] = useState({
     front: { fileId: '', previewUri: '', uploading: false, status: '' },
     back: { fileId: '', previewUri: '', uploading: false, status: '' },
@@ -291,6 +263,34 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
   }
 
   const { categories, setCategories, areas, setAreas, areaTechnicianCounts, setAreaTechnicianCounts, selected, setSelected, servicesLoading, setServicesLoading, servicesError, setServicesError, reloadKey, setReloadKey, session, setSession, authRestoring, setAuthRestoring, username, setUsername, password, setPassword, loginLoading, setLoginLoading, authMode, setAuthMode, form, setForm, clientData, setClientData, techData, setTechData, walletTransferNumbers, setWalletTransferNumbers, assignedDetails, setAssignedDetails, technicianSearch, setTechnicianSearch, technicianServiceFilter, setTechnicianServiceFilter, guidelinesChecked, setGuidelinesChecked, guidelinesReachedEnd, setGuidelinesReachedEnd, guidelinesViewportHeight, setGuidelinesViewportHeight, topup, setTopup, clientTab, setClientTab, clientServiceSearch, setClientServiceSearch, servicePickerOpen, setServicePickerOpen, subservicePickerOpen, setSubservicePickerOpen, ratingPrompt, setRatingPrompt, dismissedRatings, setDismissedRatings, ratingDismissalsLoaded, setRatingDismissalsLoaded, ratingDismissalsLoadedFor, setRatingDismissalsLoadedFor, clientTrackSN, setClientTrackSN, clientTrackedOrder, setClientTrackedOrder, clientTrackError, setClientTrackError, clientTrackLoading, setClientTrackLoading, clientComplaint, setClientComplaint, clientComplaintTrack, setClientComplaintTrack, expandedClientOrders, setExpandedClientOrders, expandedTechnicianOrders, setExpandedTechnicianOrders, notificationsOpen, setNotificationsOpen, offerDraft, setOfferDraft, notifications, setNotifications, orderChats, setOrderChats, chatDrafts, setChatDrafts, priceDrafts, setPriceDrafts, ratingDrafts, setRatingDrafts, ratingSubmitting, setRatingSubmitting, supportCases, setSupportCases, supportCase, setSupportCase, supportDraft, setSupportDraft, supportSubject, setSupportSubject, supportLoading, setSupportLoading, supportError, setSupportError, accountPasswordForm, setAccountPasswordForm, profileEditForm, setProfileEditForm, profileEditOpenCategory, setProfileEditOpenCategory, recoveryForm, setRecoveryForm, registrationNameRef, registrationPhoneRef, registrationPasswordRef, registrationConfirmPasswordRef, clientAreaInputRef, clientAddressInputRef, clientDescriptionInputRef, clientBudgetInputRef, clientServiceDetailYRef, clientFormYRef, clientScrollRef, chatScrollRef, clientChatScrollRefs, clientChatAtBottomRef, ratingSubmittingRef, orderChatsRef, acceptedChatAutoOpenedRef, dismissedRatingsRef, ratingHandledRef, ratingStatusSnapshotRef, services, updateForm } = appState;
+
+  useEffect(() => {
+    const pending = pendingAppActionRef.current;
+    if (!pending || authRestoring || !session || session.role !== 'fanni') return;
+    if (pending.action === 'topup') {
+      setTechData(current => ({ ...current, tab: 'wallet' }));
+      setScreen('technician');
+      pendingAppActionRef.current = null;
+      return;
+    }
+    if (!pending.started) {
+      pending.started = true;
+      setTechData(current => ({ ...current, tab: 'available', loading: true }));
+      setScreen('technician');
+      return;
+    }
+    if (screen !== 'technician' || techData.loading) return;
+    const order = (Array.isArray(techData.orders) ? techData.orders : []).find(item =>
+      String(item?.sn || item?.orderSn || item?.order?.sn || '').trim().toUpperCase() === pending.sn
+    );
+    pendingAppActionRef.current = null;
+    if (order) {
+      setTechData(current => ({ ...current, tab: 'available' }));
+      setOfferDraft({ order, price: '', message: '' });
+    } else {
+      Alert.alert('الطلب غير متاح', 'تعذر العثور على الطلب المطلوب. افتح الطلبات المتاحة وحاول مرة أخرى.');
+    }
+  }, [authRestoring, session, screen, techData.loading, techData.orders, setScreen, setTechData, setOfferDraft]);
   const handlePushNotificationResponse = response => {
     const data = response?.notification?.request?.content?.data || {};
     const type = String(data.type || '');
