@@ -55,6 +55,10 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
       });
       const action = params.action;
       if (action === 'topup') pendingAppActionRef.current = { action, started: false };
+      else if (action === 'register') {
+        const claimToken = String(params.claim || '').trim();
+        if (/^[A-Za-z0-9_-]{40,64}$/.test(claimToken)) pendingAppActionRef.current = { action, claimToken, started: false };
+      }
       else if (action === 'offer') {
         const sn = String(params.sn || '').trim().toUpperCase();
         if (sn) pendingAppActionRef.current = { action, sn, started: false };
@@ -68,6 +72,20 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     const subscription = Linking.addEventListener('url', event => handleTechnicianAppLink(event?.url));
     return () => { mounted = false; subscription.remove(); };
   }, [handleTechnicianAppLink]);
+
+  useEffect(() => {
+    if (screen !== 'technicianRegister' || appState.form?.referralClaimToken) return;
+    let mounted = true;
+    Clipboard.getStringAsync().then(value => {
+      const match = String(value || '').trim().match(/^HAMZAWY_FANNI_CLAIM:([A-Za-z0-9_-]{40,64})$/);
+      if (mounted && match) {
+        appState.setForm(current => current.referralClaimToken
+          ? current
+          : { ...current, referralClaimToken: match[1], referralCode: '' });
+      }
+    }).catch(() => {});
+    return () => { mounted = false; };
+  }, [screen, appState.form?.referralClaimToken, appState.setForm]);
 
   const [identityCardUploads, setIdentityCardUploads] = useState({
     front: { fileId: '', previewUri: '', uploading: false, status: '' },
@@ -263,6 +281,20 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
   }
 
   const { categories, setCategories, areas, setAreas, areaTechnicianCounts, setAreaTechnicianCounts, selected, setSelected, servicesLoading, setServicesLoading, servicesError, setServicesError, reloadKey, setReloadKey, session, setSession, authRestoring, setAuthRestoring, username, setUsername, password, setPassword, loginLoading, setLoginLoading, authMode, setAuthMode, form, setForm, clientData, setClientData, techData, setTechData, walletTransferNumbers, setWalletTransferNumbers, assignedDetails, setAssignedDetails, technicianSearch, setTechnicianSearch, technicianServiceFilter, setTechnicianServiceFilter, guidelinesChecked, setGuidelinesChecked, guidelinesReachedEnd, setGuidelinesReachedEnd, guidelinesViewportHeight, setGuidelinesViewportHeight, topup, setTopup, clientTab, setClientTab, clientServiceSearch, setClientServiceSearch, servicePickerOpen, setServicePickerOpen, subservicePickerOpen, setSubservicePickerOpen, ratingPrompt, setRatingPrompt, dismissedRatings, setDismissedRatings, ratingDismissalsLoaded, setRatingDismissalsLoaded, ratingDismissalsLoadedFor, setRatingDismissalsLoadedFor, clientTrackSN, setClientTrackSN, clientTrackedOrder, setClientTrackedOrder, clientTrackError, setClientTrackError, clientTrackLoading, setClientTrackLoading, clientComplaint, setClientComplaint, clientComplaintTrack, setClientComplaintTrack, expandedClientOrders, setExpandedClientOrders, expandedTechnicianOrders, setExpandedTechnicianOrders, notificationsOpen, setNotificationsOpen, offerDraft, setOfferDraft, notifications, setNotifications, orderChats, setOrderChats, chatDrafts, setChatDrafts, priceDrafts, setPriceDrafts, ratingDrafts, setRatingDrafts, ratingSubmitting, setRatingSubmitting, supportCases, setSupportCases, supportCase, setSupportCase, supportDraft, setSupportDraft, supportSubject, setSupportSubject, supportLoading, setSupportLoading, supportError, setSupportError, accountPasswordForm, setAccountPasswordForm, profileEditForm, setProfileEditForm, profileEditOpenCategory, setProfileEditOpenCategory, recoveryForm, setRecoveryForm, registrationNameRef, registrationPhoneRef, registrationPasswordRef, registrationConfirmPasswordRef, clientAreaInputRef, clientAddressInputRef, clientDescriptionInputRef, clientBudgetInputRef, clientServiceDetailYRef, clientFormYRef, clientScrollRef, chatScrollRef, clientChatScrollRefs, clientChatAtBottomRef, ratingSubmittingRef, orderChatsRef, acceptedChatAutoOpenedRef, dismissedRatingsRef, ratingHandledRef, ratingStatusSnapshotRef, services, updateForm } = appState;
+
+  useEffect(() => {
+    const pending = pendingAppActionRef.current;
+    if (!pending || pending.action !== 'register' || authRestoring || pending.started) return;
+    pending.started = true;
+    pendingAppActionRef.current = null;
+    if (session) {
+      Alert.alert('رابط دعوة فني', 'رابط الدعوة مخصص لإنشاء حساب فني جديد. افتح التسجيل من حساب غير مسجل.');
+      return;
+    }
+    appState.setForm(current => ({ ...current, referralClaimToken: pending.claimToken, referralCode: '' }));
+    appState.setAuthMode('fanni');
+    setScreen('technicianRegister');
+  }, [authRestoring, session, setScreen, appState.setForm, appState.setAuthMode]);
 
   useEffect(() => {
     const pending = pendingAppActionRef.current;
@@ -853,8 +885,16 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         identityCardBackFileId: identityCardUploads.back.fileId,
         profilePhotoFileId: identityCardUploads.profile.fileId,
         nationalId,
-        referralCode: String(form.referralCode || '').trim()
+        referralCode: String(form.referralCode || '').trim(),
+        referralClaimToken: String(form.referralClaimToken || '').trim()
       } });
+      const consumedClaimToken = String(form.referralClaimToken || '').trim();
+      if (consumedClaimToken) {
+        try {
+          if (await Clipboard.getStringAsync() === 'HAMZAWY_FANNI_CLAIM:' + consumedClaimToken) await Clipboard.setStringAsync('');
+        } catch (_) {}
+        updateForm('referralClaimToken', '');
+      }
       Alert.alert('تم إرسال التسجيل', result.message || 'حسابك قيد مراجعة الإدارة.');
       setIdentityCardUploads({
         front: { fileId: '', previewUri: '', uploading: false, status: '' },
@@ -1767,7 +1807,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
       <Field label="رقم الهاتف" value={form.phone} onChangeText={v => updateForm('phone', v)} keyboardType="phone-pad"
         inputRef={registrationPhoneRef} returnKeyType="next" returnKeyLabel="التالي"
         onSubmitEditing={() => registrationPasswordRef.current?.focus()} blurOnSubmit={false} />
-      <Field label="كود الدعوة (اختياري)" value={form.referralCode || ''} onChangeText={v => updateForm('referralCode', v.trim().slice(0, 50))} autoCapitalize="characters" placeholder="اكتب كود الدعوة لو معاك" />
+      {(!isClient && form.referralClaimToken) ? <Text style={[styles.detail, { color: '#166534', fontWeight: '900' }]}>✓ تم حفظ كود الدعوة تلقائيًا، وسيتم ربطه بصاحب الدعوة عند إرسال التسجيل.</Text> : <Field label="كود الدعوة (اختياري)" value={form.referralCode || ''} onChangeText={v => updateForm('referralCode', v.trim().slice(0, 50))} autoCapitalize="characters" placeholder="اكتب كود الدعوة لو معاك" />}
       <Field label="كلمة السر" value={form.password} onChangeText={v => updateForm('password', v)} secureTextEntry
         inputRef={registrationPasswordRef} returnKeyType="next" returnKeyLabel="التالي"
         onSubmitEditing={() => registrationConfirmPasswordRef.current?.focus()} blurOnSubmit={false} />

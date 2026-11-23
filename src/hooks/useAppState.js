@@ -14,7 +14,7 @@ export function useAppState() {
   const [password, setPassword] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
   const [authMode, setAuthMode] = useState('fanni');
-  const [form, setForm] = useState({ name: '', phone: '', email: '', password: '', confirmPassword: '', referralCode: '', nationalId: '', service: '', area: '', areas: [], address: '', description: '', voiceRecordingData: '', budget: '', specialties: [] });
+  const [form, setForm] = useState({ name: '', phone: '', email: '', password: '', confirmPassword: '', referralCode: '', referralClaimToken: '', nationalId: '', service: '', area: '', areas: [], address: '', description: '', voiceRecordingData: '', budget: '', specialties: [] });
   const registrationNameRef = useRef(null);
   const registrationPhoneRef = useRef(null);
   const registrationPasswordRef = useRef(null);

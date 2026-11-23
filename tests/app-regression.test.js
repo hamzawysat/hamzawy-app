@@ -1122,3 +1122,16 @@ test('technician identity resubmission uses approved API pickers instead of free
   assert.match(screens, /filter\(value => approvedAreas\.has\(value\)\)/);
   assert.doesNotMatch(technician, /افصل بين الاختيارات بعلامة/);
 });
+
+
+test('technician referral claims are captured from app deep links or the download clipboard before registration', () => {
+  const screens = fs.readFileSync(path.join(root, 'src/screens/AppScreens.js'), 'utf8');
+  const state = fs.readFileSync(path.join(root, 'src/hooks/useAppState.js'), 'utf8');
+  assert.match(screens, /action === 'register'/);
+  assert.match(screens, /params\.claim/);
+  assert.match(screens, /HAMZAWY_FANNI_CLAIM:/);
+  assert.match(screens, /Clipboard\.getStringAsync\(\)/);
+  assert.match(screens, /referralClaimToken: String\(form\.referralClaimToken \|\| ''\)\.trim\(\)/);
+  assert.match(screens, /تم حفظ كود الدعوة تلقائيًا/);
+  assert.match(state, /referralClaimToken: ''/);
+});
