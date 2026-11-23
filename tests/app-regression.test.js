@@ -898,7 +898,7 @@ test('client and technician referral cards load server-issued invite links and r
   assert.match(card, /referralUrl\.pathname = '\/client'/);
   assert.match(card, /كود الدعوة غير صالح/);
   assert.match(card, /💰 انضم لفريق فنيين حمزاوي سات واكسب 150 جنيه مكافأة بعد إكمال أول 3 طلبات ليك! 🎉 سجّل دلوقتي وابدأ شغلك معانا\./);
-  assert.match(card, /data\\.url/);
+  assert.match(card, /data\.url/);
   assert.match(card, /عن كل فني جديد يسجل من رابط دعوتك ويكمل 3 طلبات، تحصل أنت وهو على 150 جنيهًا مكافأة/);
   assert.match(card, /كل فني جديد يسجل من رابطك ويكمل 3 طلبات يمنحك ويمنحه 150 جنيهًا مكافأة/);
   assert.match(client, /ادعُ صديقك واربح 50 جنيه/);
