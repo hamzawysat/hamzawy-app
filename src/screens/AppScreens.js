@@ -46,12 +46,17 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
   const handleTechnicianAppLink = useCallback((url) => {
     if (!url) return;
     try {
-      const parsed = new URL(url);
-      if (parsed.protocol !== 'hamzawy:' || parsed.hostname !== 'technician') return;
-      const action = parsed.searchParams.get('action');
+      const match = String(url).match(/^hamzawy:\/\/technician\?([^#]*)/i);
+      if (!match) return;
+      const params = {};
+      match[1].split('&').forEach(pair => {
+        const [key, value = ''] = pair.split('=');
+        params[decodeURIComponent(key || '')] = decodeURIComponent(value.replace(/\+/g, ' '));
+      });
+      const action = params.action;
       if (action === 'topup') pendingAppActionRef.current = { action, started: false };
       else if (action === 'offer') {
-        const sn = String(parsed.searchParams.get('sn') || '').trim().toUpperCase();
+        const sn = String(params.sn || '').trim().toUpperCase();
         if (sn) pendingAppActionRef.current = { action, sn, started: false };
       }
     } catch (_) {}
