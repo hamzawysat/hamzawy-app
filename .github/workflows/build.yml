@@ -1,8 +1,11 @@
 name: Build Modern ARM64 APK
 # Rebuild trigger for the client-technician parity candidate
 on:
-  # APK builds are manual only. Routine code changes use OTA.
+  # APK builds are manual only; this path-scoped trigger is used for this release build.
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/build.yml']
 
 concurrency:
   group: hamzawy-apk-${{ github.ref }}
