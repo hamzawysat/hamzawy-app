@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing } from 'react-native';
 import {
   View, Text, Image, FlatList, TouchableOpacity, ActivityIndicator, ScrollView,
@@ -42,6 +42,61 @@ function normalizePhoneDigits(value) {
 function AppScreens({ onScreenChange, onAuthRestoringChange }) {
   const { screen, setScreenState, screenHistoryRef, screenRef, setScreen } = useScreenNavigation();
   const appState = useAppState();
+  const pendingAppActionRef = useRef(null);
+  const handleTechnicianAppLink = useCallback((url) => {
+    if (!url) return;
+    try {
+      const match = String(url).match(/^hamzawy:\/\/technician\?([^#]*)/i);
+      if (!match) return;
+      const params = {};
+      match[1].split('&').forEach(pair => {
+        const [key, value = ''] = pair.split('=');
+        params[decodeURIComponent(key || '')] = decodeURIComponent(value.replace(/\+/g, ' '));
+      });
+      const action = params.action;
+      if (action === 'topup') pendingAppActionRef.current = { action, started: false };
+      else if (action === 'offer') {
+        const sn = String(params.sn || '').trim().toUpperCase();
+        if (sn) pendingAppActionRef.current = { action, sn, started: false };
+      }
+    } catch (_) {}
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    Linking.getInitialURL().then(url => { if (mounted) handleTechnicianAppLink(url); }).catch(() => {});
+    const subscription = Linking.addEventListener('url', event => handleTechnicianAppLink(event?.url));
+    return () => { mounted = false; subscription.remove(); };
+  }, [handleTechnicianAppLink]);
+
+  useEffect(() => {
+    const pending = pendingAppActionRef.current;
+    if (!pending || authRestoring || !session || session.role !== 'fanni') return;
+    if (pending.action === 'topup') {
+      setTechData(current => ({ ...current, tab: 'wallet' }));
+      setScreen('technician');
+      pendingAppActionRef.current = null;
+      return;
+    }
+    if (!pending.started) {
+      pending.started = true;
+      setTechData(current => ({ ...current, tab: 'available', loading: true }));
+      setScreen('technician');
+      return;
+    }
+    if (screen !== 'technician' || techData.loading) return;
+    const order = (Array.isArray(techData.orders) ? techData.orders : []).find(item =>
+      String(item?.sn || item?.orderSn || item?.order?.sn || '').trim().toUpperCase() === pending.sn
+    );
+    pendingAppActionRef.current = null;
+    if (order) {
+      setTechData(current => ({ ...current, tab: 'available' }));
+      setOfferDraft({ order, price: '', message: '' });
+    } else {
+      Alert.alert('الطلب غير متاح', 'تعذر العثور على الطلب المطلوب. افتح الطلبات المتاحة وحاول مرة أخرى.');
+    }
+  }, [authRestoring, session, screen, techData.loading, techData.orders, setScreen, setTechData, setOfferDraft]);
+
   const [identityCardUploads, setIdentityCardUploads] = useState({
     front: { fileId: '', previewUri: '', uploading: false, status: '' },
     back: { fileId: '', previewUri: '', uploading: false, status: '' },
