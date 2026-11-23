@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing } from 'react-native';
 import {
-  View, Text, Image, FlatList, TouchableOpacity, ActivityIndicator, ScrollView,
+  View, Text, Image, FlatList, TouchableOpacity, ActivityIndicator, ScrollView, AppState,
   TextInput, StyleSheet, KeyboardAvoidingView, Platform, Alert, BackHandler, Linking, Modal
 } from 'react-native';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
@@ -61,16 +61,23 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         if (/^[A-Za-z0-9_-]{40,64}$/.test(saved)) token = saved;
       } catch (_) {}
       if (!token) {
-        try {
-          const clipboard = String(await Clipboard.getStringAsync() || '').trim();
-          const match = clipboard.match(/^HAMZAWY_FANNI_CLAIM:([A-Za-z0-9_-]{40,64})$/);
-          if (match) token = match[1];
-        } catch (_) {}
+        // Android may launch the app before the browser finishes writing the clipboard.
+        // Retry briefly so the registration screen is ready without requiring Back.
+        for (let attempt = 0; attempt < 8 && !token; attempt += 1) {
+          try {
+            const clipboard = String(await Clipboard.getStringAsync() || '').trim();
+            const match = clipboard.match(/^HAMZAWY_FANNI_CLAIM:([A-Za-z0-9_-]{40,64})$/);
+            if (match) token = match[1];
+          } catch (_) {}
+          if (!token && attempt < 7) await new Promise(resolve => setTimeout(resolve, 250));
+        }
       }
       if (token) {
         referralClaimTokenRef.current = token;
+        clientReferralCodeRef.current = '';
         try { await SecureStore.setItemAsync(TECHNICIAN_REFERRAL_CLAIM_STORAGE_KEY, token); } catch (_) {}
-        appState.setForm(current => current.referralClaimToken
+        try { await SecureStore.deleteItemAsync(CLIENT_REFERRAL_CODE_STORAGE_KEY); } catch (_) {}
+        appState.setForm(current => current.referralClaimToken === token && !current.referralCode
           ? current
           : { ...current, referralClaimToken: token, referralCode: '' });
       }
@@ -90,23 +97,29 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         if (isClientCode(saved)) code = saved;
       } catch (_) {}
       if (!code) {
-        try {
-          const clipboard = String(await Clipboard.getStringAsync() || '').trim();
-          const marker = clipboard.match(/^HAMZAWY_CLIENT_REFERRAL:(C-[A-F0-9]{24}-[A-F0-9]{12})$/i);
-          if (marker) code = marker[1].toUpperCase();
-          else if (isClientCode(clipboard)) code = clipboard.toUpperCase();
-          else {
-            const referral = clipboard.match(/[?&]ref=(C-[A-F0-9]{24}-[A-F0-9]{12})(?:&|$)/i);
-            if (referral) code = referral[1].toUpperCase();
-          }
-        } catch (_) {}
+        // Wait for the browser/download handoff to finish writing the client invite.
+        for (let attempt = 0; attempt < 8 && !code; attempt += 1) {
+          try {
+            const clipboard = String(await Clipboard.getStringAsync() || '').trim();
+            const marker = clipboard.match(/^HAMZAWY_CLIENT_REFERRAL:(C-[A-F0-9]{24}-[A-F0-9]{12})$/i);
+            if (marker) code = marker[1].toUpperCase();
+            else if (isClientCode(clipboard)) code = clipboard.toUpperCase();
+            else {
+              const referral = clipboard.match(/[?&]ref=(C-[A-F0-9]{24}-[A-F0-9]{12})(?:&|$)/i);
+              if (referral) code = referral[1].toUpperCase();
+            }
+          } catch (_) {}
+          if (!code && attempt < 7) await new Promise(resolve => setTimeout(resolve, 250));
+        }
       }
       if (code) {
         clientReferralCodeRef.current = code;
+        referralClaimTokenRef.current = '';
         try { await SecureStore.setItemAsync(CLIENT_REFERRAL_CODE_STORAGE_KEY, code); } catch (_) {}
-        appState.setForm(current => current.referralCode
+        try { await SecureStore.deleteItemAsync(TECHNICIAN_REFERRAL_CLAIM_STORAGE_KEY); } catch (_) {}
+        appState.setForm(current => current.referralCode === code && !current.referralClaimToken
           ? current
-          : { ...current, referralCode: code });
+          : { ...current, referralCode: code, referralClaimToken: '' });
       }
       return code;
     })().finally(() => { clientReferralCapturePromiseRef.current = null; });
@@ -163,8 +176,31 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
   }, [screen, appState.form?.referralCode, captureClientReferralCode]);
 
   useEffect(() => {
-    if (screen === 'technicianRegister' && !appState.form?.referralClaimToken) void captureReferralClaim();
-  }, [screen, appState.form?.referralClaimToken, captureReferralClaim]);
+    if (screen === 'technicianRegister') {
+      appState.setForm(current => current.referralCode
+        ? { ...current, referralCode: '' }
+        : current);
+      if (!appState.form?.referralClaimToken) void captureReferralClaim();
+    }
+  }, [screen, appState.form?.referralClaimToken, captureReferralClaim, appState.setForm]);
+
+  useEffect(() => {
+    if (screen === 'clientRegister') {
+      appState.setForm(current => current.referralClaimToken
+        ? { ...current, referralClaimToken: '' }
+        : current);
+      if (!appState.form?.referralCode) void captureClientReferralCode();
+    }
+  }, [screen, appState.form?.referralCode, captureClientReferralCode, appState.setForm]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextState => {
+      if (nextState !== 'active') return;
+      if (screenRef.current === 'clientRegister') void captureClientReferralCode();
+      else if (screenRef.current === 'technicianRegister') void captureReferralClaim();
+    });
+    return () => subscription.remove();
+  }, [captureClientReferralCode, captureReferralClaim]);
 
   const [identityCardUploads, setIdentityCardUploads] = useState({
     front: { fileId: '', previewUri: '', uploading: false, status: '' },
@@ -914,7 +950,8 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     setLoginLoading(true);
     try {
       const capturedReferralCode = await captureClientReferralCode();
-      const referralCode = String(capturedReferralCode || clientReferralCodeRef.current || form.referralCode || '').trim();
+      const referralCandidate = String(capturedReferralCode || clientReferralCodeRef.current || form.referralCode || '').trim();
+      const referralCode = /^C-[A-F0-9]{24}-[A-F0-9]{12}$/i.test(referralCandidate) ? referralCandidate.toUpperCase() : '';
       const result = await api('/client/register', { method: 'POST', body: { name: form.name.trim(), phone: form.phone.trim(), password: form.password, confirmPassword: form.confirmPassword, referralCode } });
       if (!result.token || !result.client) throw new Error('تم التسجيل لكن استجابة الخادم غير مكتملة.');
       if (referralCode && /^C-[A-F0-9]{24}-[A-F0-9]{12}$/i.test(referralCode)) {
@@ -961,6 +998,8 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     setLoginLoading(true);
     try {
       const referralClaimToken = String(form.referralClaimToken || referralClaimTokenRef.current || await captureReferralClaim() || '').trim();
+      const referralCandidate = String(form.referralCode || '').trim();
+      const referralCode = /^T-[A-F0-9]{24}-[A-F0-9]{12}$/i.test(referralCandidate) ? referralCandidate.toUpperCase() : '';
       const result = await api('/fanni/register', { method: 'POST', body: {
         name: form.name.trim(),
         phone: form.phone.trim(),
@@ -972,7 +1011,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         identityCardBackFileId: identityCardUploads.back.fileId,
         profilePhotoFileId: identityCardUploads.profile.fileId,
         nationalId,
-        referralCode: String(form.referralCode || '').trim(),
+        referralCode,
         referralClaimToken
       } });
       const consumedClaimToken = referralClaimToken;
@@ -1896,7 +1935,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
       <Field label="رقم الهاتف" value={form.phone} onChangeText={v => updateForm('phone', v)} keyboardType="phone-pad"
         inputRef={registrationPhoneRef} returnKeyType="next" returnKeyLabel="التالي"
         onSubmitEditing={() => registrationPasswordRef.current?.focus()} blurOnSubmit={false} />
-      {(!isClient && form.referralClaimToken) ? <Text style={[styles.detail, { color: '#166534', fontWeight: '900' }]}>✓ تم حفظ كود الدعوة تلقائيًا، وسيتم ربطه بصاحب الدعوة عند إرسال التسجيل.</Text> : <Field label="كود الدعوة (اختياري)" value={form.referralCode || ''} onChangeText={v => updateForm('referralCode', v.trim().slice(0, 50))} autoCapitalize="characters" placeholder="اكتب كود الدعوة لو معاك" />}
+      {(!isClient && form.referralClaimToken) ? <Text style={[styles.detail, { color: '#166534', fontWeight: '900' }]}>✓ تم حفظ كود الدعوة تلقائيًا، وسيتم ربطه بصاحب الدعوة عند إرسال التسجيل.</Text> : (isClient || /^T-[A-F0-9]{24}-[A-F0-9]{12}$/i.test(String(form.referralCode || '').trim())) ? <Field label="كود الدعوة (اختياري)" value={form.referralCode || ''} onChangeText={v => updateForm('referralCode', v.trim().slice(0, 50))} autoCapitalize="characters" placeholder="اكتب كود الدعوة لو معاك" /> : null}
       <Field label="كلمة السر" value={form.password} onChangeText={v => updateForm('password', v)} secureTextEntry
         inputRef={registrationPasswordRef} returnKeyType="next" returnKeyLabel="التالي"
         onSubmitEditing={() => registrationConfirmPasswordRef.current?.focus()} blurOnSubmit={false} />
