@@ -1322,8 +1322,8 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     const sn = getOrderSN(order), message = String(quickReply || chatDrafts[getOrderSN(order)] || '').trim();
     const offerId = orderChats[getOrderSN(order)]?.targetOfferId || order?._id || order?.offerId || order?.id;
     if (!sn || !message) { Alert.alert('رسالة فارغة', 'اكتب الرسالة أولًا.'); return; }
-    if (session?.role === 'fanni' && order?.accepted !== true && !['نعم', 'لا', 'حسب الاتفاق'].includes(message)) {
-      Alert.alert('الرد قبل قبول العرض', 'قبل اختيارك من العميل، الردود المتاحة هي: نعم، لا، حسب الاتفاق.');
+    if (session?.role === 'fanni' && order?.accepted !== true && !['نعم', 'لا', 'حسب الاتفاق', 'النهاردة بإذن الله', 'بكرة بإذن الله', 'دلوقتي لو حبيت'].includes(message)) {
+      Alert.alert('الرد قبل قبول العرض', 'قبل اختيارك من العميل، الردود المتاحة هي: نعم، لا، حسب الاتفاق، النهاردة بإذن الله، بكرة بإذن الله، دلوقتي لو حبيت.');
       return;
     }
     try {
@@ -2038,7 +2038,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
           >
             <Text style={styles.detail}>١. التزم بسعر العرض الذي وافق عليه العميل. أي زيادة تحتاج موافقة صريحة مسجلة داخل المنصة قبل التنفيذ.</Text>
             <Text style={styles.detail}>٢. تعامل باحترام وصدق، دون ضغط أو تهديد أو تضليل.</Text>
-            <Text style={styles.detail}>٣. قبل قبول العرض، الردود المسموحة «نعم»، «لا»، «حسب الاتفاق». ممنوع تبادل بيانات الاتصال أو التحايل على المنصة قبل القبول.</Text>
+            <Text style={styles.detail}>٣. قبل قبول العرض، الردود المسموحة «نعم»، «لا»، «حسب الاتفاق»، «النهاردة بإذن الله»، «بكرة بإذن الله»، «دلوقتي لو حبيت». ممنوع تبادل بيانات الاتصال أو التحايل على المنصة قبل القبول.</Text>
             <Text style={styles.detail}>٤. لا تضغط إنهاء المهمة إلا بعد إنجازها فعلًا.</Text>
             <Text style={styles.detail}>٥. احمِ بيانات العميل ولا تستخدمها خارج الطلب.</Text>
             <Text style={styles.detail}>٦. يحق للطرفين التقييم بعد الإكمال؛ ممنوع الإكراه على تقييم إيجابي أو التلاعب بالتقييمات.</Text>
