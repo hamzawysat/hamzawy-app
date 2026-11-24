@@ -1353,19 +1353,41 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     } catch (err) { Alert.alert('تعذر تعديل السعر', err.message || 'حاول مرة أخرى.'); }
   }
 
+  async function submitOrderPriceDecision(order, sn, id, approved, paymentMethod) {
+    try {
+      const result = await api(`/orders/${encodeURIComponent(sn)}/price-change/${encodeURIComponent(id)}/decision`, {
+        method: 'POST',
+        token: orderToken('client'),
+        body: { approved, ...(paymentMethod ? { paymentMethod } : {}) }
+      });
+      Alert.alert('تم تسجيل القرار', result.message || (approved ? 'تمت الموافقة.' : 'تم رفض طلب الزيادة.'));
+      await refreshOrderChat(order, 'client');
+      setReloadKey(v => v + 1);
+      await refreshVisibleData();
+    } catch (err) {
+      if (approved && paymentMethod === 'wallet' && err.status === 409 && err.data?.code === 'CLIENT_WALLET_INSUFFICIENT_FOR_PRICE_INCREASE') {
+        const amount = Number(err.data?.required || 0);
+        Alert.alert(
+          'محفظتك غير كافية لطلب الزيادة',
+          'مبلغ الزيادة ' + amount + ' جنيه. هل توافق على دفع مبلغ الزيادة نقدًا للفني بعد استلام الخدمة؟',
+          [
+            { text: 'رجوع', style: 'cancel' },
+            { text: 'لا، ارفض الزيادة', style: 'destructive', onPress: () => submitOrderPriceDecision(order, sn, id, false) },
+            { text: 'نعم، الدفع كاش', onPress: () => submitOrderPriceDecision(order, sn, id, true, 'cash') }
+          ]
+        );
+        return;
+      }
+      Alert.alert('تعذر تسجيل القرار', err.message || 'حاول مرة أخرى.');
+    }
+  }
+
   async function decideOrderPrice(order, request, approved) {
     const sn = getOrderSN(order), id = request?._id || request?.id;
     if (!sn || !id) { Alert.alert('تعذر تنفيذ القرار', 'بيانات طلب تعديل السعر غير مكتملة.'); return; }
     Alert.alert(approved ? 'الموافقة على تعديل السعر' : 'رفض تعديل السعر',
       approved ? `هل توافق على تغيير السعر إلى ${request.newPrice} جنيه؟` : 'هل تريد رفض طلب تعديل السعر؟',
-      [{ text: 'رجوع', style: 'cancel' }, { text: approved ? 'موافقة' : 'رفض', onPress: async () => {
-        try {
-          const result = await api(`/orders/${encodeURIComponent(sn)}/price-change/${encodeURIComponent(id)}/decision`, { method: 'POST', token: orderToken('client'), body: { approved } });
-          Alert.alert('تم تسجيل القرار', result.message || (approved ? 'تمت الموافقة.' : 'تم رفض الطلب.'));
-          await refreshOrderChat(order, 'client');
-          setReloadKey(v => v + 1);
-        } catch (err) { Alert.alert('تعذر تسجيل القرار', err.message || 'حاول مرة أخرى.'); }
-      }}]);
+      [{ text: 'رجوع', style: 'cancel' }, { text: approved ? 'موافقة' : 'رفض', onPress: () => submitOrderPriceDecision(order, sn, id, approved, approved ? 'wallet' : undefined) }]);
   }
 
   useEffect(() => {
