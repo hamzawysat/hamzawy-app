@@ -124,6 +124,7 @@ test('client can confirm service receipt and sees the fixed 14-day warranty wind
   assert.match(screen, /clientConfirmedAt/);
   assert.match(screen, /warrantyExpiresAt/);
   assert.match(screen, /completionDeclaredAt/);
+  assert.ok(screen.includes("order.status === 'بانتظار تأكيد العميل'"), 'client confirmation action must appear only for the pending-confirmation state');
 });
 
 test('technician completion remains an active job until the customer confirms it', () => {
