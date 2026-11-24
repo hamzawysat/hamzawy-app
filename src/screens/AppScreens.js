@@ -1366,7 +1366,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
       await refreshVisibleData();
     } catch (err) {
       if (approved && paymentMethod === 'wallet' && err.status === 409 && err.data?.code === 'CLIENT_WALLET_INSUFFICIENT_FOR_PRICE_INCREASE') {
-        const amount = Number(err.data?.required || (Number(request?.newPrice || 0) - Number(request?.oldPrice || 0)));
+        const amount = Number(err.data?.required || 0);
         Alert.alert(
           'محفظتك غير كافية لطلب الزيادة',
           'مبلغ الزيادة ' + amount + ' جنيه. هل توافق على دفع مبلغ الزيادة نقدًا للفني بعد استلام الخدمة؟',
