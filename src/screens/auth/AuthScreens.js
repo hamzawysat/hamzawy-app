@@ -5,7 +5,7 @@ import { styles } from '../../theme/styles';
 import { Button, Field } from '../../components/FormControls';
 export function LoginScreen({ authMode, username, setUsername, password, setPassword, handleLogin, loginLoading, openPasswordRecovery, setScreen }) {
   return <SafeAreaView style={styles.loginSafe}>
-    <KeyboardAvoidingView style={styles.loginPage} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={styles.loginPage} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}><ScrollView contentContainerStyle={styles.loginScrollContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
       <TouchableOpacity accessibilityRole="button" onPress={() => setScreen('home')} style={styles.loginBackButton}>
         <Text style={styles.loginBackText}>‹ رجوع</Text>
       </TouchableOpacity>
@@ -38,7 +38,7 @@ export function LoginScreen({ authMode, username, setUsername, password, setPass
       </View>
       <Text style={styles.loginSecurityNote}>بياناتك وحسابك في أمان</Text>
       </View>
-    </KeyboardAvoidingView>
+    </ScrollView></KeyboardAvoidingView>
   </SafeAreaView>;
 }
 

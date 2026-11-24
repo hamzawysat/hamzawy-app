@@ -66,6 +66,7 @@ export const styles = StyleSheet.create({
   // LOGIN PREMIUM
   loginSafe: { flex: 1, backgroundColor: PAGE_COLORS.login.background },
   loginPage: { flexGrow: 1, paddingHorizontal: 20, paddingTop: 14, paddingBottom: 28, justifyContent: 'center', gap: 12, backgroundColor: '#F2F5FB' },
+  loginScrollContent: { flexGrow: 1, paddingHorizontal: 20, paddingTop: 14, paddingBottom: 28, justifyContent: 'center', gap: 12, backgroundColor: '#F2F5FB' },
   loginBackButton: { alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 7, borderRadius: 10, backgroundColor: PAGE_COLORS.login.surface, borderWidth: 1, borderColor: PAGE_COLORS.login.border },
   loginBackText: { color: PAGE_COLORS.login.primary, fontSize: 13, fontWeight: '700' },
   loginLogoCircle: { width: 88, height: 88, borderRadius: 22, alignSelf: 'center', alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.white, borderWidth: 1, borderColor: COLORS.border, marginBottom: 2 },

@@ -16,7 +16,8 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#F4F8FC"
       },
-      "minSdkVersion": 23
+      "minSdkVersion": 23,
+      "softwareKeyboardLayoutMode": "resize"
     },
     "extra": {
       "eas": {
