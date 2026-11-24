@@ -126,6 +126,15 @@ test('client can confirm service receipt and sees the fixed 14-day warranty wind
   assert.match(screen, /completionDeclaredAt/);
 });
 
+test('technician completion remains an active job until the customer confirms it', () => {
+  const screens = fs.readFileSync(path.join(root, 'src/screens/AppScreens.js'), 'utf8');
+  const technician = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianDashboard.js'), 'utf8');
+  assert.ok(screens.includes("tab: 'currentJobs'"));
+  assert.ok(screens.includes("status === 'بانتظار تأكيد العميل'"));
+  assert.ok(technician.includes("'بانتظار تأكيد العميل'"));
+  assert.ok(technician.includes('ستظل المهمة جارية حتى يؤكد العميل'));
+});
+
 test('required runtime packages are declared', () => {
   for (const name of ['expo', 'react', 'react-native', 'expo-notifications', 'expo-secure-store']) {
     assert.ok(packageJson.dependencies[name], 'missing dependency: ' + name);
