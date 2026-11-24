@@ -1175,8 +1175,9 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
       { text: 'رجوع', style: 'cancel' },
       { text: 'إنهاء الخدمة', onPress: async () => {
         try {
-          await api(`/orders/${encodeURIComponent(sn)}/complete`, { method: 'POST', token: session.token, body: {} });
-          setTechData(current => ({ ...current, tab: 'completed' }));
+          const result = await api(`/orders/${encodeURIComponent(sn)}/complete`, { method: 'POST', token: session.token, body: {} });
+          Alert.alert('في انتظار تأكيد العميل', result.message || 'تم تسجيل طلب إنهاء الخدمة، ولن تُغلق المهمة إلا بعد تأكيد العميل.');
+          setTechData(current => ({ ...current, tab: 'currentJobs' }));
           setExpandedTechnicianOrders(current => ({ ...current, [sn]: true }));
           setReloadKey(v => v + 1);
         }
@@ -1214,7 +1215,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     if (!session || screen !== 'technician' || session.role !== 'fanni') return;
     const acceptedJobs = techData.offers.filter(item => {
       const status = String(item.orderStatus || item.status || '').trim();
-      return status === 'تم اختيار فني' || item.accepted === true;
+      return status === 'تم اختيار فني' || status === 'بانتظار تأكيد العميل' || item.accepted === true;
     });
     for (const item of acceptedJobs) {
       const sn = getOrderSN(item);
