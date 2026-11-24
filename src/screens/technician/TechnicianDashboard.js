@@ -90,7 +90,7 @@ export function TechnicianDashboard({ context }) {
     };
     const isAcceptedJob = item => !isRejectedOffer(item) && (item.accepted === true || ['تم اختيار فني', 'جاري التنفيذ', 'قيد التنفيذ'].includes(String(item.orderStatus || item.status || '').trim()));
     const isCompletedJob = item => ['تم الانتهاء', 'مكتمل', 'مكتملة', 'completed', 'finished'].includes(String(item.orderStatus || item.status || '').trim().toLowerCase());
-    const displayedOffers = technicianOffers.filter(item => tab === 'currentJobs' ? isAcceptedJob(item) && !isCompletedJob(item) : tab === 'completed' ? isCompletedJob(item) : !isAcceptedJob(item) && !isCompletedJob(item));
+    const displayedOffers = technicianOffers.filter(item => tab === 'currentJobs' ? isAcceptedJob(item) && !isCompletedJob(item) : tab === 'completed' ? isCompletedJob(item) : !isCompletedJob(item));
     const refreshSpin = useRef(new Animated.Value(0)).current;
   const isRefreshing = Boolean(techData.loading);
   useEffect(() => {
