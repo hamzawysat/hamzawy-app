@@ -1215,7 +1215,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
     if (!session || screen !== 'technician' || session.role !== 'fanni') return;
     const acceptedJobs = techData.offers.filter(item => {
       const status = String(item.orderStatus || item.status || '').trim();
-      return status === 'تم اختيار فني' || item.accepted === true;
+      return status === 'تم اختيار فني' || status === 'بانتظار تأكيد العميل' || item.accepted === true;
     });
     for (const item of acceptedJobs) {
       const sn = getOrderSN(item);
