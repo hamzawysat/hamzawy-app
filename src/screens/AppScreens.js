@@ -1175,8 +1175,9 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
       { text: 'رجوع', style: 'cancel' },
       { text: 'إنهاء الخدمة', onPress: async () => {
         try {
-          await api(`/orders/${encodeURIComponent(sn)}/complete`, { method: 'POST', token: session.token, body: {} });
-          setTechData(current => ({ ...current, tab: 'completed' }));
+          const result = await api(`/orders/${encodeURIComponent(sn)}/complete`, { method: 'POST', token: session.token, body: {} });
+          Alert.alert('في انتظار تأكيد العميل', result.message || 'تم تسجيل طلب إنهاء الخدمة، ولن تُغلق المهمة إلا بعد تأكيد العميل.');
+          setTechData(current => ({ ...current, tab: 'currentJobs' }));
           setExpandedTechnicianOrders(current => ({ ...current, [sn]: true }));
           setReloadKey(v => v + 1);
         }
