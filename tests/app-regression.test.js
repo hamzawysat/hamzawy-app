@@ -182,9 +182,9 @@ test('rating modal and rating submission safely handle missing technician order 
 
 test('brand header displays the brand without any moving shine or shimmer', () => {
   const appEntry = fs.readFileSync(path.join(root, 'App.js'), 'utf8');
-  assert.ok(appEntry.includes('<Text style={styles.brandHeaderTitle}>حمزاوي سات</Text>'), 'Hamzawy Sat brand should remain visible as native text');
+  assert.ok(appEntry.includes('<Text style={styles.brandHeaderTitle}>ساتفيو</Text>'), 'SATVIEW brand should remain visible as native text');
   assert.doesNotMatch(appEntry, /shimmer|LinearGradient|brandHeaderShimmer/, 'the moving shine effect must be completely removed from the header');
-  assert.equal((appEntry.match(/brandHeaderTitle}>حمزاوي سات/g) || []).length, 1, 'header should contain exactly one brand word');
+  assert.equal((appEntry.match(/brandHeaderTitle}>ساتفيو/g) || []).length, 1, 'header should contain exactly one brand word');
 });
 
 test('client and technician account logout buttons appear after account actions and before service history', () => {
@@ -203,13 +203,13 @@ test('startup splash stays visible until saved account restoration finishes', ()
   assert.ok(screens.includes('onAuthRestoringChange?.(authRestoring)'), 'screen should report when saved account restoration completes');
 });
 
-test('Hamzawy Sat splash keeps the brand and service identity with the animated logo', () => {
+test('SATVIEW splash keeps the brand and service identity with the animated logo', () => {
   assert.ok(app.includes("const logoRotation = spin.interpolate({ inputRange: [0, 1], outputRange: ['-18deg', '18deg'] })"), 'logo should interpolate between left and right angles');
   assert.ok(app.includes('<Animated.Image source={require("./assets/LOGO_UPLOAD_HERE/logo.png")} style={[splashStyles.logo, { transform: [{ rotate: logoRotation }] }]} resizeMode="contain" />'), 'the logo image itself should rotate');
   assert.ok(!app.includes('spinningLetter'), 'the separate spinning letter should be removed');
   assert.ok(!app.includes('<Animated.Text'), 'the splash should not animate a separate text letter');
-  assert.ok(app.includes('<Text style={splashStyles.title}>حمزاوي سات</Text>'), 'the main brand word should remain static');
-  assert.ok(app.includes('<Text style={splashStyles.caption}>الدش • كاميرات المراقبة • الشاشات</Text>'), 'splash caption should identify Hamzawy Sat services');
+  assert.ok(app.includes('<Text style={splashStyles.title}>ساتفيو</Text>'), 'the main brand word should remain static');
+  assert.ok(app.includes('<Text style={splashStyles.caption}>الدش • كاميرات المراقبة • الشاشات</Text>'), 'splash caption should identify SATVIEW services');
   assert.ok(app.includes('<Text style={styles.homeTaglinePremium}>كُلُّ خِدْمَةٍ تَبْدَأُ بِخُطْوَةٍ</Text>'), 'home tagline should retain the premium home design');
   assert.ok(!app.includes('صُنّاع — كل خدمة تبدأ بخطوة'), 'login should not receive the splash-only tagline');
   assert.ok(!app.includes('<Text style={styles.subtitle}>كل خدمة تبدأ بخطوة</Text>'), 'technician screen should not receive the splash-only tagline');
@@ -835,7 +835,7 @@ test('client and technician dashboards use the reference home layout without upp
   for (const source of [client, technician]) {
     assert.doesNotMatch(source, /tabRowPremium/);
     assert.doesNotMatch(source, /floatingControls/);
-    assert.match(source, /حمزاوي سات/);
+    assert.match(source, /ساتفيو/);
     assert.match(source, /الإحصائيات/);
     assert.match(source, /إجراءات سريعة/);
     assert.match(source, /paddingBottom:\s*132/);
@@ -903,11 +903,11 @@ test('client and technician referral cards load server-issued invite links and r
   assert.match(card, /QRCode value=\{data\.url\}/);
   assert.match(card, /Clipboard\.setStringAsync/);
   assert.match(card, /Share\.share/);
-  assert.match(card, /سجّل حسابك الجديد في حمزاوي سات واستمتع بخدماتنا ومتجرنا وأسعاره المميزة/);
+  assert.match(card, /سجّل حسابك الجديد في ساتفيو واستمتع بخدماتنا ومتجرنا وأسعاره المميزة/);
   assert.match(card, /downloadUrl\.searchParams\.set\('ref', referralCode\)/);
   assert.match(card, /referralUrl\.pathname = '\/client'/);
   assert.match(card, /كود الدعوة غير صالح/);
-  assert.match(card, /💰 انضم لفريق فنيين حمزاوي سات واكسب 150 جنيه مكافأة بعد إكمال أول 3 طلبات ليك! 🎉 سجّل دلوقتي وابدأ شغلك معانا\./);
+  assert.match(card, /💰 انضم لفريق فنيين ساتفيو واكسب 150 جنيه مكافأة بعد إكمال أول 3 طلبات ليك! 🎉 سجّل دلوقتي وابدأ شغلك معانا\./);
   assert.match(card, /data\.url/);
   assert.match(card, /عن كل فني جديد يسجل من رابط دعوتك ويكمل 3 طلبات، تحصل أنت وهو على 150 جنيهًا مكافأة/);
   assert.match(card, /كل فني جديد يسجل من رابطك ويكمل 3 طلبات يمنحك ويمنحه 150 جنيهًا مكافأة/);
@@ -1053,7 +1053,7 @@ test('public banner omits the redundant site name and referral promos pulse on b
   const referral = fs.readFileSync(path.join(root, 'src/screens/shared/ReferralCard.js'), 'utf8');
   const client = fs.readFileSync(path.join(root, 'src/screens/client/ClientDashboard.js'), 'utf8');
   const technician = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianDashboard.js'), 'utf8');
-  assert.doesNotMatch(banner, /siteName|حمزاوي سات/);
+  assert.doesNotMatch(banner, /siteName|ساتفيو/);
   assert.match(referral, /Animated\.loop\(Animated\.sequence/);
   assert.match(referral, /toValue: 1\.035/);
   assert.match(client, /<ReferralPromo onPress=/);

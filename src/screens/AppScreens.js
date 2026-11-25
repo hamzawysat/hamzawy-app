@@ -640,7 +640,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         if (rootScreen === 'client') setClientTab('home');
         return true;
       }
-      Alert.alert('الخروج من التطبيق؟', 'هل تريد الخروج من تطبيق حمزاوي سات؟', [
+      Alert.alert('الخروج من التطبيق؟', 'هل تريد الخروج من تطبيق ساتفيو؟', [
         { text: 'إلغاء', style: 'cancel' },
         { text: 'خروج', style: 'destructive', onPress: () => BackHandler.exitApp() },
       ]);
@@ -746,7 +746,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
             try {
                 if (Platform.OS === 'android') {
                   await Notifications.setNotificationChannelAsync('hamzawy_official', {
-                    name: 'إشعارات حمزاوي سات',
+                    name: 'إشعارات ساتفيو',
                     importance: Notifications.AndroidImportance.MAX,
                     sound: 'hamzawy_sat_notification_v12_wow_loud.ogg',
                     vibrationPattern: [0, 250, 250, 250],
@@ -772,7 +772,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
                     try {
                       await Notifications.scheduleNotificationAsync({
                         content: {
-                          title: String(item.title || 'إشعار من حمزاوي سات'),
+                          title: String(item.title || 'إشعار من ساتفيو'),
                           body: String(item.message || ''),
                           sound: 'hamzawy_sat_notification_v12_wow_loud.ogg',
                           data: { type: String(item.type || 'general'), link: String(item.link || ''), notificationId },
@@ -2106,7 +2106,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         <View style={styles.homeLogoCirclePremium}>
           <Image source={require('../../assets/LOGO_UPLOAD_HERE/logo.png')} style={styles.homeLogoImage} resizeMode="contain" />
         </View>
-        <Text style={styles.homeBrandTitlePremium}>حمزاوي سات</Text>
+        <Text style={styles.homeBrandTitlePremium}>ساتفيو</Text>
         <Text style={styles.homeTaglinePremium}>كُلُّ خِدْمَةٍ تَبْدَأُ بِخُطْوَةٍ</Text>
         <Text style={styles.homeIntroPremium}>تركيب وصيانة وضبط الدش وكاميرات المراقبة والشاشات، بخطوات بسيطة وخدمة موثوقة.</Text>
       </View>
@@ -2120,7 +2120,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
           <View style={styles.roleCardCopy}><Text style={styles.roleTitlePremium}>الدخول كفني</Text><Text style={styles.roleDescriptionPremium}>استقبل طلبات الدش والكاميرات والشاشات، وقدّم عروضك وتابع شغلك.</Text><View style={[styles.roleActionBadge, {backgroundColor:COLORS.navy}]}><Text style={styles.roleActionBadgeText}>شوف فرص الشغل ←</Text></View></View>
         </TouchableOpacity>
       </View>
-      <View style={styles.homeFooterPremium}><View style={styles.homeFooterDot} /><Text style={styles.homeFooterText}>اختار طريقة الدخول وابدأ مع حمزاوي سات</Text></View>
+      <View style={styles.homeFooterPremium}><View style={styles.homeFooterDot} /><Text style={styles.homeFooterText}>اختار طريقة الدخول وابدأ مع ساتفيو</Text></View>
     </ScrollView>
   </SafeAreaView>;
 }

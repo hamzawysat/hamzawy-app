@@ -43,7 +43,7 @@
       [
         "expo-av",
         {
-          "microphonePermission": "السماح لحمزاوي سات بتسجيل وصف الطلب الصوتي."
+          "microphonePermission": "السماح لساتفيو بتسجيل وصف الطلب الصوتي."
         }
       ],
       "expo-updates",

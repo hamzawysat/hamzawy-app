@@ -75,7 +75,7 @@ export function StoreAdBanner({ role, session, visible = true, onOpenStore }) {
       style={{ marginHorizontal: 12, marginTop: 6, marginBottom: 4, padding: 8, borderRadius: 14, borderWidth: 1, borderColor: '#D8E1FF', backgroundColor: '#EEF2FF', flexDirection: 'row', alignItems: 'center', gap: 8, shadowColor: '#102A9B', shadowOpacity: 0.07, shadowRadius: 9, shadowOffset: { width: 0, height: 3 }, elevation: 2 }}>
       <StoreImage value={item.imageUrl} style={{ width: 46, height: 46, borderRadius: 9 }} />
       <View style={{ flex: 1 }}>
-        <Text style={{ color: '#102A9B', fontSize: 10, fontWeight: '900' }}>إعلان من متجر حمزاوي سات</Text>
+        <Text style={{ color: '#102A9B', fontSize: 10, fontWeight: '900' }}>إعلان من متجر ساتفيو</Text>
         <Text numberOfLines={1} style={{ color: COLORS.text, fontSize: 12, fontWeight: '900', marginTop: 2 }}>{item.name || 'منتج مميز'}</Text>
         <Text style={{ color: '#102A9B', fontSize: 12, fontWeight: '900', marginTop: 3 }}>{money(item.price)}</Text>
       </View>
@@ -348,7 +348,7 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
     <View style={{ width: '100%' }}>
       <View style={{ padding: 14, paddingBottom: 28 }}>
         <View style={{ backgroundColor: '#101F9B', borderRadius: 21, padding: 17, marginBottom: 13, shadowColor: '#07136E', shadowOpacity: 0.15, shadowRadius: 12, elevation: 4 }}>
-          <Text style={{ color: '#FFFFFF', fontSize: 20, fontWeight: '900', textAlign: 'right' }}>متجر حمزاوي سات</Text>
+          <Text style={{ color: '#FFFFFF', fontSize: 20, fontWeight: '900', textAlign: 'right' }}>متجر ساتفيو</Text>
           <Text style={{ color: '#E2E8FF', fontSize: 12, fontWeight: '700', textAlign: 'right', marginTop: 5 }}>منتجات وخدمات مختارة… اطلب بسهولة وتابع مشترياتك</Text>
           <View style={{ alignSelf: 'flex-end', marginTop: 11, backgroundColor: '#FFFFFF', borderRadius: 11, paddingHorizontal: 12, paddingVertical: 7 }}>
             <Text style={{ color: '#101F9B', fontSize: 11, fontWeight: '900' }}>تسوق الآن</Text>

@@ -57,7 +57,7 @@ export default function ReferralCard({ session, kind, cardRef, expanded = false,
           const downloadUrl = new URL('/download', referralUrl.origin);
           downloadUrl.searchParams.set('ref', referralCode);
           return [
-            'سجّل حسابك الجديد في حمزاوي سات واستمتع بخدماتنا ومتجرنا وأسعاره المميزة 🛍️',
+            'سجّل حسابك الجديد في ساتفيو واستمتع بخدماتنا ومتجرنا وأسعاره المميزة 🛍️',
             '',
             '🎁 50 جنيه مكافأة بعد إتمام أول طلب ليك، و50 جنيه إضافية عن كل شخص تدعوه ويسجل ويكمل أول طلب له!',
             '',
@@ -68,7 +68,7 @@ export default function ReferralCard({ session, kind, cardRef, expanded = false,
             downloadUrl.toString()
           ].join('\n');
         })()
-      : '💰 انضم لفريق فنيين حمزاوي سات واكسب 150 جنيه مكافأة بعد إكمال أول 3 طلبات ليك! 🎉 سجّل دلوقتي وابدأ شغلك معانا.\n' + data.url;
+      : '💰 انضم لفريق فنيين ساتفيو واكسب 150 جنيه مكافأة بعد إكمال أول 3 طلبات ليك! 🎉 سجّل دلوقتي وابدأ شغلك معانا.\n' + data.url;
     if (!invitationMessage) { Alert.alert('تعذر المشاركة', 'كود الدعوة غير صالح. حدّث بيانات الدعوة وحاول مرة أخرى.'); return; }
     try { await Share.share({ message: invitationMessage }); }
     catch (e) { Alert.alert('تعذر المشاركة', e.message || 'حاول مرة أخرى.'); }

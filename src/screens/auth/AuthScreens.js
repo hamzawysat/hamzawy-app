@@ -13,14 +13,14 @@ export function LoginScreen({ authMode, username, setUsername, password, setPass
         <View style={styles.loginLogoCircle}>
           <Image source={require('../../../assets/LOGO_UPLOAD_HERE/logo.png')} style={styles.loginLogo} resizeMode="contain" />
         </View>
-        <Text style={styles.loginBrandName}>حمزاوي سات</Text>
+        <Text style={styles.loginBrandName}>ساتفيو</Text>
         <Text style={styles.loginBrandCaption}>خدماتك وشغلك… في مكان واحد</Text>
       </View>
       <View style={styles.loginHeading}>
         <View style={styles.loginRoleBadge}>
           <Text style={styles.loginRoleBadgeText}>{authMode === 'client' ? 'حساب عميل' : 'حساب فني'}</Text>
         </View>
-        <Text style={styles.loginTitle}>{authMode === 'client' ? 'أهلًا بيك في حمزاوي سات' : 'أهلًا بيك يا فني حمزاوي سات'}</Text>
+        <Text style={styles.loginTitle}>{authMode === 'client' ? 'أهلًا بيك في ساتفيو' : 'أهلًا بيك يا فني ساتفيو'}</Text>
         <Text style={styles.loginSubtitle}>{authMode === 'client' ? 'سجّل دخولك وخلّي طلباتك أسهل.' : 'سجّل دخولك وتابع فرص الشغل المتاحة ليك.'}</Text>
       </View>
       <View style={styles.loginFormCard}>

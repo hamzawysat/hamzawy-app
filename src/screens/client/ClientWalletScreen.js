@@ -118,7 +118,7 @@ export default function ClientWalletScreen({ session, onBalanceChange }) {
   return (
     <View style={{ padding: 14, paddingBottom: 30 }}>
       <View style={[styles.dataCard, { backgroundColor: '#101F9B', borderColor: '#101F9B', borderRadius: 23, padding: 19, marginTop: 4, marginBottom: 12, shadowColor: '#07136E', shadowOpacity: 0.2, shadowRadius: 14, elevation: 5 }]}>
-        <Text style={{ color: '#DCE5FF', fontSize: 12, fontWeight: '900', textAlign: 'right' }}>محفظة حمزاوي سات</Text>
+        <Text style={{ color: '#DCE5FF', fontSize: 12, fontWeight: '900', textAlign: 'right' }}>محفظة ساتفيو</Text>
         <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '800', marginTop: 8 }}>رصيد محفظتك</Text>
         <Text style={{ color: '#FFFFFF', fontSize: 28, fontWeight: '900', marginTop: 6 }}>{wallet.balance.toLocaleString('ar-EG')} جنيه</Text>
         <Text style={{ color: '#E5F1FB', fontSize: 11, marginTop: 8, lineHeight: 19 }}>تقدر تدفع قيمة الخدمة من محفظتك بعد تعيين الفني، وتشترك في الباقات وتجددها مباشرة من رصيدك.</Text>
