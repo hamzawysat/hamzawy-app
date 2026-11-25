@@ -104,7 +104,7 @@ function AppContent() {
       <View style={styles.brandHeader}>
         {headerInitial ? <View style={styles.brandHeaderAvatar}><Text style={styles.brandHeaderAvatarStar}>✦</Text><Text style={styles.brandHeaderAvatarText}>{headerInitial}</Text></View> : null}
         <Image source={require("./assets/LOGO_UPLOAD_HERE/logo.png")} style={styles.brandHeaderLogo} resizeMode="contain" />
-        <Text style={styles.brandHeaderTitle}>حمزاوي سات</Text>
+        <Text style={styles.brandHeaderTitle}>ساتفيو</Text>
       </View>
     </SafeAreaView> : null}
     <View style={styles.appScreenArea}><AppScreens onScreenChange={handleScreenChange} onAuthRestoringChange={setAuthRestoring} /></View>
@@ -112,7 +112,7 @@ function AppContent() {
       <View style={splashStyles.logoFrame}>
         <Animated.Image source={require("./assets/LOGO_UPLOAD_HERE/logo.png")} style={[splashStyles.logo, { transform: [{ rotate: logoRotation }] }]} resizeMode="contain" />
       </View>
-      <Text style={splashStyles.title}>حمزاوي سات</Text>
+      <Text style={splashStyles.title}>ساتفيو</Text>
       <Text style={splashStyles.caption}>الدش • كاميرات المراقبة • الشاشات</Text>
       {updateStatus ? <Text style={{ color: '#FFFFFF', marginTop: 8, fontSize: 13, fontWeight: '900' }}>{updateStatus}</Text> : null}
       <View style={splashStyles.loadingTrack}><View style={splashStyles.loadingFill} /></View>

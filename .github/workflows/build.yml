@@ -101,7 +101,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.APP_VERSION }}
-          name: Hamzawy Sat ${{ env.APP_VERSION }} (Build ${{ env.APP_BUILD }})
+          name: SATVIEW ${{ env.APP_VERSION }} (Build ${{ env.APP_BUILD }})
           target_commitish: ${{ github.sha }}
           generate_release_notes: true
           files: HSsat.apk
