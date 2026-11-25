@@ -44,18 +44,15 @@ export function TechnicianDashboard({ context }) {
   const openTechnicianNotification = async item => {
     const id = String(item?._id || item?.id || '');
     if (!id) return;
+    if (!item.replyEnabled) { markNotificationRead(item); return; }
     if (!item.read && !item.readAt) {
       try {
         await api('/notifications/fanni/' + encodeURIComponent(id) + '/read', { method: 'PATCH', token: session?.token });
         setNotifications(current => ({ ...current, items: current.items.map(n => String(n._id || n.id) === id ? { ...n, read: true, readAt: new Date().toISOString() } : n), unread: Math.max(0, Number(current.unread || 0) - 1) }));
       } catch (error) { Alert.alert('الإشعارات', error.message || 'تعذر تحديث الإشعار.'); return; }
     }
-    if (item.replyEnabled) {
-      setActiveReplyNotificationId(id);
-      setNotificationReplyDraft(item.reply?.message || '');
-      return;
-    }
-    markNotificationRead(item);
+    setActiveReplyNotificationId(id);
+    setNotificationReplyDraft(item.reply?.message || '');
   };
   const submitTechnicianNotificationReply = async () => {
     const message = String(notificationReplyDraft || '').trim();
