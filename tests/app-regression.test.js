@@ -182,9 +182,9 @@ test('rating modal and rating submission safely handle missing technician order 
 
 test('brand header displays the brand without any moving shine or shimmer', () => {
   const appEntry = fs.readFileSync(path.join(root, 'App.js'), 'utf8');
-  assert.ok(appEntry.includes('<Text style={styles.brandHeaderTitle}>ساتڤيو</Text>'), 'SATVIEW brand should remain visible as native text');
+  assert.ok(appEntry.includes('<Text style={styles.brandHeaderTitle}>SATVIEW</Text>'), 'SATVIEW brand should remain visible as native text');
   assert.doesNotMatch(appEntry, /shimmer|LinearGradient|brandHeaderShimmer/, 'the moving shine effect must be completely removed from the header');
-  assert.equal((appEntry.match(/brandHeaderTitle}>ساتڤيو/g) || []).length, 1, 'header should contain exactly one brand word');
+  assert.equal((appEntry.match(/brandHeaderTitle}>SATVIEW/g) || []).length, 1, 'header should contain exactly one brand word');
 });
 
 test('client and technician account logout buttons appear after account actions and before service history', () => {
@@ -208,7 +208,7 @@ test('SATVIEW splash keeps the brand and service identity with the animated logo
   assert.ok(app.includes('<Animated.Image source={require("./assets/LOGO_UPLOAD_HERE/logo.png")} style={[splashStyles.logo, { transform: [{ rotate: logoRotation }] }]} resizeMode="contain" />'), 'the logo image itself should rotate');
   assert.ok(!app.includes('spinningLetter'), 'the separate spinning letter should be removed');
   assert.ok(!app.includes('<Animated.Text'), 'the splash should not animate a separate text letter');
-  assert.ok(app.includes('<Text style={splashStyles.title}>ساتڤيو</Text>'), 'the main brand word should remain static');
+  assert.ok(app.includes('<Text style={splashStyles.title}>SATVIEW</Text>'), 'the main brand word should remain static');
   assert.ok(app.includes('<Text style={splashStyles.caption}>الدش • كاميرات المراقبة • الشاشات</Text>'), 'splash caption should identify SATVIEW services');
   assert.ok(app.includes('<Text style={styles.homeTaglinePremium}>كُلُّ خِدْمَةٍ تَبْدَأُ بِخُطْوَةٍ</Text>'), 'home tagline should retain the premium home design');
   assert.ok(!app.includes('صُنّاع — كل خدمة تبدأ بخطوة'), 'login should not receive the splash-only tagline');
