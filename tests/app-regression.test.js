@@ -903,11 +903,15 @@ test('client and technician referral cards load server-issued invite links and r
   assert.match(card, /QRCode value=\{data\.url\}/);
   assert.match(card, /Clipboard\.setStringAsync/);
   assert.match(card, /Share\.share/);
-  assert.match(card, /سجّل حسابك الجديد في ساتڤيو واستمتع بخدماتنا ومتجرنا وأسعاره المميزة/);
+  assert.match(card, /جرب SATVIEW/);
+  assert.match(card, /كاميرات المراقبة/);
+  assert.match(card, /اختار براحتك/);
   assert.match(card, /downloadUrl\.searchParams\.set\('ref', referralCode\)/);
   assert.match(card, /referralUrl\.pathname = '\/client'/);
   assert.match(card, /كود الدعوة غير صالح/);
-  assert.match(card, /💰 انضم لفريق فنيين ساتڤيو واكسب 150 جنيه مكافأة بعد إكمال أول 3 طلبات ليك! 🎉 سجّل دلوقتي وابدأ شغلك معانا\./);
+  assert.match(card, /انت فني دش او كاميرات مراقبة او شاشات/);
+  assert.match(card, /ولو جبت فني صاحبك/);
+  assert.match(card, /تاخد 150 جنيه مكافأة/);
   assert.match(card, /data\.url/);
   assert.match(card, /عن كل فني جديد يسجل من رابط دعوتك ويكمل 3 طلبات، تحصل أنت وهو على 150 جنيهًا مكافأة/);
   assert.match(card, /كل فني جديد يسجل من رابطك ويكمل 3 طلبات يمنحك ويمنحه 150 جنيهًا مكافأة/);
