@@ -700,18 +700,19 @@ test('embedded client account keeps the site name and removes only the account h
   assert.ok(client.includes('مرحباً {session.user?.name||\'بك\'}'));
   assert.ok(client.includes('عميل'), 'client role label should use the approved generic wording');
   assert.ok(!client.includes('عميل صُنّاع'), 'legacy client role label should not remain');
-  assert.ok(client.includes('<PublicContentBanner />'), 'client account should keep the shared public content banner');
+  assert.ok(client.includes('<PublicContentBanner role="client" />'), 'client account should keep the shared public content banner');
 });
 
 test('native client dashboard displays public maintenance notices, announcements and FAQs without the redundant site name', () => {
   const banner = fs.readFileSync(path.join(root, 'src/screens/shared/PublicContentBanner.js'), 'utf8');
   const client = fs.readFileSync(path.join(root, 'src/screens/client/ClientDashboard.js'), 'utf8');
-  assert.ok(client.includes('<PublicContentBanner />'), 'public content banner remains available on client tabs');
+  assert.ok(client.includes('<PublicContentBanner role="client" />'), 'public content banner remains available on client tabs');
   assert.ok(!banner.includes('content.siteName'), 'redundant small site name must not render in the banner');
   assert.ok(banner.includes('const hasVisibleContent = content.maintenance || content.announcement.trim() || content.faqs.length'), 'banner visibility should depend only on actual public content');
-  assert.ok(banner.includes("api('/content')"));
+  assert.ok(banner.includes('api(`/content?role=${audienceRole}`)'));
   assert.ok(banner.includes('maintenanceMessage'));
   assert.ok(banner.includes('announcement'));
+  assert.ok(banner.includes("role === 'fanni' ? 'fanni' : 'client'"), 'public content request must use the current app audience');
   assert.ok(banner.includes('faqs'));
 });
 
