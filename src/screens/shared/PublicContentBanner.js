@@ -4,12 +4,13 @@ import { api } from '../../services/api';
 import { COLORS } from '../../theme/colors';
 import { styles } from '../../theme/styles';
 
-export default function PublicContentBanner() {
+export default function PublicContentBanner({ role = 'client' }) {
+  const audienceRole = role === 'fanni' ? 'fanni' : 'client';
   const [content, setContent] = useState({ maintenance: false, maintenanceMessage: '', announcement: '', faqs: [] });
 
   useEffect(() => {
     let active = true;
-    api('/content').then(result => {
+    api(`/content?role=${audienceRole}`).then(result => {
       if (!active) return;
       setContent({
         maintenance: Boolean(result.maintenance),
@@ -19,7 +20,7 @@ export default function PublicContentBanner() {
       });
     }).catch(() => {});
     return () => { active = false; };
-  }, []);
+  }, [audienceRole]);
 
   const hasVisibleContent = content.maintenance || content.announcement.trim() || content.faqs.length;
   if (!hasVisibleContent) return null;
