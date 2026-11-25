@@ -66,7 +66,12 @@ export function ClientDashboard({ context }) {
     setActiveReplyNotificationId(id);
     setNotificationReplyDraft(item.reply?.message || '');
   };
-  useEffect(() => {\n    if (!notificationsOpen) { setActiveReplyNotificationId(''); return; }\n    const pending = (notifications?.items || []).find(item => item.replyEnabled && !item.reply);\n    if (pending) { setActiveReplyNotificationId(String(pending._id || pending.id)); setNotificationReplyDraft(''); }\n  }, [notificationsOpen, notifications?.items]);\n  const submitClientNotificationReply = async () => {
+  useEffect(() => {
+    if (!notificationsOpen) { setActiveReplyNotificationId(''); return; }
+    const pending = (notifications?.items || []).find(item => item.replyEnabled && !item.reply);
+    if (pending) { setActiveReplyNotificationId(String(pending._id || pending.id)); setNotificationReplyDraft(''); }
+  }, [notificationsOpen, notifications?.items]);
+  const submitClientNotificationReply = async () => {
     const message = String(notificationReplyDraft || '').trim();
     const item = (notifications?.items || []).find(n => String(n._id || n.id) === activeReplyNotificationId);
     if (!item || !item.replyEnabled || item.reply || !message || notificationReplySubmitting) return;
