@@ -16,4 +16,8 @@ test('client and technician dashboards expose one-reply notification controls', 
   assert.match(technician, /notifications\/fanni\/[\s\S]*?\/reply/);
   assert.match(client, /item\.replyEnabled/);
   assert.match(technician, /item\.replyEnabled/);
+  assert.match(client, /notificationsOpen\)[\s\S]*?item\.replyEnabled && !item\.reply/);
+  assert.match(technician, /notificationsOpen\)[\s\S]*?item\.replyEnabled && !item\.reply/);
+  assert.ok(!client.includes('رد واحد للإدارة'));
+  assert.ok(!technician.includes('رد واحد للإدارة'));
 });
