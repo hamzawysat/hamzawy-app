@@ -69,7 +69,12 @@ export function TechnicianDashboard({ context }) {
   const technicianOrders = Array.isArray(techData?.orders) ? techData.orders : [];
   const technicianOffers = Array.isArray(techData?.offers) ? techData.offers : [];
   const technicianOrdersPagination = techData?.ordersPagination || null;
-  const notificationItems = Array.isArray(notifications?.items) ? notifications.items : [];\n  useEffect(() => {\n    if (!notificationsOpen) { setActiveReplyNotificationId(''); return; }\n    const pending = notificationItems.find(item => item.replyEnabled && !item.reply);\n    if (pending) { setActiveReplyNotificationId(String(pending._id || pending.id)); setNotificationReplyDraft(''); }\n  }, [notificationsOpen, notifications?.items]);
+  const notificationItems = Array.isArray(notifications?.items) ? notifications.items : [];
+  useEffect(() => {
+    if (!notificationsOpen) { setActiveReplyNotificationId(''); return; }
+    const pending = notificationItems.find(item => item.replyEnabled && !item.reply);
+    if (pending) { setActiveReplyNotificationId(String(pending._id || pending.id)); setNotificationReplyDraft(''); }
+  }, [notificationsOpen, notifications?.items]);
   const user = techData?.profile || session?.user || {};
   const reviewFields = (Array.isArray(user.identityReviewFields) ? user.identityReviewFields : []).filter(field => ['name', 'phone', 'specialties', 'areas'].includes(field));
   const reviewImages = Array.isArray(user.identityReviewImages) && user.identityReviewImages.length
