@@ -152,7 +152,7 @@ export function ClientDashboard({ context }) {
       {!referralPageOpen ? <StoreAdBanner role="client" session={session} visible={clientTab !== 'store'} onOpenStore={() => setClientTab('store')} /> : null}
 
     <ScrollView ref={clientScrollRef} contentContainerStyle={[styles.page, { paddingBottom: 132 }]} showsVerticalScrollIndicator={false}>
-      {referralPageOpen ? <View style={styles.formCard}><Button title="← رجوع للرئيسية" secondary onPress={() => setReferralPageOpen(false)} /><ReferralCard session={session} kind="client" expanded showToggle={false} /></View> : <><PublicContentBanner />
+      {referralPageOpen ? <View style={styles.formCard}><Button title="← رجوع للرئيسية" secondary onPress={() => setReferralPageOpen(false)} /><ReferralCard session={session} kind="client" expanded showToggle={false} /></View> : <><PublicContentBanner role="client" />
       {clientTab === 'home' ? <View style={{paddingHorizontal:12,paddingTop:8,gap:10}}>
         <TouchableOpacity onPress={() => { setClientTab('new'); setClientNewRequestChoice(''); }} activeOpacity={0.9} style={{backgroundColor:'#092D9E',borderRadius:18,padding:14,minHeight:116,flexDirection:'row',alignItems:'center',justifyContent:'space-between'}}>
           <View style={{flex:1}}><Text style={{color:'#FFF',fontSize:18,fontWeight:'900',textAlign:'right'}}>اطلب خدمتك بسهولة</Text><Text style={{color:'#E3EAFF',fontSize:13,fontWeight:'700',textAlign:'right',marginTop:6}}>اختار الخدمة المناسبة وهنوصلك بالفني</Text><View style={{alignSelf:'flex-end',backgroundColor:'#FFF',borderRadius:11,paddingHorizontal:14,paddingVertical:8,marginTop:12}}><Text style={{color:'#102A9B',fontSize:13,fontWeight:'900'}}>اطلب الآن ←</Text></View></View>
