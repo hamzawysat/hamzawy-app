@@ -47,7 +47,7 @@ export function usePushNotifications(session, onNotificationResponse) {
         }
         if (Platform.OS === 'android') {
           await Notifications.setNotificationChannelAsync('hamzawy_official', {
-            name: 'إشعارات ساتفيو',
+            name: 'إشعارات ساتڤيو',
             importance: Notifications.AndroidImportance.MAX,
             sound: 'hamzawy_sat_notification_v12_wow_loud.ogg',
             vibrationPattern: [0, 250, 250, 250],

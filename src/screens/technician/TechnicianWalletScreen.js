@@ -58,7 +58,7 @@ export default function TechnicianWalletScreen({ session, user, transferNumbers,
   return (
     <ScrollView contentContainerStyle={styles.technicianPage} showsVerticalScrollIndicator={false}>
       <View style={[styles.walletCard, { backgroundColor: '#101F9B', borderColor: '#101F9B', borderRadius: 23, padding: 19, shadowColor: '#07136E', shadowOpacity: 0.2, shadowRadius: 14, elevation: 5 }]}>
-        <Text style={[styles.walletTitle, { color: '#DCE5FF' }]}>محفظة ساتفيو</Text>
+        <Text style={[styles.walletTitle, { color: '#DCE5FF' }]}>محفظة ساتڤيو</Text>
         <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: '800', textAlign: 'right', marginTop: 5 }}>رصيدك الحالي</Text>
         <Text style={styles.walletAmount}>{Number(user?.walletBalance || user?.balance || 0).toLocaleString('ar-EG')} جنيه</Text>
         <Button title={loading ? 'جاري التحديث...' : 'تحديث الرصيد والسجل'} secondary onPress={load} disabled={loading} />
