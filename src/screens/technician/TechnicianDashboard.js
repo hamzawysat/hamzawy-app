@@ -26,6 +26,7 @@ import StoreScreen, { StoreAdBanner } from '../shared/StoreScreen';
 import { matchesAreaSearch } from '../../utils/area-helpers';
 import TechnicianWalletScreen from './TechnicianWalletScreen';
 import ReferralCard, { ReferralPromo } from '../shared/ReferralCard';
+import PublicContentBanner from '../shared/PublicContentBanner';
 
 export function TechnicianDashboard({ context }) {
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
@@ -192,6 +193,7 @@ export function TechnicianDashboard({ context }) {
       <View style={{ flex: 1 }}>
         {referralPageOpen ? <ScrollView contentContainerStyle={styles.technicianPage}><View style={{ marginHorizontal: 12 }}><Button title="← رجوع للرئيسية" secondary onPress={() => setReferralPageOpen(false)} /><ReferralCard session={session} kind="fanni" expanded showToggle={false} /></View></ScrollView> : techData.loading ? <View style={styles.center}><ActivityIndicator size="large" color={COLORS.navy} /><Text style={styles.statusText}>جاري تحميل بيانات الفني...</Text></View> : <>
           {tab === 'home' && <ScrollView ref={referralScrollRef} contentContainerStyle={[styles.technicianPage,{paddingHorizontal:12,paddingTop:8,paddingBottom:132}]}>
+            <PublicContentBanner role="fanni" />
             <View style={{flexDirection:'row-reverse',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
               <View style={{flexDirection:'row-reverse',alignItems:'center',flex:1}}>
                 <View style={{width:38,height:38,borderRadius:19,overflow:'hidden',alignItems:'center',justifyContent:'center',marginLeft:9,backgroundColor:'#E8EDFF'}}>{profilePhotoUri ? <Image source={{uri:profilePhotoUri}} style={{width:38,height:38,borderRadius:19}} /> : <Text style={{color:'#172554',fontSize:16,fontWeight:'900'}}>{String(user.name||'ف').trim().charAt(0)}</Text>}</View>
