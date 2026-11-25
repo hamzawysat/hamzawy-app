@@ -596,7 +596,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         screenRef.current = target;
         setScreenState(target);
       } catch (error) {
-        console.warn('تعذر استعادة جلسة صُنّاع:', error?.message || error);
+        console.warn('تعذر استعادة جلسة ساتڤيو:', error?.message || error);
       } finally {
         if (mounted) setAuthRestoring(false);
       }
@@ -977,11 +977,11 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
       return;
     }
     if (!guidelinesReachedEnd) {
-      Alert.alert('ميثاق صُنّاع', 'لازم تقرأ الميثاق حتى آخره قبل الموافقة.');
+      Alert.alert('ميثاق ساتڤيو', 'لازم تقرأ الميثاق حتى آخره قبل الموافقة.');
       return;
     }
     if (!guidelinesChecked) {
-      Alert.alert('الموافقة مطلوبة', 'علّم على مربع قرأت وأوافق على ميثاق صُنّاع لإكمال التسجيل.');
+      Alert.alert('الموافقة مطلوبة', 'علّم على مربع قرأت وأوافق على ميثاق ساتڤيو لإكمال التسجيل.');
       return;
     }
     const nationalId = normalizePhoneDigits(form.nationalId || '');
@@ -1563,7 +1563,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         token: session?.token,
         body: { accepted: true, version: '2026-10-20-v1' }
       });
-      Alert.alert('تم تسجيل الموافقة', result.message || 'تم تسجيل موافقتك على ميثاق صُنّاع.');
+      Alert.alert('تم تسجيل الموافقة', result.message || 'تم تسجيل موافقتك على ميثاق ساتڤيو.');
       setReloadKey(value => value + 1);
     } catch (err) {
       Alert.alert('تعذر تسجيل الموافقة', err.message || 'حاول مرة أخرى.');
@@ -1626,7 +1626,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
       setSupportDraft('');
       setSupportCase(item);
       setSupportCases(current => [item, ...current.filter(x => String(x._id) !== String(item._id))]);
-      Alert.alert('تم فتح محادثة الدعم', 'رسالتك محفوظة داخل صُنّاع. لو احتاجت تدخلًا بشريًا، اضغط «طلب تدخل الدعم».');
+      Alert.alert('تم فتح محادثة الدعم', 'رسالتك محفوظة داخل ساتڤيو. لو احتاجت تدخلًا بشريًا، اضغط «طلب تدخل الدعم».');
     } catch (err) { setSupportError(err.message || 'تعذر إرسال الرسالة'); }
     finally { setSupportLoading(false); }
   }
@@ -2042,7 +2042,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         <Text style={{ color: '#64748B', fontSize: 10, lineHeight: 18, textAlign: 'right' }}>الصيغ المقبولة: JPG وPNG وWebP — الحد الأقصى 15 ميجابايت لكل صورة.</Text>
         </View>
 
-        <Text style={styles.sectionTitle}>ميثاق صُنّاع – التعامل المهني مع العملاء</Text>
+        <Text style={styles.sectionTitle}>ميثاق ساتڤيو – التعامل المهني مع العملاء</Text>
         <Text style={styles.detail}>اقرأ الميثاق كاملًا. لن تتمكن من الموافقة أو إرسال طلب التسجيل قبل الوصول إلى نهاية النص.</Text>
         <View style={{ height: 240, borderWidth: 1, borderColor: COLORS.border, borderRadius: 14, overflow: 'hidden', backgroundColor: COLORS.white }}>
           <ScrollView
@@ -2066,7 +2066,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
             <Text style={styles.detail}>٥. احمِ بيانات العميل ولا تستخدمها خارج الطلب.</Text>
             <Text style={styles.detail}>٦. يحق للطرفين التقييم بعد الإكمال؛ ممنوع الإكراه على تقييم إيجابي أو التلاعب بالتقييمات.</Text>
             <Text style={styles.detail}>٧. المخالفات قد تؤدي إلى مراجعة الطلب أو تعليق الحساب أو إيقافه.</Text>
-            <Text style={styles.detail}>بالضغط على الموافقة، تؤكد أنك قرأت التعليمات وفهمتها وتتعهد بالالتزام بها أثناء استخدام منصة صُنّاع.</Text>
+            <Text style={styles.detail}>بالضغط على الموافقة، تؤكد أنك قرأت التعليمات وفهمتها وتتعهد بالالتزام بها أثناء استخدام منصة ساتڤيو.</Text>
           </ScrollView>
         </View>
         <TouchableOpacity disabled={!guidelinesReachedEnd} onPress={() => setGuidelinesChecked(value => !value)} activeOpacity={0.8}
@@ -2075,7 +2075,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
             <Text style={{ color: COLORS.white, fontWeight: '900' }}>{guidelinesChecked ? '✓' : ''}</Text>
           </View>
           <Text style={[styles.detail, { flex: 1, fontWeight: '800', color: COLORS.text }]}>
-            {guidelinesReachedEnd ? 'قرأت ميثاق صُنّاع كاملًا وأوافق على الالتزام به.' : 'مرّر الميثاق حتى نهايته لتفعيل الموافقة.'}
+            {guidelinesReachedEnd ? 'قرأت ميثاق ساتڤيو كاملًا وأوافق على الالتزام به.' : 'مرّر الميثاق حتى نهايته لتفعيل الموافقة.'}
           </Text>
         </TouchableOpacity>
       </>}
