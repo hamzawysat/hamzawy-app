@@ -57,9 +57,11 @@ export default function ReferralCard({ session, kind, cardRef, expanded = false,
           const downloadUrl = new URL('/download', referralUrl.origin);
           downloadUrl.searchParams.set('ref', referralCode);
           return [
-            'سجّل حسابك الجديد في ساتڤيو واستمتع بخدماتنا ومتجرنا وأسعاره المميزة 🛍️',
-            '',
-            '🎁 50 جنيه مكافأة بعد إتمام أول طلب ليك، و50 جنيه إضافية عن كل شخص تدعوه ويسجل ويكمل أول طلب له!',
+            'جرب SATVIEW 📱',
+            'كل خدمة تبدأ بخطوة.',
+            'تركيب وصيانة الدش والريسيفرات وكاميرات المراقبة والشاشات، في مكان واحد.',
+            'اطلب الخدمة، وهيوصلك عروض من فنيين مختلفين، وانت اختار براحتك اللي يناسبك.',
+            'سجل من هنا وخد مكافأة الترحيب 🎁',
             '',
             '📝 تسجيل عميل جديد:',
             registrationUrl,
@@ -68,7 +70,7 @@ export default function ReferralCard({ session, kind, cardRef, expanded = false,
             downloadUrl.toString()
           ].join('\n');
         })()
-      : '💰 انضم لفريق فنيين ساتڤيو واكسب 150 جنيه مكافأة بعد إكمال أول 3 طلبات ليك! 🎉 سجّل دلوقتي وابدأ شغلك معانا.\n' + data.url;
+      : 'انت فني دش او كاميرات مراقبة او شاشات؟ 🛠️\nSATVIEW بتجيبلك شغل من غير ما تدور.\nسجل كفني، استقبل الطلبات، وقدم عرضك، واشتغل براحتك.\nولو جبت فني صاحبك، وسجل وكمل 3 شغلانات، تاخد 150 جنيه مكافأة 🎁\n' + data.url;
     if (!invitationMessage) { Alert.alert('تعذر المشاركة', 'كود الدعوة غير صالح. حدّث بيانات الدعوة وحاول مرة أخرى.'); return; }
     try { await Share.share({ message: invitationMessage }); }
     catch (e) { Alert.alert('تعذر المشاركة', e.message || 'حاول مرة أخرى.'); }
