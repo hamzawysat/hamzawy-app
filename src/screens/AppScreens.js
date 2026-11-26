@@ -1965,28 +1965,6 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
       <Field label="تأكيد كلمة السر" value={form.confirmPassword} onChangeText={v => updateForm('confirmPassword', v)} secureTextEntry
         inputRef={registrationConfirmPasswordRef} returnKeyType="go" returnKeyLabel="تسجيل"
         onSubmitEditing={isClient ? registerClient : registerTechnician} blurOnSubmit />
-      {!isClient && <>
-        <Text style={styles.sectionTitle}>اختار الخدمات اللي بتقدمها</Text>
-        {servicesLoading && categories.length === 0 ? <View style={{ paddingVertical: 14, alignItems: 'center' }}>
-          <ActivityIndicator color={COLORS.navy} />
-          <Text style={[styles.detail, { textAlign: 'center' }]}>جاري تحميل الخدمات...</Text>
-        </View> : null}
-        {!servicesLoading && servicesError && categories.length === 0 ? <View style={{ backgroundColor: COLORS.dangerBg, borderWidth: 1, borderColor: COLORS.dangerBorder, borderRadius: 12, padding: 12, marginBottom: 10 }}>
-          <Text style={[styles.errorText, { textAlign: 'center' }]}>تعذر تحميل الخدمات. تحقق من اتصال الإنترنت ثم أعد المحاولة.</Text>
-          <TouchableOpacity onPress={() => setReloadKey(value => value + 1)} disabled={servicesLoading}
-            style={{ alignSelf: 'center', backgroundColor: COLORS.navy, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 10, marginTop: 6 }}>
-            <Text style={{ color: COLORS.white, fontWeight: '900', fontSize: 13 }}>إعادة تحميل الخدمات</Text>
-          </TouchableOpacity>
-        </View> : null}
-        {categories.map(category => <View key={category.label} style={styles.selectionGroup}>
-          <TouchableOpacity onPress={() => setSelected(current => current?.label === category.label ? null : category)} style={styles.categoryToggle}><Text style={styles.groupTitle}>{category.emoji || '🛠️'} {category.label} · {(category.services || []).length} {selected?.label === category.label ? '▲' : '▼'}</Text></TouchableOpacity>
-          {selected?.label === category.label ? (category.services || []).map(service => <TouchableOpacity key={service} onPress={() => toggleArray('specialties', service)} style={styles.choiceRow}><Text style={styles.choiceText}>{form.specialties.includes(service) ? '☑' : '□'} {service}</Text></TouchableOpacity>) : null}
-        </View>)}
-
-        <AreaPicker label="مناطق العمل *" options={areas} multiple value={form.areas} onChange={value => updateForm('areas', value)} maxSelections={30} />
-        <Text style={styles.detail}>اختار المناطق التي تستطيع العمل فيها من القائمة المعتمدة. يمكنك اختيار حتى 30 منطقة.</Text>
-
-        <Field label="الرقم القومي المصري (14 رقمًا) *" value={form.nationalId || ''} onChangeText={v => updateForm('nationalId', normalizePhoneDigits(v).slice(0, 14))} keyboardType="number-pad" maxLength={14} placeholder="اكتب الرقم القومي كما هو بالبطاقة" />
         <View style={{ backgroundColor: '#EFF6FF', borderColor: '#BFDBFE', borderWidth: 1, borderRadius: 16, padding: 12, marginTop: 12, gap: 10 }}>
           <View>
             <Text style={{ color: '#0F172A', fontSize: 14, fontWeight: '900', textAlign: 'right' }}>صورة بطاقة الرقم القومي *</Text>
@@ -2041,6 +2019,28 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
         </View>
         <Text style={{ color: '#64748B', fontSize: 10, lineHeight: 18, textAlign: 'right' }}>الصيغ المقبولة: JPG وPNG وWebP — الحد الأقصى 15 ميجابايت لكل صورة.</Text>
         </View>
+      {!isClient && <>
+        <Text style={styles.sectionTitle}>اختار الخدمات اللي بتقدمها</Text>
+        {servicesLoading && categories.length === 0 ? <View style={{ paddingVertical: 14, alignItems: 'center' }}>
+          <ActivityIndicator color={COLORS.navy} />
+          <Text style={[styles.detail, { textAlign: 'center' }]}>جاري تحميل الخدمات...</Text>
+        </View> : null}
+        {!servicesLoading && servicesError && categories.length === 0 ? <View style={{ backgroundColor: COLORS.dangerBg, borderWidth: 1, borderColor: COLORS.dangerBorder, borderRadius: 12, padding: 12, marginBottom: 10 }}>
+          <Text style={[styles.errorText, { textAlign: 'center' }]}>تعذر تحميل الخدمات. تحقق من اتصال الإنترنت ثم أعد المحاولة.</Text>
+          <TouchableOpacity onPress={() => setReloadKey(value => value + 1)} disabled={servicesLoading}
+            style={{ alignSelf: 'center', backgroundColor: COLORS.navy, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 10, marginTop: 6 }}>
+            <Text style={{ color: COLORS.white, fontWeight: '900', fontSize: 13 }}>إعادة تحميل الخدمات</Text>
+          </TouchableOpacity>
+        </View> : null}
+        {categories.map(category => <View key={category.label} style={styles.selectionGroup}>
+          <TouchableOpacity onPress={() => setSelected(current => current?.label === category.label ? null : category)} style={styles.categoryToggle}><Text style={styles.groupTitle}>{category.emoji || '🛠️'} {category.label} · {(category.services || []).length} {selected?.label === category.label ? '▲' : '▼'}</Text></TouchableOpacity>
+          {selected?.label === category.label ? (category.services || []).map(service => <TouchableOpacity key={service} onPress={() => toggleArray('specialties', service)} style={styles.choiceRow}><Text style={styles.choiceText}>{form.specialties.includes(service) ? '☑' : '□'} {service}</Text></TouchableOpacity>) : null}
+        </View>)}
+
+        <AreaPicker label="مناطق العمل *" options={areas} multiple value={form.areas} onChange={value => updateForm('areas', value)} maxSelections={30} />
+        <Text style={styles.detail}>اختار المناطق التي تستطيع العمل فيها من القائمة المعتمدة. يمكنك اختيار حتى 30 منطقة.</Text>
+
+        <Field label="الرقم القومي المصري (14 رقمًا) *" value={form.nationalId || ''} onChangeText={v => updateForm('nationalId', normalizePhoneDigits(v).slice(0, 14))} keyboardType="number-pad" maxLength={14} placeholder="اكتب الرقم القومي كما هو بالبطاقة" />
 
         <Text style={styles.sectionTitle}>ميثاق ساتڤيو – التعامل المهني مع العملاء</Text>
         <Text style={styles.detail}>اقرأ الميثاق كاملًا. لن تتمكن من الموافقة أو إرسال طلب التسجيل قبل الوصول إلى نهاية النص.</Text>
