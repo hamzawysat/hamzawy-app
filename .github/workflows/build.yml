@@ -78,10 +78,49 @@ jobs:
           from pathlib import Path
           path = Path("android/app/build.gradle")
           s = path.read_text()
-          if "signingConfigs" not in s:
-              s = s.replace("    buildTypes {", "    signingConfigs {\n        release {\n            def props = new Properties()\n            props.load(new FileInputStream(rootProject.file('key.properties')))\n            storeFile file(props['storeFile'])\n            storePassword props['storePassword']\n            keyAlias props['keyAlias']\n            keyPassword props['keyPassword']\n        }\n    }\n    buildTypes {", 1)
-              s = s.replace("            release {", "            release {\n                signingConfig signingConfigs.release", 1)
-              path.write_text(s)
+          # 1. لو مفيش signingConfigs.release، نضيفه
+          if "signingConfigs.release" not in s and "signingConfigs {
+        release" not in s:
+              if "signingConfigs {" in s:
+                  # فيه signingConfigs Debug، نضيف release جواه
+                  s = s.replace("    signingConfigs {", "    signingConfigs {
+        release {
+            def props = new Properties()
+            props.load(new FileInputStream(rootProject.file('key.properties')))
+            storeFile file(props['storeFile'])
+            storePassword props['storePassword']
+            keyAlias props['keyAlias']
+            keyPassword props['keyPassword']
+        }", 1)
+              else:
+                  s = s.replace("    buildTypes {", "    signingConfigs {
+        release {
+            def props = new Properties()
+            props.load(new FileInputStream(rootProject.file('key.properties')))
+            storeFile file(props['storeFile'])
+            storePassword props['storePassword']
+            keyAlias props['keyAlias']
+            keyPassword props['keyPassword']
+        }
+    }
+    buildTypes {", 1)
+          # 2. نربط buildTypes.release بـ signingConfigs.release
+          if "signingConfig signingConfigs.release" not in s:
+              # نلاقي buildTypes -> release
+              s = s.replace("            release {
+                minifyEnabled", "            release {
+                signingConfig signingConfigs.release
+                minifyEnabled", 1)
+              if "signingConfig signingConfigs.release" not in s:
+                  # لو الشكل مختلف، نضيفه بعد أول release في buildTypes
+                  parts = s.split("buildTypes {", 1)
+                  if len(parts) == 2:
+                      head, tail = parts
+                      tail = tail.replace("release {", "release {
+                signingConfig signingConfigs.release", 1)
+                      s = head + "buildTypes {" + tail
+          path.write_text(s)
+          print("signing check:", "signingConfigs.release" in s, "linked:", "signingConfig signingConfigs.release" in s)
           PY2
 
       - name: Configure Modern APK
@@ -112,6 +151,10 @@ jobs:
           echo "Modern APK ABIs:"
           unzip -Z1 "$APK" | grep "^lib/" | cut -d/ -f2 | sort -u
           cp "$APK" ../HSsat.apk
+          echo "Checking APK signature..."
+          keytool -printcert -jarfile "$APK" | grep -q "CN=SATVIEW" || (echo "APK is NOT signed with Release key!" && exit 1)
+          echo "APK signed with Release key OK"
+
       - uses: actions/upload-artifact@v4
         with:
           name: hamzawy-sat-modern-apk
