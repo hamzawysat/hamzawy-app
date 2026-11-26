@@ -32,7 +32,7 @@ jobs:
           if (app.updates?.enabled !== true) throw new Error('Expo Updates must be enabled');
           if (app.updates?.url !== 'https://u.expo.dev/01cd6ee6-73a2-4404-8381-d60446befcc5') throw new Error('Unexpected EAS Update project URL');
           if (app.updates?.requestHeaders?.['expo-channel-name'] !== 'production') throw new Error('Android OTA channel must be production');
-          if (app.runtimeVersion?.policy !== 'appVersion') throw new Error('Runtime version policy must remain appVersion');
+          if (app.runtimeVersion?.policy !== 'fingerprint') throw new Error('Android OTA runtime version policy must be fingerprint');
           console.log('OTA configuration verified:', app.version, 'production');
           NODE
       - name: Run regression tests
