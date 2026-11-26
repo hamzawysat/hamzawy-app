@@ -16,6 +16,8 @@ assert.ok(plugin.includes('delegate_permission/common.handle_all_urls'));
 assert.ok(plugin.includes('asset_statements'));
 assert.ok(build.includes('../HSsat.apk'));
 assert.ok(build.includes('path: HSsat.apk'));
+assert.ok(build.includes('ANDROID_KEYSTORE_BASE64'));
+assert.ok(build.includes('signingConfigs.release'));
 assert.ok(build.includes('tag_name: ${{ env.APP_VERSION }}'));
 assert.ok(ota.includes('push:\n    branches: [main]'));
 assert.ok(ota.includes("github.event_name == 'push'"));
