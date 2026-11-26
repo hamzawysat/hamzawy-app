@@ -8,8 +8,8 @@ const plugin = fs.readFileSync(path.join(root, 'plugins/withAssetStatements.js')
 const build = fs.readFileSync(path.join(root, '.github/workflows/build.yml'), 'utf8');
 const ota = fs.readFileSync(path.join(root, '.github/workflows/ota-update.yml'), 'utf8');
 const notifications = fs.readFileSync(path.join(root, 'src/hooks/usePushNotifications.js'), 'utf8');
-assert.equal(app.version, '1.0.16');
-assert.equal(app.android.versionCode, 18);
+assert.equal(app.version, '1.0.17');
+assert.equal(app.android.versionCode, 19);
 assert.ok(app.plugins.includes('./plugins/withAssetStatements'));
 assert.ok(plugin.includes('https://www.hamzawy-sat.dynv6.net'));
 assert.ok(plugin.includes('delegate_permission/common.handle_all_urls'));
