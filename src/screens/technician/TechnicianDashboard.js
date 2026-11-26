@@ -73,7 +73,7 @@ export function TechnicianDashboard({ context }) {
   useEffect(() => {
     if (!notificationsOpen) { setActiveReplyNotificationId(''); return; }
     const pending = notificationItems.find(item => item.replyEnabled && !item.reply);
-    if (pending) { setActiveReplyNotificationId(String(pending._id || pending.id)); setNotificationReplyDraft(''); }
+    if (pending) { setActiveReplyNotificationId(String(pending._id || pending.id)); }
   }, [notificationsOpen, notifications?.items]);
   const user = techData?.profile || session?.user || {};
   const reviewFields = (Array.isArray(user.identityReviewFields) ? user.identityReviewFields : []).filter(field => ['name', 'phone', 'specialties', 'areas'].includes(field));

@@ -69,7 +69,7 @@ export function ClientDashboard({ context }) {
   useEffect(() => {
     if (!notificationsOpen) { setActiveReplyNotificationId(''); return; }
     const pending = (notifications?.items || []).find(item => item.replyEnabled && !item.reply);
-    if (pending) { setActiveReplyNotificationId(String(pending._id || pending.id)); setNotificationReplyDraft(''); }
+    if (pending) { setActiveReplyNotificationId(String(pending._id || pending.id)); }
   }, [notificationsOpen, notifications?.items]);
   const submitClientNotificationReply = async () => {
     const message = String(notificationReplyDraft || '').trim();
