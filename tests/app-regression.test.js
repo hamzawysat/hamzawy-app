@@ -1110,7 +1110,8 @@ test('OTA updates are checked periodically while the app stays in the foreground
   assert.match(appEntry, /appState\.current === 'active' && !updateDownloaded\.current/);
   assert.match(appEntry, /\}, 60 \* 1000\)/);
   assert.match(appEntry, /clearInterval\(updateCheckInterval\)/);
-  assert.match(appEntry, /currentScreen !== 'home'/);
+  assert.doesNotMatch(appEntry, /currentScreen !== 'home'/);
+  assert.doesNotMatch(appEntry, /currentScreen === 'home'/);
 });
 
 
