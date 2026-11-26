@@ -238,7 +238,7 @@ jobs:
           test -n "$APKSIGNER"
           "$APKSIGNER" verify --verbose --print-certs "$APK" | tee "$RUNNER_TEMP/apk-signature.txt"
 
-          ACTUAL_SHA256="$(sed -n 's/.*Signer #1 certificate SHA-256 digest: //p' "$RUNNER_TEMP/apk-signature.txt" | head -n 1)"
+          ACTUAL_SHA256="$(sed -n 's/.*certificate SHA-256 digest: //p' "$RUNNER_TEMP/apk-signature.txt" | head -n 1)"
           EXPECTED_SHA256="$(keytool -exportcert -keystore android/app/release.keystore \
             -storepass "$ANDROID_KEYSTORE_PASSWORD" -alias "$ANDROID_KEY_ALIAS" | openssl dgst -sha256 | awk '{print $NF}')"
           ACTUAL_NORMALIZED="$(printf '%s' "$ACTUAL_SHA256" | tr -d ' :\r\n' | tr '[:upper:]' '[:lower:]')"
