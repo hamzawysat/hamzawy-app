@@ -3,6 +3,8 @@ import * as FileSystem from 'expo-file-system';
 
 const SERVER_CONFIG_URL = 'https://hamzawysat.github.io/hamzawy-download/server-config.json';
 const CONFIG_CACHE_KEY = 'hamzawy.server-config.v1';
+const DEVICE_ID_KEY = 'satview.device-id.v1';
+let cachedDeviceId = null;
 const CONFIG_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 const CONFIG_TIMEOUT_MS = 8000;
 // Preserve a last-known-good cached configuration while GitHub Pages is unavailable.
@@ -95,6 +97,19 @@ async function loadConfig() {
   }
 }
 
+async function getDeviceId() {
+  if (cachedDeviceId) return cachedDeviceId;
+  try {
+    const saved = String(await SecureStore.getItemAsync(DEVICE_ID_KEY) || '').trim();
+    if (saved) { cachedDeviceId = saved; return saved; }
+  } catch (_) {}
+  let id = 'dv-';
+  for (let i = 0; i < 32; i++) id += Math.floor(Math.random() * 16).toString(16);
+  try { await SecureStore.setItemAsync(DEVICE_ID_KEY, id); } catch (_) {}
+  cachedDeviceId = id;
+  return id;
+}
+
 export async function getServerConfig(forceRefresh = false) {
   if (!forceRefresh && activeConfig && Date.now() - lastConfigRefreshAt < CONFIG_REFRESH_INTERVAL_MS) {
     return activeConfig;
@@ -151,6 +166,7 @@ async function api(path, options = {}) {
   let response;
   try {
     const url = await getApiUrl(path);
+    const deviceId = await getDeviceId().catch(() => '');
     response = await fetch(url, {
       ...fetchOptions,
       signal: controller.signal,
@@ -158,6 +174,7 @@ async function api(path, options = {}) {
         Accept: 'application/json',
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(deviceId ? { 'X-Device-Id': deviceId } : {}),
         ...(headers || {}),
       },
       body: body === undefined ? undefined : JSON.stringify(body),
