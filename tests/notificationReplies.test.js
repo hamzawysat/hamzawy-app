@@ -18,6 +18,12 @@ test('client and technician dashboards expose one-reply notification controls', 
   assert.match(technician, /item\.replyEnabled/);
   assert.match(client, /notificationsOpen\)[\s\S]*?item\.replyEnabled && !item\.reply/);
   assert.match(technician, /notificationsOpen\)[\s\S]*?item\.replyEnabled && !item\.reply/);
+  const clientAutoOpenEffect = client.match(/useEffect\(\(\) => \{[\s\S]*?\}, \[notificationsOpen, notifications\?\.items\]\);/)?.[0] || '';
+  const technicianAutoOpenEffect = technician.match(/useEffect\(\(\) => \{[\s\S]*?\}, \[notificationsOpen, notifications\?\.items\]\);/)?.[0] || '';
+  assert.ok(clientAutoOpenEffect, 'client pending reply auto-open effect exists');
+  assert.ok(technicianAutoOpenEffect, 'technician pending reply auto-open effect exists');
+  assert.doesNotMatch(clientAutoOpenEffect, /setNotificationReplyDraft\(['\"]{2}\)/, 'client refresh must not clear typed reply');
+  assert.doesNotMatch(technicianAutoOpenEffect, /setNotificationReplyDraft\(['\"]{2}\)/, 'technician refresh must not clear typed reply');
   assert.ok(!client.includes('رد واحد للإدارة'));
   assert.ok(!technician.includes('رد واحد للإدارة'));
 });
