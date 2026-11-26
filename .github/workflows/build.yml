@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -261,6 +264,7 @@ jobs:
           echo "APP_VERSION=$(node -p 'require("./app.json").expo.version')" >> "$GITHUB_ENV"
           echo "APP_BUILD=$(node -p 'require("./app.json").expo.android.versionCode')" >> "$GITHUB_ENV"
       - name: Publish versioned APK release
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.APP_VERSION }}
