@@ -26,7 +26,7 @@ function AppContent() {
   const showBrandHeader = !['home', 'login'].includes(currentScreen);
 
   const applyDownloadedUpdate = useCallback(async () => {
-    if (!updateDownloaded.current || applyingUpdate.current || authRestoring || !['home', 'technicianRegister', 'login'].includes(currentScreen) || appState.current !== 'active') return;
+    if (!updateDownloaded.current || applyingUpdate.current || appState.current !== 'active') return;
     applyingUpdate.current = true;
     try {
       await Updates.reloadAsync();
@@ -46,7 +46,7 @@ function AppContent() {
       const result = await Updates.fetchUpdateAsync();
       if (result.isNew) {
         updateDownloaded.current = true;
-        setUpdateStatus('');
+        setUpdateStatus('جاري تحديث التطبيق...');
         await applyDownloadedUpdate();
       } else {
         setUpdateStatus('');
