@@ -26,7 +26,7 @@ function AppContent() {
   const showBrandHeader = !['home', 'login'].includes(currentScreen);
 
   const applyDownloadedUpdate = useCallback(async () => {
-    if (!updateDownloaded.current || applyingUpdate.current || authRestoring || currentScreen !== 'home' || appState.current !== 'active') return;
+    if (!updateDownloaded.current || applyingUpdate.current || authRestoring || !['home', 'technicianRegister', 'login'].includes(currentScreen) || appState.current !== 'active') return;
     applyingUpdate.current = true;
     try {
       await Updates.reloadAsync();
