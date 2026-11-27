@@ -10,12 +10,10 @@ import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import * as SecureStore from 'expo-secure-store';
-import * as ImagePicker from 'expo-image-picker';
 import { Audio } from 'expo-av';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
-import * as FileSystem from 'expo-file-system';
-import { api, getApiUrl } from '../../services/api';
+import { api } from '../../services/api';
 import { COLORS } from '../../theme/colors';
 import { styles } from '../../theme/styles';
 import { getOrderChatTimeline, toList, dateLabel, getServiceEmoji } from '../../utils/app-helpers';
@@ -35,7 +33,6 @@ function TechnicianSubscriptionVisits({ session }) {
   const [loading,setLoading]=useState(false);
   const [drafts,setDrafts]=useState({});
   const [saving,setSaving]=useState('');
-  const [uploading,setUploading]=useState('');
   const load=useCallback(async()=>{
     if(!session?.token)return;
     setLoading(true);
@@ -44,51 +41,24 @@ function TechnicianSubscriptionVisits({ session }) {
     finally{setLoading(false);}
   },[session?.token]);
   useEffect(()=>{void load();},[load]);
-  const capturePhoto=async(visit,side)=>{
-    const id=String(visit._id);
-    if(uploading)return;
-    try{
-      const permission=await ImagePicker.requestCameraPermissionsAsync();
-      if(!permission.granted){Alert.alert('إذن الكاميرا مطلوب','اسمح للتطبيق باستخدام الكاميرا لتصوير الزيارة.');return;}
-      const capture=await ImagePicker.launchCameraAsync({mediaTypes:ImagePicker.MediaTypeOptions.Images,quality:0.82,allowsEditing:false});
-      if(capture.canceled||!capture.assets?.[0]?.uri)return;
-      const asset=capture.assets[0];
-      const mimeType=asset.mimeType||'image/jpeg';
-      if(!['image/jpeg','image/png','image/webp'].includes(mimeType))throw new Error('نوع الصورة غير مدعوم. استخدم JPG أو PNG أو WebP.');
-      setUploading(id+':'+side);
-      const url=await getApiUrl('/subscriptions/technician/visits/'+encodeURIComponent(id)+'/photos?side='+side);
-      const response=await FileSystem.uploadAsync(url,asset.uri,{
-        httpMethod:'POST',
-        uploadType:FileSystem.FileSystemUploadType.BINARY_CONTENT,
-        headers:{Authorization:'Bearer '+session.token,'Content-Type':mimeType}
-      });
-      let data={};try{data=JSON.parse(response.body||'{}');}catch(_){}
-      if(response.status<200||response.status>=300||!data.fileId)throw new Error(data.message||'تعذر رفع الصورة. حاول مرة أخرى.');
-      setDrafts(old=>({...old,[id]:{...old[id],[side+'PhotoId']:data.fileId}}));
-      Alert.alert('تم رفع الصورة','تم حفظ صورة '+(side==='before'?'قبل التنفيذ':'بعد التنفيذ')+' في سجل الزيارة.');
-    }catch(e){Alert.alert('تعذر التصوير أو الرفع',e.message||'تحقق من إذن الكاميرا والاتصال وحاول مرة أخرى.');}
-    finally{setUploading('');}
-  };
   const update=async visit=>{
     const id=String(visit._id);const draft=drafts[id]||{};
     setSaving(id);
     try{
-      await api('/subscriptions/technician/visits/'+encodeURIComponent(id),{method:'PATCH',token:session.token,body:{status:'completed',workDescription:draft.workDescription||visit.workDescription||''}});
-      Alert.alert('تم الحفظ','تم تحديث بيانات الزيارة.');await load();
-    }catch(e){Alert.alert('تعذر حفظ الزيارة',e.message||'حاول مرة أخرى.');}
+      const result=await api('/subscriptions/technician/visits/'+encodeURIComponent(id),{method:'PATCH',token:session.token,body:{status:'completed',workDescription:draft.workDescription||visit.workDescription||''}});
+      Alert.alert('تم إرسال طلب الإنهاء',result.message||'في انتظار تأكيد العميل لإغلاق الخدمة.');await load();
+    }catch(e){Alert.alert('تعذر إنهاء الخدمة',e.message||'حاول مرة أخرى.');}
     finally{setSaving('');}
   };
   return <ScrollView contentContainerStyle={{padding:14,paddingBottom:30}}>
-    <View style={styles.dataCard}><Text style={styles.cardTitlePremium}>زيارات الصيانة المسندة إليّ</Text><Text style={styles.detail}>تظهر هنا الزيارات المسندة لحسابك فقط، مع بيانات تنفيذ الزيارة دون تفاصيل الباقة أو بيانات الدخول.</Text><Button title={loading?'جاري التحديث...':'تحديث الزيارات'} secondary onPress={load} disabled={loading}/></View>
-    {visits.length?visits.map((v,index)=><View key={String(v._id)} style={[styles.dataCard,{marginTop:10}]}>
+    <View style={styles.dataCard}><Text style={styles.cardTitlePremium}>زيارات الصيانة المسندة إليّ</Text><Text style={styles.detail}>بعد تنفيذ العمل اضغط إنهاء الخدمة. لن تُغلق الزيارة إلا بعد تأكيد العميل أيضًا.</Text><Button title={loading?'جاري التحديث...':'تحديث الزيارات'} secondary onPress={load} disabled={loading}/></View>
+    {visits.length?visits.map(v=><View key={String(v._id)} style={[styles.dataCard,{marginTop:10}]}>
       <Text style={styles.cardTitleSmall}>{v.subscription?.code||'زيارة صيانة'}</Text>
       <Text style={styles.detail}>العميل: {v.client?.name||'—'} • الهاتف: {v.client?.phone||'—'}</Text>
       <Text style={styles.detail}>العنوان: {v.subscription?.address||'—'}</Text>
       <Text style={styles.detail}>الموعد: {new Date(v.scheduledAt).toLocaleString('ar-EG')}</Text>
-      <TextInput placeholder="وصف العمل المنفذ" multiline value={drafts[v._id]?.workDescription||v.workDescription||''} onChangeText={value=>setDrafts(old=>({...old,[v._id]:{...old[v._id],workDescription:value}}))} style={{minHeight:72,borderWidth:1,borderColor:COLORS.border,borderRadius:10,padding:10,textAlign:'right',marginTop:8}}/>
-      <Button title={uploading===String(v._id)+':before'?'جاري رفع الصورة...':drafts[v._id]?.beforePhotoId?'تم رفع صورة قبل التنفيذ · تصوير مرة أخرى':'تصوير قبل التنفيذ'} secondary onPress={()=>capturePhoto(v,'before')} disabled={Boolean(uploading||saving)}/>
-      <Button title={uploading===String(v._id)+':after'?'جاري رفع الصورة...':drafts[v._id]?.afterPhotoId?'تم رفع صورة بعد التنفيذ · تصوير مرة أخرى':'تصوير بعد التنفيذ'} secondary onPress={()=>capturePhoto(v,'after')} disabled={Boolean(uploading||saving)}/>
-      <Button title={saving===String(v._id)?'جاري الحفظ...':'حفظ وإتمام الزيارة'} onPress={()=>update(v)} disabled={Boolean(saving||uploading)}/>
+      <TextInput placeholder="وصف العمل المنفذ" multiline value={drafts[v._id]?.workDescription||v.workDescription||''} onChangeText={value=>setDrafts(old=>({...old,[v._id]:{workDescription:value}}))} style={{minHeight:72,borderWidth:1,borderColor:COLORS.border,borderRadius:10,padding:10,textAlign:'right',marginTop:8}}/>
+      {v.status==='awaiting_client_confirmation'?<Text style={styles.detail}>تم إرسال طلب إنهاء الخدمة، وفي انتظار تأكيد العميل.</Text>:<Button title={saving===String(v._id)?'جاري الإرسال...':'إنهاء الخدمة'} onPress={()=>update(v)} disabled={Boolean(saving)}/>}
     </View>):!loading?<Text style={styles.emptyText}>لا توجد زيارات مسندة إليك حاليًا.</Text>:null}
   </ScrollView>;
 }
