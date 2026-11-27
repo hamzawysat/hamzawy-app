@@ -29,7 +29,9 @@ export default function ClientSubscriptionsScreen({ session, walletBalance = 0, 
       const [catalog, current, wallet, specialCatalog, specialMine] = await Promise.all([
         api('/client/commerce/catalog', { token: session.token }),
         api('/client/commerce/subscriptions', { token: session.token }),
-        api('/client/wallet', { token: session.token })
+        api('/client/wallet', { token: session.token }),
+        api('/subscriptions/plans', { token: session.token }),
+        api('/subscriptions/client/mine', { token: session.token })
       ]);
       setItems(Array.isArray(catalog.items) ? catalog.items : []);
       setSubscriptions(Array.isArray(current.subscriptions) ? current.subscriptions : []);
@@ -46,22 +48,28 @@ export default function ClientSubscriptionsScreen({ session, walletBalance = 0, 
   const purchase = item => {
     const price = Number(item.price || 0);
     if (!Number.isFinite(price) || price < 0) { Alert.alert('سعر غير صحيح', 'سعر الباقة غير صحيح.'); return; }
-    Alert.alert('تأكيد طلب الاشتراك', 'إرسال طلب الاشتراك في ' + item.name + ' بقيمة ' + price + ' جنيه؟ لن يتم خصم أي مبلغ الآن. سيتم إشعار الإدارة، والخصم يتم فقط بعد الموافقة والتفعيل.', [
-      { text: 'رجوع', style: 'cancel' },
-      { text: 'إرسال الطلب', onPress: async () => {
-        setSubmitting(String(item._id)); setError('');
-        try {
-          const result = await api('/client/commerce/subscriptions/purchase', {
-            method: 'POST', token: session.token,
-            body: { itemId: String(item._id), idempotencyKey: idempotencyKey() }
-          });
-          if (result.balance !== undefined) onWalletBalanceChange?.(Number(result.balance));
-          Alert.alert('تم إرسال الطلب', result.message || 'تم إرسال طلب الاشتراك للمراجعة.');
-          await load();
-        } catch (e) { setError(e.message || 'تعذر شراء الاشتراك.'); }
-        finally { setSubmitting(''); }
-      } }
-    ]);
+    const submit = async paymentMethod => {
+      setSubmitting(String(item._id)); setError('');
+      try {
+        const result = await api('/client/commerce/subscriptions/purchase', {
+          method: 'POST', token: session.token,
+          body: { itemId: String(item._id), paymentMethod, idempotencyKey: idempotencyKey() }
+        });
+        if (result.balance !== undefined) onWalletBalanceChange?.(Number(result.balance));
+        Alert.alert('تم إرسال الطلب', result.message || 'تم إرسال طلب الاشتراك للمراجعة.');
+        await load();
+      } catch (e) { setError(e.message || 'تعذر شراء الاشتراك.'); }
+      finally { setSubmitting(''); }
+    };
+    Alert.alert(
+      'اختيار طريقة الدفع',
+      'قيمة الاشتراك ' + price + ' جنيه. اختار طريقة الدفع قبل تأكيد الطلب.',
+      [
+        { text: 'الدفع من محفظة التطبيق', onPress: () => submit('wallet') },
+        { text: 'تحويل أموال', onPress: () => submit('transfer') },
+        { text: 'رجوع', style: 'cancel' }
+      ]
+    );
   };
 
   const renew = item => {
