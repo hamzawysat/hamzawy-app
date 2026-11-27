@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing } from 'react-native';
 import {
   View, Text, Image, FlatList, TouchableOpacity, ActivityIndicator, ScrollView,
@@ -52,13 +52,12 @@ function TechnicianSubscriptionVisits({ session }) {
     finally{setSaving('');}
   };
   return <ScrollView contentContainerStyle={{padding:14,paddingBottom:30}}>
-    <View style={styles.dataCard}><Text style={styles.cardTitlePremium}>زيارات الصيانة المسندة إليّ</Text><Text style={styles.detail}>تظهر هنا الزيارات المسندة لحسابك فقط. لا تتضمن هذه الشاشة أسعار الاشتراك أو بيانات IPTV.</Text><Button title={loading?'جاري التحديث...':'تحديث الزيارات'} secondary onPress={load} disabled={loading}/></View>
+    <View style={styles.dataCard}><Text style={styles.cardTitlePremium}>زيارات الصيانة المسندة إليّ</Text><Text style={styles.detail}>تظهر هنا الزيارات المسندة لحسابك فقط، مع بيانات تنفيذ الزيارة دون تفاصيل الباقة أو بيانات الدخول.</Text><Button title={loading?'جاري التحديث...':'تحديث الزيارات'} secondary onPress={load} disabled={loading}/></View>
     {visits.length?visits.map((v,index)=><View key={String(v._id)} style={[styles.dataCard,{marginTop:10}]}>
       <Text style={styles.cardTitleSmall}>{v.subscription?.code||'زيارة صيانة'}</Text>
       <Text style={styles.detail}>العميل: {v.client?.name||'—'} • الهاتف: {v.client?.phone||'—'}</Text>
       <Text style={styles.detail}>العنوان: {v.subscription?.address||'—'}</Text>
       <Text style={styles.detail}>الموعد: {new Date(v.scheduledAt).toLocaleString('ar-EG')}</Text>
-      <Text style={styles.detail}>نوع الاشتراك: {v.subscription?.type==='maintenance'?'صيانة سنوية':v.subscription?.type==='air_network'?'شبكات هواء':'IPTV'}</Text>
       <TextInput placeholder="وصف العمل المنفذ" multiline value={drafts[v._id]?.workDescription||v.workDescription||''} onChangeText={value=>setDrafts(old=>({...old,[v._id]:{...old[v._id],workDescription:value}}))} style={{minHeight:72,borderWidth:1,borderColor:COLORS.border,borderRadius:10,padding:10,textAlign:'right',marginTop:8}}/>
       <TextInput placeholder="رابط صورة قبل التنفيذ (اختياري)" value={drafts[v._id]?.beforePhotos||''} onChangeText={value=>setDrafts(old=>({...old,[v._id]:{...old[v._id],beforePhotos:value}}))} style={{borderWidth:1,borderColor:COLORS.border,borderRadius:10,padding:10,textAlign:'right',marginTop:8}}/>
       <TextInput placeholder="رابط صورة بعد التنفيذ (اختياري)" value={drafts[v._id]?.afterPhotos||''} onChangeText={value=>setDrafts(old=>({...old,[v._id]:{...old[v._id],afterPhotos:value}}))} style={{borderWidth:1,borderColor:COLORS.border,borderRadius:10,padding:10,textAlign:'right',marginTop:8}}/>
