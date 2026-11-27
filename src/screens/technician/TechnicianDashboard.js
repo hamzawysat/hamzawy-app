@@ -28,6 +28,45 @@ import TechnicianWalletScreen from './TechnicianWalletScreen';
 import ReferralCard, { ReferralPromo } from '../shared/ReferralCard';
 import PublicContentBanner from '../shared/PublicContentBanner';
 
+
+function TechnicianSubscriptionVisits({ session }) {
+  const [visits,setVisits]=useState([]);
+  const [loading,setLoading]=useState(false);
+  const [drafts,setDrafts]=useState({});
+  const [saving,setSaving]=useState('');
+  const load=useCallback(async()=>{
+    if(!session?.token)return;
+    setLoading(true);
+    try{const data=await api('/subscriptions/technician/visits',{token:session.token});setVisits(Array.isArray(data.visits)?data.visits:[]);}
+    catch(e){Alert.alert('تعذر تحميل الزيارات',e.message||'حاول مرة أخرى.');}
+    finally{setLoading(false);}
+  },[session?.token]);
+  useEffect(()=>{void load();},[load]);
+  const update=async visit=>{
+    const id=String(visit._id);const draft=drafts[id]||{};
+    setSaving(id);
+    try{
+      await api('/subscriptions/technician/visits/'+encodeURIComponent(id),{method:'PATCH',token:session.token,body:{status:draft.status||'completed',workDescription:draft.workDescription||'',beforePhotos:draft.beforePhotos?[draft.beforePhotos]:[],afterPhotos:draft.afterPhotos?[draft.afterPhotos]:[]}});
+      Alert.alert('تم الحفظ','تم تحديث بيانات الزيارة.');await load();
+    }catch(e){Alert.alert('تعذر حفظ الزيارة',e.message||'حاول مرة أخرى.');}
+    finally{setSaving('');}
+  };
+  return <ScrollView contentContainerStyle={{padding:14,paddingBottom:30}}>
+    <View style={styles.dataCard}><Text style={styles.cardTitlePremium}>زيارات الصيانة المسندة إليّ</Text><Text style={styles.detail}>تظهر هنا الزيارات المسندة لحسابك فقط. لا تتضمن هذه الشاشة أسعار الاشتراك أو بيانات IPTV.</Text><Button title={loading?'جاري التحديث...':'تحديث الزيارات'} secondary onPress={load} disabled={loading}/></View>
+    {visits.length?visits.map((v,index)=><View key={String(v._id)} style={[styles.dataCard,{marginTop:10}]}>
+      <Text style={styles.cardTitleSmall}>{v.subscription?.code||'زيارة صيانة'}</Text>
+      <Text style={styles.detail}>العميل: {v.client?.name||'—'} • الهاتف: {v.client?.phone||'—'}</Text>
+      <Text style={styles.detail}>العنوان: {v.subscription?.address||'—'}</Text>
+      <Text style={styles.detail}>الموعد: {new Date(v.scheduledAt).toLocaleString('ar-EG')}</Text>
+      <Text style={styles.detail}>نوع الاشتراك: {v.subscription?.type==='maintenance'?'صيانة سنوية':v.subscription?.type==='air_network'?'شبكات هواء':'IPTV'}</Text>
+      <TextInput placeholder="وصف العمل المنفذ" multiline value={drafts[v._id]?.workDescription||v.workDescription||''} onChangeText={value=>setDrafts(old=>({...old,[v._id]:{...old[v._id],workDescription:value}}))} style={{minHeight:72,borderWidth:1,borderColor:COLORS.border,borderRadius:10,padding:10,textAlign:'right',marginTop:8}}/>
+      <TextInput placeholder="رابط صورة قبل التنفيذ (اختياري)" value={drafts[v._id]?.beforePhotos||''} onChangeText={value=>setDrafts(old=>({...old,[v._id]:{...old[v._id],beforePhotos:value}}))} style={{borderWidth:1,borderColor:COLORS.border,borderRadius:10,padding:10,textAlign:'right',marginTop:8}}/>
+      <TextInput placeholder="رابط صورة بعد التنفيذ (اختياري)" value={drafts[v._id]?.afterPhotos||''} onChangeText={value=>setDrafts(old=>({...old,[v._id]:{...old[v._id],afterPhotos:value}}))} style={{borderWidth:1,borderColor:COLORS.border,borderRadius:10,padding:10,textAlign:'right',marginTop:8}}/>
+      <Button title={saving===String(v._id)?'جاري الحفظ...':'حفظ وإتمام الزيارة'} onPress={()=>update(v)} disabled={Boolean(saving)}/>
+    </View>):!loading?<Text style={styles.emptyText}>لا توجد زيارات مسندة إليك حاليًا.</Text>:null}
+  </ScrollView>;
+}
+
 export function TechnicianDashboard({ context }) {
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
   const [activeReplyNotificationId, setActiveReplyNotificationId] = useState('');
@@ -259,10 +298,11 @@ export function TechnicianDashboard({ context }) {
             <ReferralPromo onPress={()=>setReferralPageOpen(true)} style={{backgroundColor:'#DCE5FF',borderRadius:13,padding:8,marginBottom:2,flexDirection:'row-reverse',alignItems:'center',gap:9}}><Text style={{fontSize:21}}>🎁</Text><View style={{flex:1}}><Text style={{color:'#09145B',fontSize:14,fontWeight:'900',textAlign:'right'}}>ادعُ صديقك واربح 150 جنيه</Text><Text style={{color:'#26356E',fontSize:11,fontWeight:'700',textAlign:'right',marginTop:3}}>شارك رابط الدعوة واكسب رصيد لكل صديق ينضم</Text></View><View style={{backgroundColor:'#102A9B',borderRadius:11,paddingHorizontal:11,paddingVertical:9}}><Text style={{color:'#FFF',fontWeight:'900',fontSize:12}}>دعوة الآن ←</Text></View></ReferralPromo>
             <Text style={{color:'#07145C',fontSize:22,fontWeight:'900',textAlign:'right',marginBottom:2}}>إجراءات سريعة</Text>
             <View style={{backgroundColor:'#FFF',borderRadius:17,paddingHorizontal:12,elevation:3}}>
-              {[{label:'سجل المهام',icon:'📋',run:()=>setTechData(v=>({...v,tab:'completed'}))},{label:'التقارير',icon:'📊',run:()=>setTechData(v=>({...v,tab:'offers'}))},{label:'الإعدادات',icon:'⚙️',run:()=>setTechData(v=>({...v,tab:'profile'}))},{label:'طلب دعم فني',icon:'🎧',run:()=>setScreen('support')}].map((item,index)=><TouchableOpacity key={item.label} onPress={item.run} style={{minHeight:52,flexDirection:'row-reverse',alignItems:'center',borderBottomWidth:index===3?0:1,borderBottomColor:'#EDF0F5',gap:12}}><Text style={{fontSize:21,width:28,textAlign:'center'}}>{item.icon}</Text><Text style={{flex:1,color:'#111827',fontSize:15,fontWeight:'800',textAlign:'right'}}>{item.label}</Text><Text style={{color:'#CBD0D9',fontSize:24}}>‹</Text></TouchableOpacity>)}
+              {[{label:'زيارات الصيانة',icon:'🛠️',run:()=>setTechData(v=>({...v,tab:'subscriptionVisits'}))},{label:'سجل المهام',icon:'📋',run:()=>setTechData(v=>({...v,tab:'completed'}))},{label:'التقارير',icon:'📊',run:()=>setTechData(v=>({...v,tab:'offers'}))},{label:'الإعدادات',icon:'⚙️',run:()=>setTechData(v=>({...v,tab:'profile'}))},{label:'طلب دعم فني',icon:'🎧',run:()=>setScreen('support')}].map((item,index)=><TouchableOpacity key={item.label} onPress={item.run} style={{minHeight:52,flexDirection:'row-reverse',alignItems:'center',borderBottomWidth:index===3?0:1,borderBottomColor:'#EDF0F5',gap:12}}><Text style={{fontSize:21,width:28,textAlign:'center'}}>{item.icon}</Text><Text style={{flex:1,color:'#111827',fontSize:15,fontWeight:'800',textAlign:'right'}}>{item.label}</Text><Text style={{color:'#CBD0D9',fontSize:24}}>‹</Text></TouchableOpacity>)}
             </View>
             {!isApproved?<Text style={{color:COLORS.amber800,fontSize:11,lineHeight:20,marginTop:10,textAlign:'right'}}>حسابك {user.status||'قيد المراجعة'}. إرسال العروض وشحن المحفظة متاحان بعد اعتماد الإدارة.</Text>:null}
           </ScrollView>}
+          {tab === 'subscriptionVisits' && <TechnicianSubscriptionVisits session={session} />}
           {tab === 'available' && <>{!acceptingOrders ? <View style={[styles.formCard, { marginHorizontal: 12, marginTop: 8, borderColor: COLORS.amber300 }]}><Text style={styles.cardTitleSmall}>استقبال الطلبات الجديدة متوقف</Text><Text style={styles.detail}>فعّل استلام الطلبات عشان تقدر تشوف الطلبات الجديدة وتقدم عروضك. طلباتك الحالية ورسائل العملاء ما زالت تعمل بشكل طبيعي.</Text><Button title="تفعيل استلام الطلبات" onPress={toggleOrderAvailability} disabled={availabilitySaving} /></View> : null}<View style={[styles.formCard, { marginHorizontal: 12, marginTop: 8 }]}>{/*availability*/}<Field label="ابحث بكود الطلب أو المنطقة أو الخدمة" value={technicianSearch} onChangeText={setTechnicianSearch} placeholder="اكتب كلمة للبحث" /><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 7, paddingVertical: 4 }}>{['الكل', ...availableServices].map(service => <TouchableOpacity key={service} onPress={() => setTechnicianServiceFilter(service)} style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 18, borderWidth: 1, borderColor: technicianServiceFilter === service ? '#102A9B' : '#E5E9F2', backgroundColor: technicianServiceFilter === service ? '#EEF2FF' : COLORS.white }}><Text style={{ color: COLORS.text, fontSize: 11, fontWeight: '800' }}>{service}</Text></TouchableOpacity>)}</ScrollView></View><FlatList style={{ flex: 1 }} contentContainerStyle={styles.listPremium} data={filteredAvailableOrders} keyExtractor={(item, i) => String(item._id || item.sn || i)} ListEmptyComponent={<Text style={styles.emptyText}>لا توجد فرص متاحة حاليًا.</Text>} ListFooterComponent={hasMoreAvailable ? <Button title={loadingMoreAvailable ? 'جاري تحميل المزيد...' : 'تحميل 20 طلبًا إضافيًا'} secondary onPress={loadMoreAvailable} disabled={loadingMoreAvailable} /> : null} renderItem={({ item }) => {
              const sn = getOrderSN(item);
              return <View style={styles.orderCardPremium}>
