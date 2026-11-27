@@ -59,7 +59,7 @@
       }
     },
     "runtimeVersion": {
-      "policy": "fingerprint"
+      "policy": "appVersion"
     },
     "scheme": "hamzawy"
   }
