@@ -651,6 +651,16 @@ test('client dashboard includes browser service/store chooser, store, wallet, su
   assert.ok(subscriptions.includes("value: 'wallet'"));
   assert.ok(subscriptions.includes("value: 'transfer'"));
   assert.ok(subscriptions.includes('accessibilityRole="radio"'));
+  assert.ok(subscriptions.includes("'/subscriptions/client/request-visit'"));
+  assert.ok(subscriptions.includes("'/subscriptions/client/visits/'"));
+  assert.ok(subscriptions.includes('await confirmAction('));
+  assert.ok(!subscriptions.includes('/client/commerce/'));
+  const technician = fs.readFileSync(path.join(root, 'src/screens/technician/TechnicianDashboard.js'), 'utf8');
+  assert.ok(technician.includes("api('/subscriptions/technician/visits'"));
+  assert.ok(technician.includes("'/subscriptions/technician/visits/'"));
+  assert.ok(technician.includes("status:'completed'"));
+  assert.ok(technician.includes('awaiting_client_confirmation'));
+  assert.ok(technician.includes('await confirmSubscriptionVisitAction('));
 });
 
 test('native store ads use one server-clock schedule shared by clients and technicians across app restarts', () => {
