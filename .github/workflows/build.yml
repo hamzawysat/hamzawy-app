@@ -78,11 +78,10 @@ jobs:
           from pathlib import Path
           path = Path("android/app/build.gradle")
           s = path.read_text()
-          if "signingConfigs.release" not in s:
+          if "signingConfigs.release" not in s and "signingConfig signingConfigs.release" not in s:
               NL = chr(10)
-              if "signingConfigs {" in s:
-                  s = s.replace("    signingConfigs {", "    signingConfigs {" + NL + "        release {" + NL + "            def props = new Properties()" + NL + "            props.load(new FileInputStream(rootProject.file('key.properties')))" + NL + "            storeFile file(props['storeFile'])" + NL + "            storePassword props['storePassword']" + NL + "            keyAlias props['keyAlias']" + NL + "            keyPassword props['keyPassword']" + NL + "        }", 1)
-              s = s.replace("    buildTypes {", "    signingConfigs {\n        release {\n            def props = new Properties()\n            props.load(new FileInputStream(rootProject.file('key.properties')))\n            storeFile file(props['storeFile'])\n            storePassword props['storePassword']\n            keyAlias props['keyAlias']\n            keyPassword props['keyPassword']\n        }\n    }\n    buildTypes {", 1)
+              block = "    signingConfigs {" + NL + "        release {" + NL + "            def props = new Properties()" + NL + "            props.load(new FileInputStream(rootProject.file('key.properties')))" + NL + "            storeFile file(props['storeFile'])" + NL + "            storePassword props['storePassword']" + NL + "            keyAlias props['keyAlias']" + NL + "            keyPassword props['keyPassword']" + NL + "        }" + NL + "    }" + NL
+              s = s.replace("    buildTypes {", block + "    buildTypes {", 1)
               s = s.replace("            release {", "            release {\n                signingConfig signingConfigs.release", 1)
               path.write_text(s)
           PY2
