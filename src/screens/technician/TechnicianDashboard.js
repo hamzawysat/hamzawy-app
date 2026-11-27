@@ -28,6 +28,15 @@ import ReferralCard, { ReferralPromo } from '../shared/ReferralCard';
 import PublicContentBanner from '../shared/PublicContentBanner';
 
 
+function confirmSubscriptionVisitAction(title, message) {
+  return new Promise(resolve => {
+    Alert.alert(title, message, [
+      { text: 'إلغاء', style: 'cancel', onPress: () => resolve(false) },
+      { text: 'تأكيد', onPress: () => resolve(true) },
+    ], { cancelable: true, onDismiss: () => resolve(false) });
+  });
+}
+
 function TechnicianSubscriptionVisits({ session }) {
   const [visits,setVisits]=useState([]);
   const [loading,setLoading]=useState(false);
@@ -43,6 +52,8 @@ function TechnicianSubscriptionVisits({ session }) {
   useEffect(()=>{void load();},[load]);
   const update=async visit=>{
     const id=String(visit._id);const draft=drafts[id]||{};
+    const confirmed = await confirmSubscriptionVisitAction('إنهاء زيارة الصيانة', 'هل تؤكد إنهاء زيارة الصيانة؟ سيصل طلب التأكيد للعميل، ولن تُغلق الزيارة قبل تأكيده.');
+    if (!confirmed) return;
     setSaving(id);
     try{
       const result=await api('/subscriptions/technician/visits/'+encodeURIComponent(id),{method:'PATCH',token:session.token,body:{status:'completed',workDescription:draft.workDescription||visit.workDescription||''}});
