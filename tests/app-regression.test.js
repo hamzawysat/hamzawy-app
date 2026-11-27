@@ -644,9 +644,13 @@ test('client dashboard includes browser service/store chooser, store, wallet, su
   assert.ok(wallet.includes("'/client/wallet/topup'"));
   assert.ok(wallet.includes('topupRequests'));
   assert.ok(wallet.includes('transactions'));
-  assert.ok(subscriptions.includes("'/client/commerce/catalog'"));
-  assert.ok(subscriptions.includes("'/client/commerce/subscriptions/purchase'"));
-  assert.ok(subscriptions.includes("'/client/commerce/subscriptions/'"));
+  assert.ok(subscriptions.includes("'/subscriptions/plans'"));
+  assert.ok(subscriptions.includes("'/subscriptions/client/mine'"));
+  assert.ok(subscriptions.includes("'/subscriptions/client/request'"));
+  assert.ok(subscriptions.includes("'/subscriptions/client/request-renewal'"));
+  assert.ok(subscriptions.includes("value: 'wallet'"));
+  assert.ok(subscriptions.includes("value: 'transfer'"));
+  assert.ok(subscriptions.includes('accessibilityRole="radio"'));
 });
 
 test('native store ads use one server-clock schedule shared by clients and technicians across app restarts', () => {
