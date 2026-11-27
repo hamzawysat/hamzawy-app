@@ -111,6 +111,7 @@ export default function ClientSubscriptionsScreen({ session, walletBalance = 0, 
             {item.type === 'air_network' ? <Text style={styles.detail}>الشبكة: {item.networkName || '—'} • كود التفعيل: {item.activationCode || '—'}</Text> : null}
             {item.type === 'iptv' ? <View><Text style={styles.detail}>اسم المستخدم: {item.iptvUsername || '—'}</Text><Text style={styles.detail}>كلمة المرور: {item.iptvPassword || '—'}</Text><Text style={styles.detail}>البوابة: {item.portalUrl || '—'} • الأجهزة: {item.allowedDevices || 1}</Text></View> : null}
             {(item.includedServices || []).map((x,i)=><Text key={i} style={styles.detail}>• {x}</Text>)}
+            {['active','expired','paused'].includes(item.status) ? <Button title="طلب تجديد الاشتراك" secondary onPress={() => Alert.alert('طلب تجديد', 'إرسال طلب تجديد الاشتراك ' + item.code + ' للإدارة؟', [{text:'رجوع',style:'cancel'},{text:'إرسال الطلب',onPress:async()=>{setSubmitting(String(item._id));try{const result=await api('/subscriptions/client/request-renewal',{method:'POST',token:session.token,body:{subscriptionId:String(item._id)}});Alert.alert('تم إرسال الطلب',result.message||'سيتم التواصل معك.');}catch(e){setError(e.message||'تعذر إرسال طلب التجديد.');}finally{setSubmitting('');}}}])} disabled={Boolean(submitting)} /> : null}
           </View>;
         }) : <Text style={styles.emptyText}>لا توجد اشتراكات مفعلة على حسابك.</Text>}
         {specialVisits.length ? <Text style={[styles.detail,{fontWeight:'900',marginTop:8}]}>مواعيد الصيانة</Text> : null}
