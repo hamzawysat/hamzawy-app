@@ -98,6 +98,16 @@ export default function ClientSubscriptionsScreen({ session, walletBalance = 0, 
     ]);
   };
 
+  const requestSpecialRenewal = async (item, paymentMethod) => {
+    setSubmitting(String(item._id)); setError('');
+    try {
+      const result = await api('/subscriptions/client/request-renewal', { method: 'POST', token: session.token, body: { subscriptionId: String(item._id), paymentMethod } });
+      Alert.alert('تم إرسال طلب التجديد', result.message || 'سيتم مراجعة طلبك من الإدارة.');
+      await load();
+    } catch (e) { setError(e.message || 'تعذر إرسال طلب التجديد.'); }
+    finally { setSubmitting(''); }
+  };
+
   return (
     <View style={{ padding: 14, paddingBottom: 30 }}>
       <View style={styles.dataCard}>
@@ -120,7 +130,7 @@ export default function ClientSubscriptionsScreen({ session, walletBalance = 0, 
             {item.type === 'iptv' ? <View><Text style={styles.detail}>نوع الخدمة: اشتراك ترفيهي</Text><Text style={styles.detail}>بيانات الدخول: {item.iptvUsername || '—'} / {item.iptvPassword || '—'}</Text><Text style={styles.detail}>رابط الخدمة: {item.portalUrl || '—'} • عدد الأجهزة: {item.allowedDevices || 1}</Text></View> : null}
             {(item.includedServices || []).map((x,i)=><Text key={i} style={styles.detail}>• {x}</Text>)}
             {item.type === 'maintenance' && item.status === 'active' ? <Button title="طلب زيارة صيانة" secondary onPress={() => Alert.alert('طلب زيارة', 'إرسال طلب زيارة صيانة للإدارة؟', [{text:'رجوع',style:'cancel'},{text:'إرسال الطلب',onPress:async()=>{setSubmitting(String(item._id));try{const result=await api('/subscriptions/client/request-visit',{method:'POST',token:session.token,body:{subscriptionId:String(item._id)}});Alert.alert('تم إرسال الطلب',result.message||'سيتم التواصل معك لتأكيد الموعد.');}catch(e){setError(e.message||'تعذر إرسال طلب الزيارة.');}finally{setSubmitting('');}}}])} disabled={Boolean(submitting)} /> : null}
-            {['active','expired','paused'].includes(item.status) ? <Button title="طلب تجديد الاشتراك" secondary onPress={() => Alert.alert('طلب تجديد', 'إرسال طلب تجديد الاشتراك ' + item.code + ' للإدارة؟', [{text:'رجوع',style:'cancel'},{text:'إرسال الطلب',onPress:async()=>{setSubmitting(String(item._id));try{const result=await api('/subscriptions/client/request-renewal',{method:'POST',token:session.token,body:{subscriptionId:String(item._id)}});Alert.alert('تم إرسال الطلب',result.message||'سيتم التواصل معك.');}catch(e){setError(e.message||'تعذر إرسال طلب التجديد.');}finally{setSubmitting('');}}}])} disabled={Boolean(submitting)} /> : null}
+            {['active','expired','paused'].includes(item.status) ? <Button title="طلب تجديد الاشتراك" secondary onPress={() => Alert.alert('اختيار طريقة الدفع للتجديد', 'اختار طريقة الدفع قبل إرسال طلب تجديد ' + item.code + '.', [{text:'الدفع من المحفظة',onPress:()=>requestSpecialRenewal(item,'wallet')},{text:'تحويل أموال',onPress:()=>requestSpecialRenewal(item,'transfer')},{text:'رجوع',style:'cancel'}])} disabled={Boolean(submitting)} /> : null}
           </View>;
         }) : <Text style={styles.emptyText}>لا توجد اشتراكات مفعلة على حسابك.</Text>}
         {specialVisits.length ? <Text style={[styles.detail,{fontWeight:'900',marginTop:8}]}>مواعيد الصيانة</Text> : null}
