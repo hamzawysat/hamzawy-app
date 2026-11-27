@@ -1,23 +1,51 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { api } from '../../services/api';
 import { COLORS } from '../../theme/colors';
 import { styles } from '../../theme/styles';
 import { Button } from '../../components/FormControls';
 
-function idempotencyKey() {
-  return 'commerce-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+const TYPE_LABEL = { maintenance: 'الصيانة السنوية', iptv: 'الاشتراك الترفيهي', air_network: 'الاشتراك المحلي' };
+const STATUS = { active: 'نشط', pending: 'قيد مراجعة الإدارة', paused: 'موقوف مؤقتًا', cancelled: 'ملغي', expired: 'منتهي' };
+const PAYMENT_OPTIONS = [
+  { value: 'wallet', label: 'محفظة التطبيق', hint: 'الخصم بعد موافقة الإدارة' },
+  { value: 'transfer', label: 'تحويل أموال', hint: 'تراجع الإدارة التحويل قبل التفعيل' },
+];
+
+function PaymentChoices({ value, onChange }) {
+  return (
+    <View style={{ marginTop: 9 }}>
+      <Text style={[styles.detail, { fontWeight: '900', marginBottom: 7 }]}>طريقة الدفع — اختار طريقة واحدة</Text>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        {PAYMENT_OPTIONS.map(option => {
+          const selected = value === option.value;
+          return (
+            <Pressable key={option.value} accessibilityRole="radio" accessibilityState={{ selected }}
+              onPress={() => onChange(option.value)}
+              style={{ flex: 1, minWidth: 135, padding: 12, borderRadius: 12, borderWidth: selected ? 2 : 1,
+                borderColor: selected ? COLORS.navy : COLORS.border, backgroundColor: selected ? '#EEF3FA' : '#FFFFFF' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <View style={{ width: 19, height: 19, borderRadius: 10, borderWidth: 2,
+                  borderColor: selected ? COLORS.navy : '#9AA4B2', alignItems: 'center', justifyContent: 'center' }}>
+                  {selected ? <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: COLORS.navy }} /> : null}
+                </View>
+                <Text style={{ fontSize: 13, fontWeight: '900', color: COLORS.navy }}>{option.label}</Text>
+              </View>
+              <Text style={[styles.detail, { marginTop: 6, fontSize: 11 }]}>{option.hint}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
 }
 
-const STATUS = { active: 'نشط', pending: 'قيد المراجعة', paused: 'موقوف مؤقتًا', cancelled: 'ملغي', expired: 'منتهي' };
-
 export default function ClientSubscriptionsScreen({ session, walletBalance = 0, onWalletBalanceChange, onOpenWallet }) {
-  const [items, setItems] = useState([]);
+  const [plans, setPlans] = useState([]);
   const [subscriptions, setSubscriptions] = useState([]);
-  const [specialPlans, setSpecialPlans] = useState([]);
-  const [specialSubscriptions, setSpecialSubscriptions] = useState([]);
-  const [specialVisits, setSpecialVisits] = useState([]);
-  const [view, setView] = useState('available');
+  const [visits, setVisits] = useState([]);
+  const [paymentMethods, setPaymentMethods] = useState({});
+  const [renewalMethods, setRenewalMethods] = useState({});
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState('');
   const [error, setError] = useState('');
@@ -26,18 +54,14 @@ export default function ClientSubscriptionsScreen({ session, walletBalance = 0, 
     if (!session?.token) return;
     setLoading(true); setError('');
     try {
-      const [catalog, current, wallet, specialCatalog, specialMine] = await Promise.all([
-        api('/client/commerce/catalog', { token: session.token }),
-        api('/client/commerce/subscriptions', { token: session.token }),
-        api('/client/wallet', { token: session.token }),
+      const [catalog, mine, wallet] = await Promise.all([
         api('/subscriptions/plans', { token: session.token }),
-        api('/subscriptions/client/mine', { token: session.token })
+        api('/subscriptions/client/mine', { token: session.token }),
+        api('/client/wallet', { token: session.token }),
       ]);
-      setItems(Array.isArray(catalog.items) ? catalog.items : []);
-      setSubscriptions(Array.isArray(current.subscriptions) ? current.subscriptions : []);
-      setSpecialPlans(Array.isArray(specialCatalog.plans) ? specialCatalog.plans : []);
-      setSpecialSubscriptions(Array.isArray(specialMine.subscriptions) ? specialMine.subscriptions : []);
-      setSpecialVisits(Array.isArray(specialMine.visits) ? specialMine.visits : []);
+      setPlans(Array.isArray(catalog.plans) ? catalog.plans.filter(plan => plan.active !== false) : []);
+      setSubscriptions(Array.isArray(mine.subscriptions) ? mine.subscriptions : []);
+      setVisits(Array.isArray(mine.visits) ? mine.visits : []);
       if (wallet.balance !== undefined || wallet.walletBalance !== undefined) onWalletBalanceChange?.(Number(wallet.balance ?? wallet.walletBalance));
     } catch (e) { setError(e.message || 'تعذر تحميل الاشتراكات.'); }
     finally { setLoading(false); }
@@ -45,133 +69,133 @@ export default function ClientSubscriptionsScreen({ session, walletBalance = 0, 
 
   useEffect(() => { load(); }, [load]);
 
-  const purchase = item => {
-    const price = Number(item.price || 0);
-    if (!Number.isFinite(price) || price < 0) { Alert.alert('سعر غير صحيح', 'سعر الباقة غير صحيح.'); return; }
-    const submit = async paymentMethod => {
-      setSubmitting(String(item._id)); setError('');
-      try {
-        const result = await api('/client/commerce/subscriptions/purchase', {
-          method: 'POST', token: session.token,
-          body: { itemId: String(item._id), paymentMethod, idempotencyKey: idempotencyKey() }
-        });
-        if (result.balance !== undefined) onWalletBalanceChange?.(Number(result.balance));
-        Alert.alert('تم إرسال الطلب', result.message || 'تم إرسال طلب الاشتراك للمراجعة.');
-        await load();
-      } catch (e) { setError(e.message || 'تعذر شراء الاشتراك.'); }
-      finally { setSubmitting(''); }
-    };
-    Alert.alert(
-      'اختيار طريقة الدفع',
-      'قيمة الاشتراك ' + price + ' جنيه. اختار طريقة الدفع قبل تأكيد الطلب.',
-      [
-        { text: 'الدفع من محفظة التطبيق', onPress: () => submit('wallet') },
-        { text: 'تحويل أموال', onPress: () => submit('transfer') },
-        { text: 'رجوع', style: 'cancel' }
-      ]
-    );
-  };
-
-  const renew = item => {
-    const amount = Number(item.amount || 0);
-    const submit = async paymentMethod => {
-      setSubmitting(String(item._id)); setError('');
-      try {
-        const result = await api('/client/commerce/subscriptions/' + encodeURIComponent(item._id) + '/renew', {
-          method: 'POST', token: session.token, body: { paymentMethod, idempotencyKey: idempotencyKey() }
-        });
-        if (result.balance !== undefined) onWalletBalanceChange?.(Number(result.balance));
-        Alert.alert(result.duplicate ? 'طلب مسجل بالفعل' : 'طلب التجديد', result.message || 'تم إرسال طلب التجديد.');
-        await load();
-      } catch (e) { setError(e.message || 'تعذر تجديد الاشتراك.'); }
-      finally { setSubmitting(''); }
-    };
-    Alert.alert(
-      'اختيار طريقة الدفع',
-      'قيمة التجديد ' + amount + ' جنيه. اختار طريقة الدفع قبل التأكيد.',
-      [
-        { text: 'الدفع من محفظة التطبيق', onPress: () => submit('wallet') },
-        { text: 'تحويل أموال', onPress: () => submit('transfer') },
-        { text: 'رجوع', style: 'cancel' }
-      ]
-    );
-  };
-
-  const requestSpecialRenewal = async (item, paymentMethod) => {
-    setSubmitting(String(item._id)); setError('');
+  const submitPlanRequest = async plan => {
+    const paymentMethod = paymentMethods[String(plan._id)];
+    if (!paymentMethod) { Alert.alert('اختار طريقة الدفع', 'حدد محفظة التطبيق أو تحويل الأموال أولًا.'); return; }
+    setSubmitting(String(plan._id)); setError('');
     try {
-      const result = await api('/subscriptions/client/request-renewal', { method: 'POST', token: session.token, body: { subscriptionId: String(item._id), paymentMethod } });
-      Alert.alert('تم إرسال طلب التجديد', result.message || 'سيتم مراجعة طلبك من الإدارة.');
+      const result = await api('/subscriptions/client/request', { method: 'POST', token: session.token,
+        body: { planId: String(plan._id), paymentMethod } });
+      Alert.alert('تم إرسال الطلب', result.message || 'تم إرسال طلب الاشتراك للإدارة للمراجعة.');
+      await load();
+    } catch (e) { setError(e.message || 'تعذر إرسال طلب الاشتراك.'); }
+    finally { setSubmitting(''); }
+  };
+
+  const submitRenewalRequest = async item => {
+    const paymentMethod = renewalMethods[String(item._id)];
+    if (!paymentMethod) { Alert.alert('اختار طريقة الدفع', 'حدد طريقة دفع التجديد أولًا.'); return; }
+    setSubmitting('renew-' + item._id); setError('');
+    try {
+      const result = await api('/subscriptions/client/request-renewal', { method: 'POST', token: session.token,
+        body: { subscriptionId: String(item._id), paymentMethod } });
+      Alert.alert('تم إرسال طلب التجديد', result.message || 'ستراجع الإدارة طلب التجديد وطريقة الدفع.');
       await load();
     } catch (e) { setError(e.message || 'تعذر إرسال طلب التجديد.'); }
     finally { setSubmitting(''); }
   };
 
+  const requestVisit = async item => {
+    setSubmitting('visit-' + item._id); setError('');
+    try {
+      const result = await api('/subscriptions/client/request-visit', { method: 'POST', token: session.token,
+        body: { subscriptionId: String(item._id) } });
+      Alert.alert('تم إرسال طلب الزيارة', result.message || 'ستراجع الإدارة طلب زيارة الصيانة.');
+      await load();
+    } catch (e) { setError(e.message || 'تعذر إرسال طلب الزيارة.'); }
+    finally { setSubmitting(''); }
+  };
+
+  const confirmVisit = async visit => {
+    setSubmitting('confirm-' + visit._id); setError('');
+    try {
+      const result = await api('/subscriptions/client/visits/' + encodeURIComponent(visit._id) + '/confirm-completion', {
+        method: 'POST', token: session.token, body: {},
+      });
+      Alert.alert('تم تأكيد الزيارة', result.message || 'تم تسجيل تأكيدك.');
+      await load();
+    } catch (e) { setError(e.message || 'تعذر تأكيد استلام الزيارة.'); }
+    finally { setSubmitting(''); }
+  };
+
+  const renderPlan = plan => (
+    <View key={String(plan._id)} style={{ paddingVertical: 12, borderTopWidth: 1, borderColor: COLORS.border }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8, alignItems: 'center' }}>
+        <Text style={styles.cardTitleSmall}>{plan.name || TYPE_LABEL[plan.type] || 'باقة اشتراك'}</Text>
+        <Text style={[styles.cardTitleSmall, { color: COLORS.navy }]}>{Number(plan.price || 0).toLocaleString('ar-EG')} جنيه</Text>
+      </View>
+      <Text style={styles.detail}>{TYPE_LABEL[plan.type] || 'اشتراك'} • {Number(plan.durationDays || 0)} يوم</Text>
+      {plan.description ? <Text style={styles.detail}>{plan.description}</Text> : null}
+      {plan.type === 'maintenance' && Number(plan.visitCount || 0) > 0 ? <Text style={styles.detail}>عدد زيارات الصيانة: {Number(plan.visitCount)}</Text> : null}
+      {Array.isArray(plan.includedServices) && plan.includedServices.length ? <View style={{ marginTop: 7 }}>
+        <Text style={[styles.detail, { fontWeight: '900' }]}>الخدمات المشمولة</Text>
+        {plan.includedServices.map((service, i) => <Text key={String(i)} style={styles.detail}>✓ {service}</Text>)}
+      </View> : null}
+      {Array.isArray(plan.excludedSupplies) && plan.excludedSupplies.length ? <View style={{ marginTop: 5 }}>
+        <Text style={[styles.detail, { fontWeight: '900' }]}>غير مشمول في السعر</Text>
+        {plan.excludedSupplies.map((supply, i) => <Text key={String(i)} style={styles.detail}>• {supply}</Text>)}
+      </View> : null}
+      {plan.type !== 'maintenance' ? <Text style={styles.detail}>عدد الأجهزة المسموح بها: {Number(plan.allowedDevices || 1)}</Text> : null}
+      <PaymentChoices value={paymentMethods[String(plan._id)] || ''}
+        onChange={method => setPaymentMethods(current => ({ ...current, [String(plan._id)]: method }))} />
+      <Button title={submitting === String(plan._id) ? 'جاري إرسال الطلب...' : 'إرسال طلب الاشتراك'}
+        onPress={() => submitPlanRequest(plan)} disabled={Boolean(submitting) || !paymentMethods[String(plan._id)]} />
+    </View>
+  );
+
   return (
-    <View style={{ padding: 14, paddingBottom: 30 }}>
+    <ScrollView contentContainerStyle={{ padding: 14, paddingBottom: 30 }}>
       <View style={styles.dataCard}>
         <Text style={styles.cardTitlePremium}>الاشتراكات</Text>
-        <Text style={styles.detail}>تابع اشتراكاتك أو استعرض الباقات المتاحة.</Text>
+        <Text style={styles.detail}>الصيانة السنوية والاشتراك الترفيهي والاشتراك المحلي في نظام موحد.</Text>
         <Text style={[styles.detail, { fontWeight: '900', marginTop: 6 }]}>رصيد المحفظة: {Number(walletBalance || 0).toLocaleString('ar-EG')} جنيه</Text>
+        {onOpenWallet ? <Button title="فتح المحفظة" secondary onPress={onOpenWallet} /> : null}
         <Button title={loading ? 'جاري التحديث...' : 'تحديث الاشتراكات والباقات'} secondary onPress={load} disabled={loading} />
-      </View>
-      <View style={styles.dataCard}>
-        <Text style={styles.cardTitlePremium}>اشتراكاتي الخاصة</Text>
-        <Text style={styles.detail}>الأسعار والمدد والخدمات يحددها فريق الإدارة.</Text>
-        {specialSubscriptions.length ? specialSubscriptions.map((item, index) => {
-          const remaining = item.endsAt ? Math.max(0, Math.ceil((new Date(item.endsAt).getTime() - Date.now()) / 86400000)) : 0;
-          return <View key={String(item._id)} style={{ paddingVertical: 10, borderTopWidth: index ? 1 : 0, borderColor: COLORS.border }}>
-            <Text style={styles.cardTitleSmall}>{item.type === 'maintenance' ? 'صيانة سنوية' : item.type === 'air_network' ? 'اشتراك محلي' : 'اشتراك ترفيهي'} • {item.code}</Text>
-            <Text style={styles.detail}>الحالة: {item.status === 'active' ? (remaining <= 7 ? 'قرب الانتهاء' : 'نشط') : item.status === 'expired' ? 'منتهي' : item.status}</Text>
-            <Text style={styles.detail}>ينتهي: {new Date(item.endsAt).toLocaleDateString('ar-EG')} • متبقي {remaining} يوم</Text>
-            {item.type === 'maintenance' ? <Text style={styles.detail}>الطبق: {item.dishSize || '—'} • الرسيفر: {item.receiverType || '—'}</Text> : null}
-            {item.type === 'air_network' ? <View><Text style={styles.detail}>اسم الباقة: {item.networkName || '—'}</Text><Text style={styles.detail}>بيانات الدخول: {item.activationCode || '—'}</Text></View> : null}
-            {item.type === 'iptv' ? <View><Text style={styles.detail}>نوع الخدمة: اشتراك ترفيهي</Text><Text style={styles.detail}>بيانات الدخول: {item.iptvUsername || '—'} / {item.iptvPassword || '—'}</Text><Text style={styles.detail}>رابط الخدمة: {item.portalUrl || '—'} • عدد الأجهزة: {item.allowedDevices || 1}</Text></View> : null}
-            {(item.includedServices || []).map((x,i)=><Text key={i} style={styles.detail}>• {x}</Text>)}
-            {item.type === 'maintenance' && item.status === 'active' ? <Button title="طلب زيارة صيانة" secondary onPress={() => Alert.alert('طلب زيارة', 'إرسال طلب زيارة صيانة للإدارة؟', [{text:'رجوع',style:'cancel'},{text:'إرسال الطلب',onPress:async()=>{setSubmitting(String(item._id));try{const result=await api('/subscriptions/client/request-visit',{method:'POST',token:session.token,body:{subscriptionId:String(item._id)}});Alert.alert('تم إرسال الطلب',result.message||'سيتم التواصل معك لتأكيد الموعد.');}catch(e){setError(e.message||'تعذر إرسال طلب الزيارة.');}finally{setSubmitting('');}}}])} disabled={Boolean(submitting)} /> : null}
-            {['active','expired','paused'].includes(item.status) ? <Button title="طلب تجديد الاشتراك" secondary onPress={() => Alert.alert('اختيار طريقة الدفع للتجديد', 'اختار طريقة الدفع قبل إرسال طلب تجديد ' + item.code + '.', [{text:'الدفع من المحفظة',onPress:()=>requestSpecialRenewal(item,'wallet')},{text:'تحويل أموال',onPress:()=>requestSpecialRenewal(item,'transfer')},{text:'رجوع',style:'cancel'}])} disabled={Boolean(submitting)} /> : null}
-          </View>;
-        }) : <Text style={styles.emptyText}>لا توجد اشتراكات مفعلة على حسابك.</Text>}
-        {specialVisits.length ? <Text style={[styles.detail,{fontWeight:'900',marginTop:8}]}>مواعيد الصيانة</Text> : null}
-        {specialVisits.map(v => <View key={String(v._id)} style={{paddingVertical:7,borderTopWidth:1,borderColor:COLORS.border}}><Text style={styles.detail}>{new Date(v.scheduledAt).toLocaleString('ar-EG')} • {v.status === 'completed' ? 'تم تأكيد إنهاء الخدمة من الطرفين' : v.status === 'awaiting_client_confirmation' ? 'الفني طلب إنهاء الخدمة — يلزم تأكيدك' : v.status === 'in_progress' ? 'الخدمة قيد التنفيذ' : 'زيارة مجدولة'}</Text>{v.status === 'awaiting_client_confirmation' && !v.clientConfirmedAt ? <Button title={submitting===String(v._id)?'جاري التأكيد...':'تأكيد إنهاء الخدمة'} onPress={async()=>{setSubmitting(String(v._id));try{const result=await api('/subscriptions/client/visits/'+encodeURIComponent(v._id)+'/confirm-completion',{method:'POST',token:session.token,body:{}});Alert.alert('تأكيد الخدمة',result.message||'تم تسجيل تأكيدك.');await load();}catch(e){setError(e.message||'تعذر تأكيد إنهاء الخدمة.');}finally{setSubmitting('');}}} disabled={Boolean(submitting)}/> : null}</View>)}
-        <Text style={[styles.cardTitleSmall,{marginTop:12}]}>الخطط المتاحة</Text>
-        {specialPlans.map(plan => <View key={String(plan._id)} style={{paddingVertical:8,borderTopWidth:1,borderColor:COLORS.border}}>
-          <Text style={styles.cardTitleSmall}>اسم الباقة: {plan.name}</Text>
-          <Text style={styles.detail}>{plan.description || ''} • {Number(plan.durationDays)} يوم • {Number(plan.price).toLocaleString('ar-EG')} جنيه</Text>
-          <Button title={submitting === 'special-'+plan._id ? 'جاري الإرسال...' : 'طلب الاشتراك'} secondary onPress={() => Alert.alert('طلب اشتراك', 'إرسال طلب ' + plan.name + ' للإدارة؟', [{text:'رجوع',style:'cancel'},{text:'إرسال',onPress:async()=>{
-            setSubmitting('special-'+plan._id);
-            try { const result=await api('/subscriptions/client/request',{method:'POST',token:session.token,body:{planId:String(plan._id)}}); Alert.alert('تم إرسال الطلب',result.message || 'سيتم التواصل معك.'); await load(); }
-            catch(e){setError(e.message || 'تعذر إرسال الطلب.');}
-            finally{setSubmitting('');}
-          }}])} disabled={Boolean(submitting)} />
-        </View>)}
-      </View>
-      <View style={{ flexDirection: 'row', gap: 8, marginVertical: 12 }}>
-        <View style={{ flex: 1 }}><Button title={'اشتراكاتي الحالية (' + subscriptions.length + ')'} secondary={view !== 'current'} onPress={() => setView('current')} /></View>
-        <View style={{ flex: 1 }}><Button title={'الاشتراكات المتاحة (' + items.length + ')'} secondary={view !== 'available'} onPress={() => setView('available')} /></View>
       </View>
       {error ? <View style={styles.dataCard}><Text style={styles.errorText}>{error}</Text><Button title="إعادة المحاولة" secondary onPress={load} /></View> : null}
       {loading ? <ActivityIndicator color={COLORS.navy} /> : null}
-      {view === 'available' ? <View style={styles.dataCard}>
-        <Text style={styles.cardTitleSmall}>الاشتراكات المتاحة</Text>
-        {items.length ? items.map((item, index) => <View key={String(item._id || index)} style={{ paddingVertical: 11, borderTopWidth: index ? 1 : 0, borderColor: COLORS.border }}>
-          <Text style={styles.cardTitleSmall}>{item.name || 'باقة'}</Text>
-          <Text style={styles.detail}>{item.description || ''}</Text>
-          <Text style={styles.detail}>المدة: {Number(item.durationDays || 30)} يوم • السعر: {Number(item.price || 0)} جنيه</Text>
-          {Array.isArray(item.features) ? item.features.map((feature, i) => <Text key={i} style={styles.detail}>• {feature}</Text>) : null}
-          <Button title={submitting === String(item._id) ? 'جاري إرسال الطلب...' : 'إرسال طلب الاشتراك'} onPress={() => purchase(item)} disabled={Boolean(submitting)} />
-        </View>) : <Text style={styles.emptyText}>لا توجد باقات متاحة حاليًا.</Text>}
-      </View> : <View style={styles.dataCard}>
-        <Text style={styles.cardTitleSmall}>اشتراكاتي الحالية</Text>
-        {subscriptions.length ? subscriptions.map((item, index) => <View key={String(item._id || index)} style={{ paddingVertical: 11, borderTopWidth: index ? 1 : 0, borderColor: COLORS.border }}>
-          <Text style={styles.cardTitleSmall}>{item.itemName || 'اشتراك'}</Text>
-          <Text style={styles.detail}>الحالة: {STATUS[item.status] || item.status || 'غير محددة'}</Text>
-          <Text style={styles.detail}>{item.startsAt ? 'من ' + new Date(item.startsAt).toLocaleDateString('ar-EG') : ''}{item.endsAt ? ' إلى ' + new Date(item.endsAt).toLocaleDateString('ar-EG') : ''}</Text>
-          <Text style={styles.detail}>قيمة التجديد: {Number(item.amount || 0)} جنيه</Text>
-          {item.subscriptionDetails ? <Text style={[styles.detail, { marginTop: 6 }]}>{item.subscriptionDetails}</Text> : null}
-          {['active', 'expired'].includes(item.status) ? <Button title={submitting === String(item._id) ? 'جاري التجديد...' : 'تجديد الاشتراك'} onPress={() => renew(item)} disabled={Boolean(submitting)} /> : null}
-        </View>) : <Text style={styles.emptyText}>لم تشترك في أي باقة حتى الآن.</Text>}
-      </View>}
-    </View>
+
+      <View style={styles.dataCard}>
+        <Text style={styles.cardTitlePremium}>اشتراكاتي الحالية ({subscriptions.length})</Text>
+        {subscriptions.length ? subscriptions.map(item => {
+          const remaining = item.endsAt ? Math.max(0, Math.ceil((new Date(item.endsAt).getTime() - Date.now()) / 86400000)) : 0;
+          const needsRenewal = ['active', 'expired', 'paused'].includes(item.status) && !(item.renewalRequest?.requestedAt && item.renewalRequest?.paymentStatus === 'pending');
+          return <View key={String(item._id)} style={{ paddingVertical: 11, borderTopWidth: 1, borderColor: COLORS.border }}>
+            <Text style={styles.cardTitleSmall}>{TYPE_LABEL[item.type] || 'اشتراك'} • {item.code || ''}</Text>
+            <Text style={styles.detail}>الحالة: {STATUS[item.status] || item.status || 'غير محددة'}</Text>
+            <Text style={styles.detail}>ينتهي: {item.endsAt ? new Date(item.endsAt).toLocaleDateString('ar-EG') : '—'} • متبقي {remaining} يوم</Text>
+            <Text style={styles.detail}>القيمة: {Number(item.amount || 0).toLocaleString('ar-EG')} جنيه</Text>
+            {item.paymentStatus === 'pending' ? <Text style={[styles.detail, { color: '#9A6500', fontWeight: '800' }]}>طريقة الدفع: {item.paymentMethod === 'wallet' ? 'محفظة التطبيق' : 'تحويل أموال'} — قيد مراجعة الإدارة</Text> : null}
+            {item.paymentStatus === 'paid' ? <Text style={[styles.detail, { color: '#16734B' }]}>تم تأكيد السداد</Text> : null}
+            {item.type === 'maintenance' ? <Text style={styles.detail}>الطبق: {item.dishSize || '—'} • الرسيفر: {item.receiverType || '—'}</Text> : null}
+            {item.type === 'air_network' ? <View><Text style={styles.detail}>اسم الباقة: {item.networkName || '—'}</Text><Text style={styles.detail}>بيانات التفعيل: {item.activationCode || '—'}</Text></View> : null}
+            {item.type === 'iptv' ? <View><Text style={styles.detail}>اسم المستخدم: {item.iptvUsername || '—'}</Text><Text style={styles.detail}>كلمة المرور: {item.iptvPassword || '—'}</Text><Text style={styles.detail}>رابط الخدمة: {item.portalUrl || '—'} • الأجهزة: {item.allowedDevices || 1}</Text></View> : null}
+            {(item.includedServices || []).map((service, i) => <Text key={String(i)} style={styles.detail}>✓ {service}</Text>)}
+            {item.type === 'maintenance' && item.status === 'active' ? <Button title="طلب زيارة صيانة" secondary onPress={() => requestVisit(item)} disabled={Boolean(submitting)} /> : null}
+            {needsRenewal ? <>
+              <PaymentChoices value={renewalMethods[String(item._id)] || ''}
+                onChange={method => setRenewalMethods(current => ({ ...current, [String(item._id)]: method }))} />
+              <Button title={submitting === 'renew-' + item._id ? 'جاري إرسال التجديد...' : 'إرسال طلب تجديد الاشتراك'} secondary
+                onPress={() => submitRenewalRequest(item)} disabled={Boolean(submitting) || !renewalMethods[String(item._id)]} />
+            </> : item.renewalRequest?.requestedAt ? <Text style={styles.detail}>طلب التجديد: {item.renewalRequest.paymentStatus === 'pending' ? 'قيد المراجعة' : item.renewalRequest.paymentStatus}</Text> : null}
+          </View>;
+        }) : <Text style={styles.emptyText}>لا توجد اشتراكات مسجلة على حسابك حاليًا.</Text>}
+      </View>
+
+      {visits.length ? <View style={styles.dataCard}>
+        <Text style={styles.cardTitlePremium}>زيارات الصيانة</Text>
+        {visits.map(visit => <View key={String(visit._id)} style={{ paddingVertical: 8, borderTopWidth: 1, borderColor: COLORS.border }}>
+          <Text style={styles.detail}>{new Date(visit.scheduledAt).toLocaleString('ar-EG')}</Text>
+          <Text style={styles.detail}>{visit.status === 'completed' ? 'تم تأكيد إنهاء الخدمة' : visit.status === 'awaiting_client_confirmation' ? 'الفني أنهى العمل — في انتظار تأكيدك' : visit.status === 'in_progress' ? 'الزيارة قيد التنفيذ' : visit.status === 'cancelled' ? 'الزيارة ملغاة' : 'زيارة مجدولة'}</Text>
+          {visit.status === 'awaiting_client_confirmation' && !visit.clientConfirmedAt
+            ? <Button title={submitting === 'confirm-' + visit._id ? 'جاري التأكيد...' : 'تأكيد استلام الزيارة وإنهاء الخدمة'} onPress={() => confirmVisit(visit)} disabled={Boolean(submitting)} /> : null}
+        </View>)}
+      </View> : null}
+
+      <View style={styles.dataCard}>
+        <Text style={styles.cardTitlePremium}>الباقات المتاحة</Text>
+        {plans.length ? plans.map(renderPlan) : <Text style={styles.emptyText}>لا توجد باقات متاحة حاليًا.</Text>}
+      </View>
+    </ScrollView>
   );
 }
