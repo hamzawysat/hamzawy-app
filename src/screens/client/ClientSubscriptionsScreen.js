@@ -99,17 +99,17 @@ export default function ClientSubscriptionsScreen({ session, walletBalance = 0, 
         <Button title={loading ? 'جاري التحديث...' : 'تحديث الاشتراكات والباقات'} secondary onPress={load} disabled={loading} />
       </View>
       <View style={styles.dataCard}>
-        <Text style={styles.cardTitlePremium}>اشتراكات الصيانة والشبكات وIPTV</Text>
+        <Text style={styles.cardTitlePremium}>اشتراكاتي الخاصة</Text>
         <Text style={styles.detail}>الأسعار والمدد والخدمات يحددها فريق الإدارة.</Text>
         {specialSubscriptions.length ? specialSubscriptions.map((item, index) => {
           const remaining = item.endsAt ? Math.max(0, Math.ceil((new Date(item.endsAt).getTime() - Date.now()) / 86400000)) : 0;
           return <View key={String(item._id)} style={{ paddingVertical: 10, borderTopWidth: index ? 1 : 0, borderColor: COLORS.border }}>
-            <Text style={styles.cardTitleSmall}>{item.type === 'maintenance' ? 'صيانة سنوية' : item.type === 'air_network' ? 'شبكات هواء' : 'IPTV'} • {item.code}</Text>
+            <Text style={styles.cardTitleSmall}>{item.type === 'maintenance' ? 'صيانة سنوية' : item.type === 'air_network' ? 'اشتراك محلي' : 'اشتراك ترفيهي'} • {item.code}</Text>
             <Text style={styles.detail}>الحالة: {item.status === 'active' ? (remaining <= 7 ? 'قرب الانتهاء' : 'نشط') : item.status === 'expired' ? 'منتهي' : item.status}</Text>
             <Text style={styles.detail}>ينتهي: {new Date(item.endsAt).toLocaleDateString('ar-EG')} • متبقي {remaining} يوم</Text>
             {item.type === 'maintenance' ? <Text style={styles.detail}>الطبق: {item.dishSize || '—'} • الرسيفر: {item.receiverType || '—'}</Text> : null}
-            {item.type === 'air_network' ? <Text style={styles.detail}>الشبكة: {item.networkName || '—'} • كود التفعيل: {item.activationCode || '—'}</Text> : null}
-            {item.type === 'iptv' ? <View><Text style={styles.detail}>اسم المستخدم: {item.iptvUsername || '—'}</Text><Text style={styles.detail}>كلمة المرور: {item.iptvPassword || '—'}</Text><Text style={styles.detail}>البوابة: {item.portalUrl || '—'} • الأجهزة: {item.allowedDevices || 1}</Text></View> : null}
+            {item.type === 'air_network' ? <View><Text style={styles.detail}>اسم الباقة: {item.networkName || '—'}</Text><Text style={styles.detail}>بيانات الدخول: {item.activationCode || '—'}</Text></View> : null}
+            {item.type === 'iptv' ? <View><Text style={styles.detail}>نوع الخدمة: اشتراك ترفيهي</Text><Text style={styles.detail}>بيانات الدخول: {item.iptvUsername || '—'} / {item.iptvPassword || '—'}</Text><Text style={styles.detail}>رابط الخدمة: {item.portalUrl || '—'} • عدد الأجهزة: {item.allowedDevices || 1}</Text></View> : null}
             {(item.includedServices || []).map((x,i)=><Text key={i} style={styles.detail}>• {x}</Text>)}
             {item.type === 'maintenance' && item.status === 'active' ? <Button title="طلب زيارة صيانة" secondary onPress={() => Alert.alert('طلب زيارة', 'إرسال طلب زيارة صيانة للإدارة؟', [{text:'رجوع',style:'cancel'},{text:'إرسال الطلب',onPress:async()=>{setSubmitting(String(item._id));try{const result=await api('/subscriptions/client/request-visit',{method:'POST',token:session.token,body:{subscriptionId:String(item._id)}});Alert.alert('تم إرسال الطلب',result.message||'سيتم التواصل معك لتأكيد الموعد.');}catch(e){setError(e.message||'تعذر إرسال طلب الزيارة.');}finally{setSubmitting('');}}}])} disabled={Boolean(submitting)} /> : null}
             {['active','expired','paused'].includes(item.status) ? <Button title="طلب تجديد الاشتراك" secondary onPress={() => Alert.alert('طلب تجديد', 'إرسال طلب تجديد الاشتراك ' + item.code + ' للإدارة؟', [{text:'رجوع',style:'cancel'},{text:'إرسال الطلب',onPress:async()=>{setSubmitting(String(item._id));try{const result=await api('/subscriptions/client/request-renewal',{method:'POST',token:session.token,body:{subscriptionId:String(item._id)}});Alert.alert('تم إرسال الطلب',result.message||'سيتم التواصل معك.');}catch(e){setError(e.message||'تعذر إرسال طلب التجديد.');}finally{setSubmitting('');}}}])} disabled={Boolean(submitting)} /> : null}
@@ -119,7 +119,7 @@ export default function ClientSubscriptionsScreen({ session, walletBalance = 0, 
         {specialVisits.map(v => <Text key={String(v._id)} style={styles.detail}>{new Date(v.scheduledAt).toLocaleString('ar-EG')} • {v.status === 'completed' ? 'تمت الزيارة' : 'زيارة مجدولة'}</Text>)}
         <Text style={[styles.cardTitleSmall,{marginTop:12}]}>الخطط المتاحة</Text>
         {specialPlans.map(plan => <View key={String(plan._id)} style={{paddingVertical:8,borderTopWidth:1,borderColor:COLORS.border}}>
-          <Text style={styles.cardTitleSmall}>{plan.name}</Text>
+          <Text style={styles.cardTitleSmall}>اسم الباقة: {plan.name}</Text>
           <Text style={styles.detail}>{plan.description || ''} • {Number(plan.durationDays)} يوم • {Number(plan.price).toLocaleString('ar-EG')} جنيه</Text>
           <Button title={submitting === 'special-'+plan._id ? 'جاري الإرسال...' : 'طلب الاشتراك'} secondary onPress={() => Alert.alert('طلب اشتراك', 'إرسال طلب ' + plan.name + ' للإدارة؟', [{text:'رجوع',style:'cancel'},{text:'إرسال',onPress:async()=>{
             setSubmitting('special-'+plan._id);
