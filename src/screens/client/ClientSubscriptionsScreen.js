@@ -74,28 +74,27 @@ export default function ClientSubscriptionsScreen({ session, walletBalance = 0, 
 
   const renew = item => {
     const amount = Number(item.amount || 0);
-    if (Number(walletBalance) < amount) {
-      Alert.alert('الرصيد غير كافٍ', 'اشحن محفظتك أولًا لتجديد الاشتراك.', [
-        { text: 'لاحقًا', style: 'cancel' },
-        { text: 'فتح المحفظة', onPress: () => onOpenWallet?.() }
-      ]);
-      return;
-    }
-    Alert.alert('تأكيد التجديد', 'تجديد ' + (item.itemName || 'الاشتراك') + ' بمبلغ ' + amount + ' جنيه من محفظتك؟', [
-      { text: 'إلغاء', style: 'cancel' },
-      { text: 'تأكيد التجديد', onPress: async () => {
-        setSubmitting(String(item._id)); setError('');
-        try {
-          const result = await api('/client/commerce/subscriptions/' + encodeURIComponent(item._id) + '/renew', {
-            method: 'POST', token: session.token, body: { idempotencyKey: idempotencyKey() }
-          });
-          if (result.balance !== undefined) onWalletBalanceChange?.(Number(result.balance));
-          Alert.alert('تم التجديد', result.message || 'تم تجديد الاشتراك.');
-          await load();
-        } catch (e) { setError(e.message || 'تعذر تجديد الاشتراك.'); }
-        finally { setSubmitting(''); }
-      } }
-    ]);
+    const submit = async paymentMethod => {
+      setSubmitting(String(item._id)); setError('');
+      try {
+        const result = await api('/client/commerce/subscriptions/' + encodeURIComponent(item._id) + '/renew', {
+          method: 'POST', token: session.token, body: { paymentMethod, idempotencyKey: idempotencyKey() }
+        });
+        if (result.balance !== undefined) onWalletBalanceChange?.(Number(result.balance));
+        Alert.alert(result.duplicate ? 'طلب مسجل بالفعل' : 'طلب التجديد', result.message || 'تم إرسال طلب التجديد.');
+        await load();
+      } catch (e) { setError(e.message || 'تعذر تجديد الاشتراك.'); }
+      finally { setSubmitting(''); }
+    };
+    Alert.alert(
+      'اختيار طريقة الدفع',
+      'قيمة التجديد ' + amount + ' جنيه. اختار طريقة الدفع قبل التأكيد.',
+      [
+        { text: 'الدفع من محفظة التطبيق', onPress: () => submit('wallet') },
+        { text: 'تحويل أموال', onPress: () => submit('transfer') },
+        { text: 'رجوع', style: 'cancel' }
+      ]
+    );
   };
 
   const requestSpecialRenewal = async (item, paymentMethod) => {
