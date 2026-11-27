@@ -10,6 +10,7 @@ import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import * as SecureStore from 'expo-secure-store';
+import * as ImagePicker from 'expo-image-picker';
 import { Audio } from 'expo-av';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
@@ -34,6 +35,7 @@ function TechnicianSubscriptionVisits({ session }) {
   const [loading,setLoading]=useState(false);
   const [drafts,setDrafts]=useState({});
   const [saving,setSaving]=useState('');
+  const [uploading,setUploading]=useState('');
   const load=useCallback(async()=>{
     if(!session?.token)return;
     setLoading(true);
@@ -42,11 +44,36 @@ function TechnicianSubscriptionVisits({ session }) {
     finally{setLoading(false);}
   },[session?.token]);
   useEffect(()=>{void load();},[load]);
+  const capturePhoto=async(visit,side)=>{
+    const id=String(visit._id);
+    if(uploading)return;
+    try{
+      const permission=await ImagePicker.requestCameraPermissionsAsync();
+      if(!permission.granted){Alert.alert('إذن الكاميرا مطلوب','اسمح للتطبيق باستخدام الكاميرا لتصوير الزيارة.');return;}
+      const capture=await ImagePicker.launchCameraAsync({mediaTypes:ImagePicker.MediaTypeOptions.Images,quality:0.82,allowsEditing:false});
+      if(capture.canceled||!capture.assets?.[0]?.uri)return;
+      const asset=capture.assets[0];
+      const mimeType=asset.mimeType||'image/jpeg';
+      if(!['image/jpeg','image/png','image/webp'].includes(mimeType))throw new Error('نوع الصورة غير مدعوم. استخدم JPG أو PNG أو WebP.');
+      setUploading(id+':'+side);
+      const url=await getApiUrl('/subscriptions/technician/visits/'+encodeURIComponent(id)+'/photos?side='+side);
+      const response=await FileSystem.uploadAsync(url,asset.uri,{
+        httpMethod:'POST',
+        uploadType:FileSystem.FileSystemUploadType.BINARY_CONTENT,
+        headers:{Authorization:'Bearer '+session.token,'Content-Type':mimeType}
+      });
+      let data={};try{data=JSON.parse(response.body||'{}');}catch(_){}
+      if(response.status<200||response.status>=300||!data.fileId)throw new Error(data.message||'تعذر رفع الصورة. حاول مرة أخرى.');
+      setDrafts(old=>({...old,[id]:{...old[id],[side+'PhotoId']:data.fileId}}));
+      Alert.alert('تم رفع الصورة','تم حفظ صورة '+(side==='before'?'قبل التنفيذ':'بعد التنفيذ')+' في سجل الزيارة.');
+    }catch(e){Alert.alert('تعذر التصوير أو الرفع',e.message||'تحقق من إذن الكاميرا والاتصال وحاول مرة أخرى.');}
+    finally{setUploading('');}
+  };
   const update=async visit=>{
     const id=String(visit._id);const draft=drafts[id]||{};
     setSaving(id);
     try{
-      await api('/subscriptions/technician/visits/'+encodeURIComponent(id),{method:'PATCH',token:session.token,body:{status:draft.status||'completed',workDescription:draft.workDescription||'',beforePhotos:draft.beforePhotos?[draft.beforePhotos]:[],afterPhotos:draft.afterPhotos?[draft.afterPhotos]:[]}});
+      await api('/subscriptions/technician/visits/'+encodeURIComponent(id),{method:'PATCH',token:session.token,body:{status:'completed',workDescription:draft.workDescription||visit.workDescription||''}});
       Alert.alert('تم الحفظ','تم تحديث بيانات الزيارة.');await load();
     }catch(e){Alert.alert('تعذر حفظ الزيارة',e.message||'حاول مرة أخرى.');}
     finally{setSaving('');}
@@ -59,9 +86,9 @@ function TechnicianSubscriptionVisits({ session }) {
       <Text style={styles.detail}>العنوان: {v.subscription?.address||'—'}</Text>
       <Text style={styles.detail}>الموعد: {new Date(v.scheduledAt).toLocaleString('ar-EG')}</Text>
       <TextInput placeholder="وصف العمل المنفذ" multiline value={drafts[v._id]?.workDescription||v.workDescription||''} onChangeText={value=>setDrafts(old=>({...old,[v._id]:{...old[v._id],workDescription:value}}))} style={{minHeight:72,borderWidth:1,borderColor:COLORS.border,borderRadius:10,padding:10,textAlign:'right',marginTop:8}}/>
-      <TextInput placeholder="رابط صورة قبل التنفيذ (اختياري)" value={drafts[v._id]?.beforePhotos||''} onChangeText={value=>setDrafts(old=>({...old,[v._id]:{...old[v._id],beforePhotos:value}}))} style={{borderWidth:1,borderColor:COLORS.border,borderRadius:10,padding:10,textAlign:'right',marginTop:8}}/>
-      <TextInput placeholder="رابط صورة بعد التنفيذ (اختياري)" value={drafts[v._id]?.afterPhotos||''} onChangeText={value=>setDrafts(old=>({...old,[v._id]:{...old[v._id],afterPhotos:value}}))} style={{borderWidth:1,borderColor:COLORS.border,borderRadius:10,padding:10,textAlign:'right',marginTop:8}}/>
-      <Button title={saving===String(v._id)?'جاري الحفظ...':'حفظ وإتمام الزيارة'} onPress={()=>update(v)} disabled={Boolean(saving)}/>
+      <Button title={uploading===String(v._id)+':before'?'جاري رفع الصورة...':drafts[v._id]?.beforePhotoId?'تم رفع صورة قبل التنفيذ · تصوير مرة أخرى':'تصوير قبل التنفيذ'} secondary onPress={()=>capturePhoto(v,'before')} disabled={Boolean(uploading||saving)}/>
+      <Button title={uploading===String(v._id)+':after'?'جاري رفع الصورة...':drafts[v._id]?.afterPhotoId?'تم رفع صورة بعد التنفيذ · تصوير مرة أخرى':'تصوير بعد التنفيذ'} secondary onPress={()=>capturePhoto(v,'after')} disabled={Boolean(uploading||saving)}/>
+      <Button title={saving===String(v._id)?'جاري الحفظ...':'حفظ وإتمام الزيارة'} onPress={()=>update(v)} disabled={Boolean(saving||uploading)}/>
     </View>):!loading?<Text style={styles.emptyText}>لا توجد زيارات مسندة إليك حاليًا.</Text>:null}
   </ScrollView>;
 }
