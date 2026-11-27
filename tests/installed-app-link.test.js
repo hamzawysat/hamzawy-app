@@ -23,7 +23,7 @@ assert.ok(ota.includes('push:\n    branches: [main]'));
 assert.ok(ota.includes("github.event_name == 'push'"));
 assert.equal(app.updates.enabled, true);
 assert.equal(app.updates.requestHeaders['expo-channel-name'], 'production');
-assert.equal(app.runtimeVersion.policy, 'fingerprint');
+assert.equal(app.runtimeVersion.policy, 'appVersion');
 assert.ok(JSON.stringify(app.plugins).includes('hamzawy_sat_notification_v12_wow_loud.ogg'));
 assert.ok(notifications.includes("sound: 'hamzawy_sat_notification_v12_wow_loud.ogg'"));
 console.log('Installed-app association, versioning, APK naming, OTA and notification-sound regression checks passed.');
