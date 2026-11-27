@@ -12,6 +12,15 @@ const PAYMENT_OPTIONS = [
   { value: 'transfer', label: 'تحويل أموال', hint: 'تراجع الإدارة التحويل قبل التفعيل' },
 ];
 
+function confirmAction(title, message) {
+  return new Promise(resolve => {
+    Alert.alert(title, message, [
+      { text: 'إلغاء', style: 'cancel', onPress: () => resolve(false) },
+      { text: 'تأكيد', onPress: () => resolve(true) },
+    ], { cancelable: true, onDismiss: () => resolve(false) });
+  });
+}
+
 function PaymentChoices({ value, onChange }) {
   return (
     <View style={{ marginTop: 9 }}>
@@ -72,6 +81,8 @@ export default function ClientSubscriptionsScreen({ session, walletBalance = 0, 
   const submitPlanRequest = async plan => {
     const paymentMethod = paymentMethods[String(plan._id)];
     if (!paymentMethod) { Alert.alert('اختار طريقة الدفع', 'حدد محفظة التطبيق أو تحويل الأموال أولًا.'); return; }
+    const confirmed = await confirmAction('تأكيد طلب الاشتراك', 'تأكيد طلب ' + (TYPE_LABEL[plan.type] || 'الاشتراك') + ' بطريقة ' + (paymentMethod === 'wallet' ? 'محفظة التطبيق' : 'تحويل الأموال') + '؟ لن يتم الخصم قبل موافقة الإدارة.');
+    if (!confirmed) return;
     setSubmitting(String(plan._id)); setError('');
     try {
       const result = await api('/subscriptions/client/request', { method: 'POST', token: session.token,
@@ -85,6 +96,8 @@ export default function ClientSubscriptionsScreen({ session, walletBalance = 0, 
   const submitRenewalRequest = async item => {
     const paymentMethod = renewalMethods[String(item._id)];
     if (!paymentMethod) { Alert.alert('اختار طريقة الدفع', 'حدد طريقة دفع التجديد أولًا.'); return; }
+    const confirmed = await confirmAction('تأكيد طلب التجديد', 'تأكيد إرسال طلب التجديد بطريقة ' + (paymentMethod === 'wallet' ? 'محفظة التطبيق' : 'تحويل الأموال') + '؟ لن يتم الخصم الآن.');
+    if (!confirmed) return;
     setSubmitting('renew-' + item._id); setError('');
     try {
       const result = await api('/subscriptions/client/request-renewal', { method: 'POST', token: session.token,
@@ -96,6 +109,8 @@ export default function ClientSubscriptionsScreen({ session, walletBalance = 0, 
   };
 
   const requestVisit = async item => {
+    const confirmed = await confirmAction('طلب زيارة صيانة', 'إرسال طلب زيارة صيانة للإدارة؟');
+    if (!confirmed) return;
     setSubmitting('visit-' + item._id); setError('');
     try {
       const result = await api('/subscriptions/client/request-visit', { method: 'POST', token: session.token,
@@ -107,6 +122,8 @@ export default function ClientSubscriptionsScreen({ session, walletBalance = 0, 
   };
 
   const confirmVisit = async visit => {
+    const confirmed = await confirmAction('تأكيد استلام الزيارة', 'تأكيد استلام زيارة الصيانة وإغلاقها؟');
+    if (!confirmed) return;
     setSubmitting('confirm-' + visit._id); setError('');
     try {
       const result = await api('/subscriptions/client/visits/' + encodeURIComponent(visit._id) + '/confirm-completion', {
