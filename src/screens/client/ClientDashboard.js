@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Easing } from 'react-native';
+import { Animated, Easing, AppState } from 'react-native';
 import {
   View, Text, Image, FlatList, TouchableOpacity, ActivityIndicator, ScrollView,
   TextInput, StyleSheet, KeyboardAvoidingView, Platform, Alert, BackHandler, Linking, Modal
