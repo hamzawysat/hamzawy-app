@@ -232,7 +232,7 @@ export default function ClientSubscriptionsScreen({ session, walletBalance = 0, 
         {visits.map(visit => <View key={String(visit._id)} style={{ paddingVertical: 8, borderTopWidth: 1, borderColor: COLORS.border }}>
           <Text style={styles.detail}>{new Date(visit.scheduledAt).toLocaleString('ar-EG')}</Text>
           {visit.workDescription ? <Text style={styles.detail}>{visit.workDescription}</Text> : null}
-          <Text style={styles.detail}>{visit.status === 'completed' ? 'تم تأكيد إنهاء الخدمة' : visit.status === 'awaiting_client_confirmation' ? 'الفني أنهى العمل — في انتظار تأكيدك' : visit.status === 'in_progress' ? 'الزيارة قيد التنفيذ' : visit.status === 'cancelled' ? 'الزيارة ملغاة' : 'زيارة مجدولة'}</Text>
+          <Text style={styles.detail}>{visit.status === 'requested' ? 'طلب الزيارة قيد مراجعة الإدارة' : visit.status === 'completed' ? 'تم تأكيد إنهاء الخدمة' : visit.status === 'awaiting_client_confirmation' ? 'الفني أنهى العمل — في انتظار تأكيدك' : visit.status === 'in_progress' ? 'الزيارة قيد التنفيذ' : visit.status === 'cancelled' ? 'الزيارة ملغاة' : 'زيارة مجدولة'}</Text>
           {visit.status === 'awaiting_client_confirmation' && !visit.clientConfirmedAt
             ? <Button title={submitting === 'confirm-' + visit._id ? 'جاري التأكيد...' : 'تأكيد استلام الزيارة وإنهاء الخدمة'} onPress={() => confirmVisit(visit)} disabled={Boolean(submitting)} /> : null}
         </View>)}
