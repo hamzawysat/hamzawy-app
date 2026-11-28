@@ -234,7 +234,7 @@ jobs:
           APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
           test -n "$APKSIGNER"
           "$APKSIGNER" verify --verbose --print-certs "$APK" | tee "$RUNNER_TEMP/apk-signature-check.txt"
-          if ! grep -Eq 'Signer #1 certificate DN: .*CN=SATVIEW([, ]|$)' "$RUNNER_TEMP/apk-signature-check.txt"; then
+          if ! grep -Eq '^(Signer #1 certificate DN:|V[0-9]+ Signer: certificate DN:) .*CN=SATVIEW([, ]|$)' "$RUNNER_TEMP/apk-signature-check.txt"; then
             echo "::error::APK is not signed with the SATVIEW release certificate; refusing to publish."
             exit 1
           fi
