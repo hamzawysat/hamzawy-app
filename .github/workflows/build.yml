@@ -60,31 +60,137 @@ jobs:
           PY
       - name: Prebuild Android
         run: npx expo prebuild --platform android --clean
-      - name: Restore release keystore
+      - name: Restore and validate SATVIEW release keystore
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
-          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/app/release.keystore
-          cat > android/key.properties <<EOF
-          storePassword=$ANDROID_KEYSTORE_PASSWORD
-          keyPassword=$ANDROID_KEY_PASSWORD
-          keyAlias=$ANDROID_KEY_ALIAS
-          storeFile=release.keystore
-          EOF
-          python3 - <<'PY2'
+          set -euo pipefail
+          for name in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::Required Android signing secret is missing: $name"
+              exit 1
+            fi
+          done
+          install -d android/app
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/release.keystore
+          test -s android/app/release.keystore
+          keytool -list -v -keystore android/app/release.keystore \
+            -alias "$ANDROID_KEY_ALIAS" -storepass "$ANDROID_KEYSTORE_PASSWORD" \
+            > "$RUNNER_TEMP/release-keystore-check.txt"
+          if ! grep -Eq 'Owner: .*CN=SATVIEW([, ]|$)' "$RUNNER_TEMP/release-keystore-check.txt"; then
+            echo "::error::Configured release keystore certificate is not CN=SATVIEW."
+            exit 1
+          fi
+          python3 - <<'PY'
           from pathlib import Path
+          import re
+
           path = Path("android/app/build.gradle")
-          s = path.read_text()
-          if "signingConfigs.release" not in s and "signingConfig signingConfigs.release" not in s:
-              NL = chr(10)
-              block = "    signingConfigs {" + NL + "        release {" + NL + "            def props = new Properties()" + NL + "            props.load(new FileInputStream(rootProject.file('key.properties')))" + NL + "            storeFile file(props['storeFile'])" + NL + "            storePassword props['storePassword']" + NL + "            keyAlias props['keyAlias']" + NL + "            keyPassword props['keyPassword']" + NL + "        }" + NL + "    }" + NL
-              s = s.replace("    buildTypes {", block + "    buildTypes {", 1)
-              s = s.replace("            release {", "            release {\n                signingConfig signingConfigs.release", 1)
-              path.write_text(s)
-          PY2
+          source = path.read_text()
+
+          def block_bounds(text, pattern, label):
+              match = re.search(pattern, text, re.MULTILINE)
+              if not match:
+                  raise SystemExit(f"Could not find generated Gradle {label} block")
+              opening = text.find("{", match.start(), match.end() + 2)
+              if opening < 0:
+                  raise SystemExit(f"Malformed Gradle {label} block")
+              depth = 0
+              quote = None
+              escaped = False
+              line_comment = False
+              block_comment = False
+              i = opening
+              while i < len(text):
+                  ch = text[i]
+                  nxt = text[i + 1] if i + 1 < len(text) else ""
+                  if line_comment:
+                      if ch == "\n": line_comment = False
+                  elif block_comment:
+                      if ch == "*" and nxt == "/":
+                          block_comment = False
+                          i += 1
+                  elif quote:
+                      if escaped: escaped = False
+                      elif ch == "\\": escaped = True
+                      elif ch == quote: quote = None
+                  elif ch == "/" and nxt == "/":
+                      line_comment = True
+                      i += 1
+                  elif ch == "/" and nxt == "*":
+                      block_comment = True
+                      i += 1
+                  elif ch in ("'", '"'):
+                      quote = ch
+                  elif ch == "{":
+                      depth += 1
+                  elif ch == "}":
+                      depth -= 1
+                      if depth == 0:
+                          return match.start(), opening, i + 1
+                  i += 1
+              raise SystemExit(f"Unclosed Gradle {label} block")
+
+          signing = re.search(r"(?m)^\s*signingConfigs\s*\{", source)
+          if signing:
+              _, _, signing_end = block_bounds(source, r"(?m)^\s*signingConfigs\s*\{", "signingConfigs")
+              signing_start = signing.start()
+              inner = source[signing.start():signing_end]
+              release_match = re.search(r"(?m)^\s*release\s*\{", inner)
+              release_config = """        release {
+                      storeFile file("release.keystore")
+                      storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                      keyAlias System.getenv("ANDROID_KEY_ALIAS")
+                      keyPassword System.getenv("ANDROID_KEY_PASSWORD")
+                  }"""
+              if release_match:
+                  _, _, rel_end = block_bounds(inner, r"(?m)^\s*release\s*\{", "signingConfigs.release")
+                  inner = inner[:release_match.start()] + release_config + inner[rel_end:]
+              else:
+                  close = inner.rfind("}")
+                  inner = inner[:close] + release_config + "\n    " + inner[close:]
+              source = source[:signing_start] + inner + source[signing_end:]
+          else:
+              build_start, _, _ = block_bounds(source, r"(?m)^\s*buildTypes\s*\{", "buildTypes")
+              indent = re.match(r"(?m)^(\s*)buildTypes\s*\{", source[build_start:]).group(1)
+              config = (
+                  indent + "signingConfigs {\n"
+                  + indent + "    release {\n"
+                  + indent + '        storeFile file("release.keystore")\n'
+                  + indent + '        storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD")\n'
+                  + indent + '        keyAlias System.getenv("ANDROID_KEY_ALIAS")\n'
+                  + indent + '        keyPassword System.getenv("ANDROID_KEY_PASSWORD")\n'
+                  + indent + "    }\n"
+                  + indent + "}\n"
+              )
+              source = source[:build_start] + config + source[build_start:]
+
+          bt_start, bt_open, bt_end = block_bounds(source, r"(?m)^\s*buildTypes\s*\{", "buildTypes")
+          build_types = source[bt_start:bt_end]
+          rel = re.search(r"(?m)^\s*release\s*\{", build_types)
+          if not rel:
+              raise SystemExit("Could not find buildTypes.release block")
+          _, _, rel_end = block_bounds(build_types, r"(?m)^\s*release\s*\{", "buildTypes.release")
+          release_block = build_types[rel.start():rel_end]
+          release_block = re.sub(
+              r"(?m)^\s*signingConfig\s+signingConfigs\.[A-Za-z0-9_]+\s*$\n?",
+              "", release_block
+          )
+          line_end = release_block.find("\n")
+          release_block = release_block[:line_end + 1] + "            signingConfig signingConfigs.release\n" + release_block[line_end + 1:]
+          build_types = build_types[:rel.start()] + release_block + build_types[rel_end:]
+          source = source[:bt_start] + build_types + source[bt_end:]
+
+          if source.count("signingConfig signingConfigs.release") != 1:
+              raise SystemExit("Expected exactly one Release signingConfig binding")
+          if not re.search(r"storeFile\s+file\([\"']release\.keystore[\"']\)", source):
+              raise SystemExit("Release keystore file is not configured")
+          path.write_text(source)
+          print("Gradle Release signing config is wired to the SATVIEW keystore.")
+          PY
 
       - name: Configure Modern APK
         run: |
@@ -103,7 +209,12 @@ jobs:
           PY
           grep -n -A4 "defaultConfig {" android/app/build.gradle
       - name: Build Modern Release APK
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
+          set -euo pipefail
           cd android
           chmod +x gradlew
           ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a
@@ -114,6 +225,20 @@ jobs:
           echo "Modern APK ABIs:"
           unzip -Z1 "$APK" | grep "^lib/" | cut -d/ -f2 | sort -u
           cp "$APK" ../HSsat.apk
+
+      - name: Verify APK is signed by SATVIEW release certificate
+        run: |
+          set -euo pipefail
+          APK="HSsat.apk"
+          test -s "$APK"
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+          test -n "$APKSIGNER"
+          "$APKSIGNER" verify --verbose --print-certs "$APK" | tee "$RUNNER_TEMP/apk-signature-check.txt"
+          if ! grep -Eq 'Signer #1 certificate DN: .*CN=SATVIEW([, ]|$)' "$RUNNER_TEMP/apk-signature-check.txt"; then
+            echo "::error::APK is not signed with the SATVIEW release certificate; refusing to publish."
+            exit 1
+          fi
+
       - uses: actions/upload-artifact@v4
         with:
           name: hamzawy-sat-modern-apk
