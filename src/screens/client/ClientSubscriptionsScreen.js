@@ -244,17 +244,19 @@ export default function ClientSubscriptionsScreen({ session, walletBalance = 0, 
             {item.type === 'air_network' ? <View><Text style={styles.detail}>اسم الباقة: {item.networkName || '—'}</Text><Text style={styles.detail}>بيانات التفعيل: {item.activationCode || '—'}</Text></View> : null}
             {item.type === 'iptv' ? <View><Text style={styles.detail}>اسم المستخدم: {item.iptvUsername || '—'}</Text><Text style={styles.detail}>كلمة المرور: {item.iptvPassword || '—'}</Text><Text style={styles.detail}>رابط الخدمة: {item.portalUrl || '—'} • الأجهزة: {item.allowedDevices || 1}</Text></View> : null}
             {(item.includedServices || []).map((service, i) => <Text key={String(i)} style={styles.detail}>✓ {service}</Text>)}
-            {item.type === 'maintenance' && item.status === 'active' && activeVisit ? (
-              <View accessibilityRole="alert" style={{ marginTop: 10, padding: 12, borderRadius: 10, borderWidth: 1, borderColor: '#D6A441', backgroundColor: '#FFF7E6' }}>
-                <Text style={{ color: '#754900', fontSize: 14, fontWeight: '900', textAlign: 'right' }}>
-                  {activeVisit.status === 'requested' ? 'لديك طلب زيارة قيد مراجعة الإدارة بالفعل' : 'لديك زيارة صيانة قائمة بالفعل'}
-                </Text>
-                <Text style={{ color: '#754900', fontSize: 12, textAlign: 'right', marginTop: 4 }}>
-                  {activeVisit.status === 'requested' ? 'لا تحتاج إلى إرسال طلب آخر. ستظهر لك حالة الطلب هنا بعد مراجعة الإدارة.' : 'لا يمكن طلب زيارة جديدة قبل انتهاء الزيارة الحالية.'}
-                </Text>
-              </View>
-            ) : item.type === 'maintenance' && item.status === 'active' ? (
-              <Button title={submitting === 'visit-' + item._id ? 'جاري إرسال الطلب...' : 'طلب زيارة صيانة'} secondary onPress={() => requestVisit(item)} disabled={Boolean(submitting)} />
+            {item.type === 'maintenance' && item.status === 'active' ? (
+              <Button
+                title={submitting === 'visit-' + item._id
+                  ? 'جاري إرسال الطلب...'
+                  : activeVisit
+                    ? activeVisit.status === 'requested'
+                      ? 'لديك طلب زيارة في مراجعة الإدارة'
+                      : 'لديك زيارة صيانة قائمة بالفعل'
+                    : 'طلب زيارة'}
+                secondary
+                onPress={() => requestVisit(item)}
+                disabled={Boolean(submitting) || Boolean(activeVisit)}
+              />
             ) : null}
             {needsRenewal ? <>
               <PaymentChoices value={renewalMethods[String(item._id)] || ''}
