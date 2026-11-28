@@ -49,7 +49,7 @@ function PaymentChoices({ value, onChange }) {
   );
 }
 
-export default function ClientSubscriptionsScreen({ session, walletBalance = 0, onWalletBalanceChange, onOpenWallet }) {
+export default function ClientSubscriptionsScreen({ session, walletBalance = 0, onWalletBalanceChange, onOpenWallet, initialView = 'mine' }) {
   const [plans, setPlans] = useState([]);
   const [subscriptions, setSubscriptions] = useState([]);
   const [visits, setVisits] = useState([]);
@@ -58,7 +58,7 @@ export default function ClientSubscriptionsScreen({ session, walletBalance = 0, 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState('');
   const [error, setError] = useState('');
-  const [activeView, setActiveView] = useState('mine');
+  const [activeView, setActiveView] = useState(initialView === 'available' ? 'available' : 'mine');
   const [expandedPlans, setExpandedPlans] = useState({});
 
   const load = useCallback(async () => {
