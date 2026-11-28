@@ -84,7 +84,7 @@ export function StoreAdBanner({ role, session, visible = true, onOpenStore }) {
   );
 }
 
-export default function StoreScreen({ role, session, walletBalance, onWalletBalanceChange, onOpenSubscriptions }) {
+export default function StoreScreen({ role, session, walletBalance, onWalletBalanceChange }) {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -140,9 +140,9 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
       ]);
       if (results[0].status === 'rejected') throw results[0].reason;
       const catalog = results[0].value;
-      setProducts(Array.isArray(catalog.products) ? catalog.products : []);
+      setProducts((Array.isArray(catalog.products) ? catalog.products : []).filter(item => role !== 'client' || item?.type !== 'subscription'));
       setCategories(Array.isArray(catalog.categories) ? catalog.categories : []);
-      setOrders(results[1].status === 'fulfilled' && Array.isArray(results[1].value.orders) ? results[1].value.orders : []);
+      setOrders((results[1].status === 'fulfilled' && Array.isArray(results[1].value.orders) ? results[1].value.orders : []).filter(order => role !== 'client' || (order?.productType !== 'subscription' && !(Array.isArray(order?.items) && order.items.some(item => item?.productType === 'subscription')))));
     } catch (e) {
       setError(e.message || 'تعذر تحميل المتجر حاليًا.');
     } finally {
@@ -354,17 +354,6 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
             <Text style={{ color: '#101F9B', fontSize: 11, fontWeight: '900' }}>تسوق الآن</Text>
           </View>
         </View>
-        {role === 'client' && typeof onOpenSubscriptions === 'function' ? (
-          <TouchableOpacity accessibilityRole="button" accessibilityLabel="فتح الاشتراكات وطلب باقة" onPress={onOpenSubscriptions} style={{ backgroundColor: '#EEF2FF', borderWidth: 1, borderColor: '#C7D2FE', borderRadius: 16, padding: 14, marginBottom: 13, flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-            <View style={{ flex: 1 }}>
-              <Text style={{ color: COLORS.navy, fontSize: 16, fontWeight: '900', textAlign: 'right' }}>الاشتراكات وطلب باقة</Text>
-              <Text style={{ color: COLORS.muted, fontSize: 12, fontWeight: '700', textAlign: 'right', marginTop: 4 }}>تصفح الباقات المنشورة واطلب اشتراكك من النظام الموحد</Text>
-            </View>
-            <View style={{ backgroundColor: COLORS.navy, borderRadius: 11, paddingHorizontal: 13, paddingVertical: 9 }}>
-              <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: '900' }}>عرض الباقات ←</Text>
-            </View>
-          </TouchableOpacity>
-        ) : null}
         <TextInput
           value={searchQuery}
           onChangeText={setSearchQuery}
