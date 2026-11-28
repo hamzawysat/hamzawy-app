@@ -142,7 +142,7 @@ export default function StoreScreen({ role, session, walletBalance, onWalletBala
       const catalog = results[0].value;
       setProducts((Array.isArray(catalog.products) ? catalog.products : []).filter(item => role !== 'client' || item?.type !== 'subscription'));
       setCategories(Array.isArray(catalog.categories) ? catalog.categories : []);
-      setOrders(results[1].status === 'fulfilled' && Array.isArray(results[1].value.orders) ? results[1].value.orders : []);
+      setOrders((results[1].status === 'fulfilled' && Array.isArray(results[1].value.orders) ? results[1].value.orders : []).filter(order => role !== 'client' || (order?.productType !== 'subscription' && !(Array.isArray(order?.items) && order.items.some(item => item?.productType === 'subscription')))));
     } catch (e) {
       setError(e.message || 'تعذر تحميل المتجر حاليًا.');
     } finally {
