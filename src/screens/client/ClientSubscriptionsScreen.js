@@ -189,6 +189,14 @@ export default function ClientSubscriptionsScreen({ session, walletBalance = 0, 
       </View>
       {error ? <View style={styles.dataCard}><Text style={styles.errorText}>{error}</Text><Button title="إعادة المحاولة" secondary onPress={load} /></View> : null}
       {loading ? <ActivityIndicator color={COLORS.navy} /> : null}
+      {activeView === 'mine' && visits.some(visit => visit.status === 'awaiting_client_confirmation' && !visit.clientConfirmedAt) ? <View style={styles.dataCard}>
+        <Text style={[styles.cardTitlePremium, { color: '#8A5200' }]}>مطلوب تأكيد استلام زيارة الصيانة</Text>
+        <Text style={styles.detail}>الفني أنهى الزيارة السنوية. راجع الخدمة واضغط تأكيد الاستلام لإغلاقها.</Text>
+        {visits.filter(visit => visit.status === 'awaiting_client_confirmation' && !visit.clientConfirmedAt).map(visit => <View key={'pending-' + String(visit._id)} style={{ paddingTop: 9 }}>
+          <Text style={styles.detail}>{new Date(visit.scheduledAt).toLocaleString('ar-EG')}</Text>
+          <Button title={submitting === 'confirm-' + visit._id ? 'جاري التأكيد...' : 'تأكيد استلام الخدمة'} onPress={() => confirmVisit(visit)} disabled={Boolean(submitting)} />
+        </View>)}
+      </View> : null}
       <View style={{ flexDirection: 'row', gap: 8, marginBottom: 4 }}>
         <Pressable accessibilityRole="button" accessibilityState={{ selected: activeView === 'mine' }} onPress={() => setActiveView('mine')}
           style={{ flex: 1, padding: 12, borderRadius: 12, borderWidth: 1, borderColor: activeView === 'mine' ? COLORS.navy : COLORS.border, backgroundColor: activeView === 'mine' ? COLORS.navy : '#FFFFFF' }}>
@@ -233,8 +241,6 @@ export default function ClientSubscriptionsScreen({ session, walletBalance = 0, 
           <Text style={styles.detail}>{new Date(visit.scheduledAt).toLocaleString('ar-EG')}</Text>
           {visit.workDescription ? <Text style={styles.detail}>{visit.workDescription}</Text> : null}
           <Text style={styles.detail}>{visit.status === 'requested' ? 'طلب الزيارة قيد مراجعة الإدارة' : visit.status === 'completed' ? 'تم تأكيد إنهاء الخدمة' : visit.status === 'awaiting_client_confirmation' ? 'الفني أنهى العمل — في انتظار تأكيدك' : visit.status === 'in_progress' ? 'الزيارة قيد التنفيذ' : visit.status === 'cancelled' ? 'الزيارة ملغاة' : 'زيارة مجدولة'}</Text>
-          {visit.status === 'awaiting_client_confirmation' && !visit.clientConfirmedAt
-            ? <Button title={submitting === 'confirm-' + visit._id ? 'جاري التأكيد...' : 'تأكيد استلام الزيارة وإنهاء الخدمة'} onPress={() => confirmVisit(visit)} disabled={Boolean(submitting)} /> : null}
         </View>)}
       </View> : null}
 
