@@ -143,6 +143,42 @@ export default function ClientSubscriptionsScreen({ session, walletBalance = 0, 
     const id = String(plan._id), expanded = Boolean(expandedPlans[id]);
     const hasExisting = subscriptions.some(item => String(item.plan) === id && ['pending', 'active', 'paused'].includes(item.status));
     return (
+      <View key={id} style={{ paddingVertical: 12, borderTopWidth: 1, borderColor: COLORS.border }}>
+        <View style={{ flexDirection: 'row-reverse', justifyContent: 'space-between', gap: 8, alignItems: 'center' }}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.cardTitleSmall}>{plan.name || TYPE_LABEL[plan.type] || 'باقة اشتراك'}</Text>
+            <Text style={[styles.cardTitleSmall, { color: COLORS.navy, marginTop: 4 }]}>{Number(plan.price || 0).toLocaleString('ar-EG')} جنيه</Text>
+          </View>
+          <Pressable accessibilityRole="button" accessibilityState={{ expanded }}
+            onPress={() => setExpandedPlans(current => ({ ...current, [id]: !current[id] }))}
+            style={{ borderWidth: 1, borderColor: COLORS.border, borderRadius: 10, paddingVertical: 9, paddingHorizontal: 14 }}>
+            <Text style={{ color: COLORS.navy, fontSize: 11, fontWeight: '900' }}>{expanded ? 'إخفاء التفاصيل' : 'تفاصيل'}</Text>
+          </Pressable>
+        </View>
+        {expanded ? <>
+          <Text style={styles.detail}>{TYPE_LABEL[plan.type] || 'اشتراك'} • {Number(plan.durationDays || 0)} يوم</Text>
+          {plan.description ? <Text style={styles.detail}>{plan.description}</Text> : null}
+          {plan.type === 'maintenance' ? <Text style={styles.detail}>عدد زيارات الصيانة: {Number(plan.visitCount || 0)}</Text> : <Text style={styles.detail}>عدد الأجهزة المسموح بها: {Number(plan.allowedDevices || 1)}</Text>}
+          {Array.isArray(plan.includedServices) && plan.includedServices.length ? <View style={{ marginTop: 7 }}>
+            <Text style={[styles.detail, { fontWeight: '900' }]}>الخدمات المشمولة</Text>
+            {plan.includedServices.map((service, i) => <Text key={String(i)} style={styles.detail}>✓ {service}</Text>)}
+          </View> : null}
+          {Array.isArray(plan.excludedSupplies) && plan.excludedSupplies.length ? <View style={{ marginTop: 5 }}>
+            <Text style={[styles.detail, { fontWeight: '900' }]}>غير مشمول في السعر</Text>
+            {plan.excludedSupplies.map((supply, i) => <Text key={String(i)} style={styles.detail}>• {supply}</Text>)}
+          </View> : null}
+          {hasExisting ? <Text style={[styles.detail, { color: COLORS.navy, fontWeight: '900', marginTop: 10 }]}>لديك طلب أو اشتراك قائم لهذه الباقة</Text> : <>
+            <PaymentChoices value={paymentMethods[id] || ''}
+              onChange={method => setPaymentMethods(current => ({ ...current, [id]: method }))} />
+            <Button title={submitting === id ? 'جاري إرسال الطلب...' : 'إرسال طلب الاشتراك'}
+              onPress={() => submitPlanRequest(plan)} disabled={Boolean(submitting) || !paymentMethods[id]} />
+          </>}
+        </> : null}
+      </View>
+    );
+  };
+
+  return (
     <ScrollView contentContainerStyle={{ padding: 14, paddingBottom: 30 }}>
       <View style={styles.dataCard}>
         <Text style={styles.cardTitlePremium}>الاشتراكات</Text>
