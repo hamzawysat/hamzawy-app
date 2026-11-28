@@ -79,6 +79,8 @@ export default function ClientSubscriptionsScreen({ session, walletBalance = 0, 
   useEffect(() => { load(); }, [load]);
 
   const submitPlanRequest = async plan => {
+    const existing = subscriptions.find(item => String(item.plan) === String(plan._id) && ['pending', 'active', 'paused'].includes(item.status));
+    if (existing) { Alert.alert('طلب أو اشتراك قائم', existing.status === 'pending' ? 'طلبك لهذه الباقة قيد مراجعة الإدارة بالفعل.' : 'لديك اشتراك قائم في هذه الباقة بالفعل.'); return; }
     const paymentMethod = paymentMethods[String(plan._id)];
     if (!paymentMethod) { Alert.alert('اختار طريقة الدفع', 'حدد محفظة التطبيق أو تحويل الأموال أولًا.'); return; }
     const confirmed = await confirmAction('تأكيد طلب الاشتراك', 'تأكيد طلب ' + (TYPE_LABEL[plan.type] || 'الاشتراك') + ' بطريقة ' + (paymentMethod === 'wallet' ? 'محفظة التطبيق' : 'تحويل الأموال') + '؟ لن يتم الخصم قبل موافقة الإدارة.');
@@ -155,8 +157,10 @@ export default function ClientSubscriptionsScreen({ session, walletBalance = 0, 
       {plan.type !== 'maintenance' ? <Text style={styles.detail}>عدد الأجهزة المسموح بها: {Number(plan.allowedDevices || 1)}</Text> : null}
       <PaymentChoices value={paymentMethods[String(plan._id)] || ''}
         onChange={method => setPaymentMethods(current => ({ ...current, [String(plan._id)]: method }))} />
-      <Button title={submitting === String(plan._id) ? 'جاري إرسال الطلب...' : 'إرسال طلب الاشتراك'}
-        onPress={() => submitPlanRequest(plan)} disabled={Boolean(submitting) || !paymentMethods[String(plan._id)]} />
+      {subscriptions.some(item => String(item.plan) === String(plan._id) && ['pending', 'active', 'paused'].includes(item.status))
+        ? <Text style={[styles.detail, { color: COLORS.navy, fontWeight: '900', marginTop: 10 }]}>لديك طلب أو اشتراك قائم لهذه الباقة</Text>
+        : <Button title={submitting === String(plan._id) ? 'جاري إرسال الطلب...' : 'إرسال طلب الاشتراك'}
+          onPress={() => submitPlanRequest(plan)} disabled={Boolean(submitting) || !paymentMethods[String(plan._id)]} />}
     </View>
   );
 
