@@ -113,16 +113,33 @@ export default function ClientSubscriptionsScreen({ session, walletBalance = 0, 
   };
 
   const requestVisit = async item => {
+    const subscriptionId = String(item._id);
+    const activeVisit = visits.find(visit => {
+      const visitSubscriptionId = String(visit.subscription?._id || visit.subscription || '');
+      return visitSubscriptionId === subscriptionId
+        && ['requested', 'scheduled', 'in_progress', 'awaiting_client_confirmation'].includes(visit.status);
+    });
+    if (activeVisit) {
+      if (activeVisit.status === 'requested') {
+        Alert.alert('طلب زيارة قائم', 'لديك طلب زيارة قيد مراجعة الإدارة بالفعل.');
+      } else {
+        Alert.alert('زيارة قائمة', 'لديك زيارة صيانة قائمة بالفعل.');
+      }
+      return;
+    }
+
     const confirmed = await confirmAction('طلب زيارة صيانة', 'إرسال طلب زيارة صيانة للإدارة؟');
     if (!confirmed) return;
-    setSubmitting('visit-' + item._id); setError('');
+    setSubmitting('visit-' + subscriptionId); setError('');
     try {
       const result = await api('/subscriptions/client/request-visit', { method: 'POST', token: session.token,
-        body: { subscriptionId: String(item._id) } });
+        body: { subscriptionId } });
       Alert.alert('تم إرسال طلب الزيارة', result.message || 'ستراجع الإدارة طلب زيارة الصيانة.');
       await load();
-    } catch (e) { setError(e.message || 'تعذر إرسال طلب الزيارة.'); }
-    finally { setSubmitting(''); }
+    } catch (e) {
+      Alert.alert('تعذر إرسال طلب الزيارة', e.message || 'حدث خطأ أثناء إرسال الطلب. حاول مرة أخرى.');
+      if (e.status === 409) await load();
+    } finally { setSubmitting(''); }
   };
 
   const confirmVisit = async visit => {
