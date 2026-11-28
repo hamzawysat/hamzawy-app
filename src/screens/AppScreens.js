@@ -454,7 +454,7 @@ function AppScreens({ onScreenChange, onAuthRestoringChange }) {
       setScreen('technician');
     } else if (session?.role === 'client') {
       if (type.startsWith('client_wallet_') || type === 'client_service_refunded') setClientTab('wallet');
-      else if (type === 'subscription_activated' || type === 'subscription_renewed') setClientTab('subscriptions');
+      else if (['subscription_activated', 'subscription_renewed', 'subscription_visit_awaiting_confirmation', 'subscription_visit_scheduled'].includes(type)) setClientTab('subscriptions');
       else if (type === 'store_order_update') setClientTab('store');
       else if (['order_created', 'new_offer', 'offer_accepted', 'order_cancelled', 'order_completed', 'order_rated'].includes(type)) setClientTab('current');
       setScreen('client');
