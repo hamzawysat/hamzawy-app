@@ -112,13 +112,15 @@ export default function ClientSubscriptionsScreen({ session, walletBalance = 0, 
     finally { setSubmitting(''); }
   };
 
+  const findActiveVisit = subscriptionId => visits.find(visit => {
+    const visitSubscriptionId = String(visit.subscription?._id || visit.subscription || '');
+    return visitSubscriptionId === String(subscriptionId)
+      && ['requested', 'scheduled', 'in_progress', 'awaiting_client_confirmation'].includes(visit.status);
+  });
+
   const requestVisit = async item => {
     const subscriptionId = String(item._id);
-    const activeVisit = visits.find(visit => {
-      const visitSubscriptionId = String(visit.subscription?._id || visit.subscription || '');
-      return visitSubscriptionId === subscriptionId
-        && ['requested', 'scheduled', 'in_progress', 'awaiting_client_confirmation'].includes(visit.status);
-    });
+    const activeVisit = findActiveVisit(subscriptionId);
     if (activeVisit) {
       if (activeVisit.status === 'requested') {
         Alert.alert('طلب زيارة قائم', 'لديك طلب زيارة قيد مراجعة الإدارة بالفعل.');
@@ -228,6 +230,7 @@ export default function ClientSubscriptionsScreen({ session, walletBalance = 0, 
       <View style={styles.dataCard}>
         <Text style={styles.cardTitlePremium}>اشتراكاتي الحالية ({subscriptions.length})</Text>
         {subscriptions.length ? subscriptions.map(item => {
+          const activeVisit = item.type === 'maintenance' ? findActiveVisit(item._id) : null;
           const remaining = item.endsAt ? Math.max(0, Math.ceil((new Date(item.endsAt).getTime() - Date.now()) / 86400000)) : 0;
           const needsRenewal = ['active', 'expired', 'paused'].includes(item.status) && !(item.renewalRequest?.requestedAt && item.renewalRequest?.paymentStatus === 'pending');
           return <View key={String(item._id)} style={{ paddingVertical: 11, borderTopWidth: 1, borderColor: COLORS.border }}>
@@ -241,7 +244,18 @@ export default function ClientSubscriptionsScreen({ session, walletBalance = 0, 
             {item.type === 'air_network' ? <View><Text style={styles.detail}>اسم الباقة: {item.networkName || '—'}</Text><Text style={styles.detail}>بيانات التفعيل: {item.activationCode || '—'}</Text></View> : null}
             {item.type === 'iptv' ? <View><Text style={styles.detail}>اسم المستخدم: {item.iptvUsername || '—'}</Text><Text style={styles.detail}>كلمة المرور: {item.iptvPassword || '—'}</Text><Text style={styles.detail}>رابط الخدمة: {item.portalUrl || '—'} • الأجهزة: {item.allowedDevices || 1}</Text></View> : null}
             {(item.includedServices || []).map((service, i) => <Text key={String(i)} style={styles.detail}>✓ {service}</Text>)}
-            {item.type === 'maintenance' && item.status === 'active' ? <Button title="طلب زيارة صيانة" secondary onPress={() => requestVisit(item)} disabled={Boolean(submitting)} /> : null}
+            {item.type === 'maintenance' && item.status === 'active' && activeVisit ? (
+              <View accessibilityRole="alert" style={{ marginTop: 10, padding: 12, borderRadius: 10, borderWidth: 1, borderColor: '#D6A441', backgroundColor: '#FFF7E6' }}>
+                <Text style={{ color: '#754900', fontSize: 14, fontWeight: '900', textAlign: 'right' }}>
+                  {activeVisit.status === 'requested' ? 'لديك طلب زيارة قيد مراجعة الإدارة بالفعل' : 'لديك زيارة صيانة قائمة بالفعل'}
+                </Text>
+                <Text style={{ color: '#754900', fontSize: 12, textAlign: 'right', marginTop: 4 }}>
+                  {activeVisit.status === 'requested' ? 'لا تحتاج إلى إرسال طلب آخر. ستظهر لك حالة الطلب هنا بعد مراجعة الإدارة.' : 'لا يمكن طلب زيارة جديدة قبل انتهاء الزيارة الحالية.'}
+                </Text>
+              </View>
+            ) : item.type === 'maintenance' && item.status === 'active' ? (
+              <Button title={submitting === 'visit-' + item._id ? 'جاري إرسال الطلب...' : 'طلب زيارة صيانة'} secondary onPress={() => requestVisit(item)} disabled={Boolean(submitting)} />
+            ) : null}
             {needsRenewal ? <>
               <PaymentChoices value={renewalMethods[String(item._id)] || ''}
                 onChange={method => setRenewalMethods(current => ({ ...current, [String(item._id)]: method }))} />
