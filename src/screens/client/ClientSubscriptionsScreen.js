@@ -58,6 +58,8 @@ export default function ClientSubscriptionsScreen({ session, walletBalance = 0, 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState('');
   const [error, setError] = useState('');
+  const [activeView, setActiveView] = useState('mine');
+  const [expandedPlans, setExpandedPlans] = useState({});
 
   const load = useCallback(async () => {
     if (!session?.token) return;
@@ -137,32 +139,44 @@ export default function ClientSubscriptionsScreen({ session, walletBalance = 0, 
     finally { setSubmitting(''); }
   };
 
-  const renderPlan = plan => (
-    <View key={String(plan._id)} style={{ paddingVertical: 12, borderTopWidth: 1, borderColor: COLORS.border }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8, alignItems: 'center' }}>
-        <Text style={styles.cardTitleSmall}>{plan.name || TYPE_LABEL[plan.type] || 'باقة اشتراك'}</Text>
-        <Text style={[styles.cardTitleSmall, { color: COLORS.navy }]}>{Number(plan.price || 0).toLocaleString('ar-EG')} جنيه</Text>
+  const renderPlan = plan => {
+    const id = String(plan._id), expanded = Boolean(expandedPlans[id]);
+    const hasExisting = subscriptions.some(item => String(item.plan) === id && ['pending', 'active', 'paused'].includes(item.status));
+    return (
+      <View key={id} style={{ paddingVertical: 12, borderTopWidth: 1, borderColor: COLORS.border }}>
+        <View style={{ flexDirection: 'row-reverse', justifyContent: 'space-between', gap: 8, alignItems: 'center' }}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.cardTitleSmall}>{plan.name || TYPE_LABEL[plan.type] || 'باقة اشتراك'}</Text>
+            <Text style={[styles.cardTitleSmall, { color: COLORS.navy, marginTop: 4 }]}>{Number(plan.price || 0).toLocaleString('ar-EG')} جنيه</Text>
+          </View>
+          <Pressable accessibilityRole="button" accessibilityState={{ expanded }}
+            onPress={() => setExpandedPlans(current => ({ ...current, [id]: !current[id] }))}
+            style={{ borderWidth: 1, borderColor: COLORS.border, borderRadius: 10, paddingVertical: 9, paddingHorizontal: 14 }}>
+            <Text style={{ color: COLORS.navy, fontSize: 11, fontWeight: '900' }}>{expanded ? 'إخفاء التفاصيل' : 'تفاصيل'}</Text>
+          </Pressable>
+        </View>
+        {expanded ? <>
+          <Text style={styles.detail}>{TYPE_LABEL[plan.type] || 'اشتراك'} • {Number(plan.durationDays || 0)} يوم</Text>
+          {plan.description ? <Text style={styles.detail}>{plan.description}</Text> : null}
+          {plan.type === 'maintenance' ? <Text style={styles.detail}>عدد زيارات الصيانة: {Number(plan.visitCount || 0)}</Text> : <Text style={styles.detail}>عدد الأجهزة المسموح بها: {Number(plan.allowedDevices || 1)}</Text>}
+          {Array.isArray(plan.includedServices) && plan.includedServices.length ? <View style={{ marginTop: 7 }}>
+            <Text style={[styles.detail, { fontWeight: '900' }]}>الخدمات المشمولة</Text>
+            {plan.includedServices.map((service, i) => <Text key={String(i)} style={styles.detail}>✓ {service}</Text>)}
+          </View> : null}
+          {Array.isArray(plan.excludedSupplies) && plan.excludedSupplies.length ? <View style={{ marginTop: 5 }}>
+            <Text style={[styles.detail, { fontWeight: '900' }]}>غير مشمول في السعر</Text>
+            {plan.excludedSupplies.map((supply, i) => <Text key={String(i)} style={styles.detail}>• {supply}</Text>)}
+          </View> : null}
+          {hasExisting ? <Text style={[styles.detail, { color: COLORS.navy, fontWeight: '900', marginTop: 10 }]}>لديك طلب أو اشتراك قائم لهذه الباقة</Text> : <>
+            <PaymentChoices value={paymentMethods[id] || ''}
+              onChange={method => setPaymentMethods(current => ({ ...current, [id]: method }))} />
+            <Button title={submitting === id ? 'جاري إرسال الطلب...' : 'إرسال طلب الاشتراك'}
+              onPress={() => submitPlanRequest(plan)} disabled={Boolean(submitting) || !paymentMethods[id]} />
+          </>}
+        </> : null}
       </View>
-      <Text style={styles.detail}>{TYPE_LABEL[plan.type] || 'اشتراك'} • {Number(plan.durationDays || 0)} يوم</Text>
-      {plan.description ? <Text style={styles.detail}>{plan.description}</Text> : null}
-      {plan.type === 'maintenance' && Number(plan.visitCount || 0) > 0 ? <Text style={styles.detail}>عدد زيارات الصيانة: {Number(plan.visitCount)}</Text> : null}
-      {Array.isArray(plan.includedServices) && plan.includedServices.length ? <View style={{ marginTop: 7 }}>
-        <Text style={[styles.detail, { fontWeight: '900' }]}>الخدمات المشمولة</Text>
-        {plan.includedServices.map((service, i) => <Text key={String(i)} style={styles.detail}>✓ {service}</Text>)}
-      </View> : null}
-      {Array.isArray(plan.excludedSupplies) && plan.excludedSupplies.length ? <View style={{ marginTop: 5 }}>
-        <Text style={[styles.detail, { fontWeight: '900' }]}>غير مشمول في السعر</Text>
-        {plan.excludedSupplies.map((supply, i) => <Text key={String(i)} style={styles.detail}>• {supply}</Text>)}
-      </View> : null}
-      {plan.type !== 'maintenance' ? <Text style={styles.detail}>عدد الأجهزة المسموح بها: {Number(plan.allowedDevices || 1)}</Text> : null}
-      <PaymentChoices value={paymentMethods[String(plan._id)] || ''}
-        onChange={method => setPaymentMethods(current => ({ ...current, [String(plan._id)]: method }))} />
-      {subscriptions.some(item => String(item.plan) === String(plan._id) && ['pending', 'active', 'paused'].includes(item.status))
-        ? <Text style={[styles.detail, { color: COLORS.navy, fontWeight: '900', marginTop: 10 }]}>لديك طلب أو اشتراك قائم لهذه الباقة</Text>
-        : <Button title={submitting === String(plan._id) ? 'جاري إرسال الطلب...' : 'إرسال طلب الاشتراك'}
-          onPress={() => submitPlanRequest(plan)} disabled={Boolean(submitting) || !paymentMethods[String(plan._id)]} />}
-    </View>
-  );
+    );
+  };
 
   return (
     <ScrollView contentContainerStyle={{ padding: 14, paddingBottom: 30 }}>
@@ -175,7 +189,17 @@ export default function ClientSubscriptionsScreen({ session, walletBalance = 0, 
       </View>
       {error ? <View style={styles.dataCard}><Text style={styles.errorText}>{error}</Text><Button title="إعادة المحاولة" secondary onPress={load} /></View> : null}
       {loading ? <ActivityIndicator color={COLORS.navy} /> : null}
-
+      <View style={{ flexDirection: 'row', gap: 8, marginBottom: 4 }}>
+        <Pressable accessibilityRole="button" accessibilityState={{ selected: activeView === 'mine' }} onPress={() => setActiveView('mine')}
+          style={{ flex: 1, padding: 12, borderRadius: 12, borderWidth: 1, borderColor: activeView === 'mine' ? COLORS.navy : COLORS.border, backgroundColor: activeView === 'mine' ? COLORS.navy : '#FFFFFF' }}>
+          <Text style={{ textAlign: 'center', fontWeight: '900', fontSize: 12, color: activeView === 'mine' ? '#FFFFFF' : COLORS.navy }}>اشتراكاتي</Text>
+        </Pressable>
+        <Pressable accessibilityRole="button" accessibilityState={{ selected: activeView === 'available' }} onPress={() => setActiveView('available')}
+          style={{ flex: 1, padding: 12, borderRadius: 12, borderWidth: 1, borderColor: activeView === 'available' ? COLORS.navy : COLORS.border, backgroundColor: activeView === 'available' ? COLORS.navy : '#FFFFFF' }}>
+          <Text style={{ textAlign: 'center', fontWeight: '900', fontSize: 12, color: activeView === 'available' ? '#FFFFFF' : COLORS.navy }}>الاشتراكات المتاحة</Text>
+        </Pressable>
+      </View>
+      {activeView === 'mine' ? <>
       <View style={styles.dataCard}>
         <Text style={styles.cardTitlePremium}>اشتراكاتي الحالية ({subscriptions.length})</Text>
         {subscriptions.length ? subscriptions.map(item => {
@@ -214,10 +238,12 @@ export default function ClientSubscriptionsScreen({ session, walletBalance = 0, 
         </View>)}
       </View> : null}
 
-      <View style={styles.dataCard}>
-        <Text style={styles.cardTitlePremium}>الباقات المتاحة</Text>
+
+      </> : null}
+      {activeView === 'available' ? <View style={styles.dataCard}>
+        <Text style={styles.cardTitlePremium}>الاشتراكات المتاحة</Text>
         {plans.length ? plans.map(renderPlan) : <Text style={styles.emptyText}>لا توجد باقات متاحة حاليًا.</Text>}
-      </View>
+      </View> : null}
     </ScrollView>
   );
 }
